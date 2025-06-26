@@ -1,4 +1,3 @@
-# Utility functions for usage tracking
 import json
 from pathlib import Path
 
