@@ -21,6 +21,8 @@ st.page_link("pages/visual_brand_audit.py", label="🎨 Visual Brand Audit")
 # Future tools (coming soon)
 st.markdown("""
 ---
+st.page_link("pages/consumer_behavior.py", label="🍽️ DinePsych AI")
+
 
 🛠 **Coming Soon:**
 - 🌟 BloomScore (AI-powered brand score)
