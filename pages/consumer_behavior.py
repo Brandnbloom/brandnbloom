@@ -6,7 +6,7 @@ from reportlab.pdfgen import canvas
 from utils import can_use_tool, increment_usage
 
 # 🔐 Streamlit Secrets
-openai.api_key = st.secrets["OPENAI_API_KEY"]
+openai.api_key = os.environ.get["OPENAI_API_KEY"]
 
 # 🌸 Title
 st.set_page_config(page_title="DinePsych AI", layout="centered")
