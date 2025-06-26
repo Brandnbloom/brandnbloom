@@ -5,7 +5,7 @@ from reportlab.pdfgen import canvas
 from utils import can_use_tool, increment_usage
 
 # 1️⃣ Enforce usage limit
-user_email = st.experimental_user.email if st.experimental_user else "guest@example.com"
+user_email = "guest@example.com"  # You can replace this with login logic if available
 allowed, remaining = can_use_tool(user_email)
 if not allowed:
     st.warning("You've used all 3 free tries! Please upgrade to continue.")
@@ -40,20 +40,20 @@ if st.button("🔍 Generate BloomScore"):
         psi_key = st.secrets["PAGESPEED_KEY"]
         psi_url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={website_url}&key={psi_key}"
         resp2 = requests.get(psi_url).json()
-        labs = resp2["lighthouseResult"]["audits"]
+        audits = resp2["lighthouseResult"]["audits"]
         psi_stats = {
-            "LCP": labs["largest-contentful-paint"]["displayValue"],
-            "FCP": labs["first-contentful-paint"]["displayValue"],
-            "CLS": labs["cumulative-layout-shift"]["displayValue"]
+            "LCP": audits["largest-contentful-paint"]["displayValue"],
+            "FCP": audits["first-contentful-paint"]["displayValue"],
+            "CLS": audits["cumulative-layout-shift"]["displayValue"]
         }
     except:
         psi_stats = {"LCP": "N/A", "FCP": "N/A", "CLS": "N/A"}
 
-    # 5️⃣ Compute BloomScore (simple algorithm)
-    score = (min(insta_stats["followers"]/100, 30) +
-             min(insta_stats["posts"]/10, 30) +
-             (30 if psi_stats["LCP"]!="N/A" else 0)) / 90 * 100
-    st.success(f"🎯 Your BloomScore: *{int(score)}/100*")
+    # 5️⃣ Compute BloomScore
+    score = (min(insta_stats["followers"] / 100, 30) +
+             min(insta_stats["posts"] / 10, 30) +
+             (30 if psi_stats["LCP"] != "N/A" else 0)) / 90 * 100
+    st.success(f"🎯 Your BloomScore: **{int(score)}/100**")
 
     # 6️⃣ Show metrics
     st.subheader("📊 Instagram Metrics")
@@ -72,14 +72,3 @@ if st.button("🔍 Generate BloomScore"):
     pdf.save()
     buffer.seek(0)
     st.download_button("📥 Download PDF Report", buffer, file_name="BloomScore_Report.pdf", mime="application/pdf")
-
-
----
-
-🔧 What to Do Next
-
-1. Add your IG_ACCESS_TOKEN, IG_USER_ID, and PAGESPEED_KEY in Streamlit Secrets:
-
-IG_ACCESS_TOKEN = "your_instagram_graph_token"
-IG_USER_ID = "your_fb_ig_user_id"
-PAGESPEED_KEY = "your_google_pagespeed_api_key"
