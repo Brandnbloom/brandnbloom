@@ -72,3 +72,14 @@ if st.button("🔍 Generate BloomScore"):
     pdf.save()
     buffer.seek(0)
     st.download_button("📥 Download PDF Report", buffer, file_name="BloomScore_Report.pdf", mime="application/pdf")
+
+
+---
+
+🔧 What to Do Next
+
+1. Add your IG_ACCESS_TOKEN, IG_USER_ID, and PAGESPEED_KEY in Streamlit Secrets:
+
+IG_ACCESS_TOKEN = "your_instagram_graph_token"
+IG_USER_ID = "your_fb_ig_user_id"
+PAGESPEED_KEY = "your_google_pagespeed_api_key"
