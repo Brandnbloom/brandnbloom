@@ -1,29 +1,31 @@
 import json
-from pathlib import Path
+import os
 
-# Store usage in a JSON file
-USAGE_FILE = Path("usage.json")
+# File to store usage tracking
+USAGE_FILE = "usage.json"
 
-# Load or create empty usage file
+# Load existing usage data or create new file
 def load_usage():
-    if USAGE_FILE.exists():
-        with open(USAGE_FILE, "r") as f:
-            return json.load(f)
-    return {}
+    if not os.path.exists(USAGE_FILE):
+        with open(USAGE_FILE, "w") as f:
+            json.dump({}, f)
+    with open(USAGE_FILE, "r") as f:
+        return json.load(f)
 
-# Save usage to file
+# Save updated usage data
 def save_usage(data):
     with open(USAGE_FILE, "w") as f:
-        json.dump(data, f)
+        json.dump(data, f, indent=2)
 
-# Check if user can use the tool (3 free tries)
-def can_use_tool(user_email):
-    usage = load_usage()
-    count = usage.get(user_email, 0)
-    return count < 3, 3 - count
+# Check if user can still use the tool (limit: 3)
+def can_use_tool(email):
+    usage_data = load_usage()
+    if email not in usage_data:
+        usage_data[email] = 0
+    return usage_data[email] < 3
 
-# Increase usage count
-def increment_usage(user_email):
-    usage = load_usage()
-    usage[user_email] = usage.get(user_email, 0) + 1
-    save_usage(usage)
+# Increase usage count by 1
+def increment_usage(email):
+    usage_data = load_usage()
+    usage_data[email] = usage_data.get(email, 0) + 1
+    save_usage(usage_data)
