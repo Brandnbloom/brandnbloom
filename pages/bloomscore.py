@@ -1,74 +1,87 @@
 import streamlit as st
-import requests, random, io
+import os
+from openai import OpenAI
+from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-from utils import can_use_tool, increment_usage
 
-# 1️⃣ Enforce usage limit
-user_email = "guest@example.com"  # You can replace this with login logic if available
-allowed, remaining = can_use_tool(user_email)
-if not allowed:
-    st.warning("You've used all 3 free tries! Please upgrade to continue.")
-    st.markdown("👉 [Upgrade via PayPal — $5/month or $50/year]")
-    st.stop()
+# Streamlit config
+st.set_page_config(page_title="🌸 BloomScore - Brand n Bloom", layout="wide")
+st.title("🌸 BloomScore – Brand Audit Tool")
+st.markdown("Enter your restaurant’s social media or website and let AI score your brand’s online presence.")
 
-st.title("🌟 BloomScore — Real-Time Brand Health Check")
+# OpenAI client setup
+client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
-# 2️⃣ Collect user input
-insta_link = st.text_input("Instagram Profile Link (e.g., https://www.instagram.com/yourrestaurant)")
-website_url = st.text_input("Website URL (e.g., https://yourrestaurant.com)")
-if st.button("🔍 Generate BloomScore"):
-    increment_usage(user_email)
-
-    # 3️⃣ Get Instagram data via Graph API
-    insta_stats = {}
-    try:
-        token = st.secrets["IG_ACCESS_TOKEN"]
-        user_id = st.secrets["IG_USER_ID"]
-        url = f"https://graph.facebook.com/v17.0/{user_id}?fields=followers_count,media_count&access_token={token}"
-        resp = requests.get(url).json()
-        insta_stats = {
-            "followers": resp.get("followers_count", 0),
-            "posts": resp.get("media_count", 0)
-        }
-    except:
-        insta_stats = {"followers": 0, "posts": 0}
-
-    # 4️⃣ Website performance via PageSpeed Insights
-    psi_stats = {}
-    try:
-        psi_key = st.secrets["PAGESPEED_KEY"]
-        psi_url = f"https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url={website_url}&key={psi_key}"
-        resp2 = requests.get(psi_url).json()
-        audits = resp2["lighthouseResult"]["audits"]
-        psi_stats = {
-            "LCP": audits["largest-contentful-paint"]["displayValue"],
-            "FCP": audits["first-contentful-paint"]["displayValue"],
-            "CLS": audits["cumulative-layout-shift"]["displayValue"]
-        }
-    except:
-        psi_stats = {"LCP": "N/A", "FCP": "N/A", "CLS": "N/A"}
-
-    # 5️⃣ Compute BloomScore
-    score = (min(insta_stats["followers"] / 100, 30) +
-             min(insta_stats["posts"] / 10, 30) +
-             (30 if psi_stats["LCP"] != "N/A" else 0)) / 90 * 100
-    st.success(f"🎯 Your BloomScore: **{int(score)}/100**")
-
-    # 6️⃣ Show metrics
-    st.subheader("📊 Instagram Metrics")
-    st.write(insta_stats)
-    st.subheader("🌐 PageSpeed Metrics")
-    st.write(psi_stats)
-
-    # 7️⃣ Generate downloadable PDF
-    buffer = io.BytesIO()
+# PDF Generator
+def generate_pdf(text):
+    buffer = BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
-    pdf.drawString(50, 750, "🌟 BloomScore Report")
-    pdf.drawString(50, 720, f"Instagram Followers: {insta_stats['followers']}")
-    pdf.drawString(50, 700, f"Instagram Posts: {insta_stats['posts']}")
-    pdf.drawString(50, 680, f"LCP: {psi_stats['LCP']}, FCP: {psi_stats['FCP']}, CLS: {psi_stats['CLS']}")
-    pdf.drawString(50, 650, f"Final Score: {int(score)}/100")
+    width, height = letter
+    y = height - 40
+    for line in text.split('\n'):
+        if y < 40:
+            pdf.showPage()
+            y = height - 40
+        pdf.drawString(40, y, line.strip())
+        y -= 15
     pdf.save()
     buffer.seek(0)
-    st.download_button("📥 Download PDF Report", buffer, file_name="BloomScore_Report.pdf", mime="application/pdf")
+    return buffer
+
+# --- Form Input ---
+with st.form("bloomscore_form"):
+    insta_url = st.text_input("📷 Instagram Profile URL")
+    website_url = st.text_input("🌐 Website URL")
+    industry = st.selectbox("Restaurant Category", ["Fine Dining", "Cafe", "Fast Food", "Cloud Kitchen", "Bakery", "Bar"])
+    user_email = st.text_input("📧 Your Email (optional for emailing report)")
+    user_name = st.text_input("🧑‍🍳 Your Name (for personalization)", placeholder="Optional")
+    submitted = st.form_submit_button("Generate BloomScore")
+
+# --- GPT Analysis ---
+if submitted:
+    with st.spinner("Auditing your brand..."):
+        prompt = f"""
+You are a branding expert for hospitality businesses. Based on the following inputs:
+
+- Instagram: {insta_url}
+- Website: {website_url}
+- Category: {industry}
+
+Perform a full brand presence audit including:
+1. First impression (consistency, logo, design)
+2. Instagram content style (reels vs static, tone)
+3. Use of hashtags and captions
+4. Follower quality (assume public stats)
+5. Website speed, UX, SEO structure (estimate)
+6. Overall branding score (out of 10)
+7. Actionable tips to improve
+
+Format output in clean, easy-to-read points.
+"""
+
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": "You are a digital brand strategist."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7
+            )
+
+            output = response.choices[0].message.content
+            st.success("✅ BloomScore Audit Ready!")
+            st.markdown("### 📋 Audit Summary:\n")
+            st.markdown(output)
+
+            pdf_buffer = generate_pdf(output)
+            st.download_button(
+                label="📄 Download BloomScore PDF",
+                data=pdf_buffer,
+                file_name="bloomscore_report.pdf",
+                mime="application/pdf"
+            )
+
+        except Exception as e:
+            st.error(f"⚠️ Error: {e}")
