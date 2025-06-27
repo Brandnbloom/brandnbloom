@@ -3,3 +3,5 @@ openai>=1.0.0
 fpdf
 pillow
 reportlab
+smtplib
+email-validator
