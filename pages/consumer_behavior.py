@@ -10,10 +10,10 @@ st.set_page_config(page_title="DinePsych AI - Brand n Bloom", layout="wide")
 st.title("🧠 DinePsych AI — Behavioral Marketing Insights")
 st.markdown("Let our AI analyze your ideal customer behavior & psychology to refine your restaurant's strategy.")
 
-# OpenAI Client (new SDK)
+# OpenAI Client
 client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
-# PDF Generation Function
+# PDF Generator
 def generate_pdf(text):
     buffer = BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
@@ -39,7 +39,6 @@ with st.form("behavior_form"):
     common_feedback = st.text_area("Common Customer Feedback Themes (Optional)")
     user_email = st.text_input("📧 Enter your email to receive the report (Optional)")
     user_name = st.text_input("🧑‍🍳 Your Name (for personalization)", placeholder="Optional")
-
     submitted = st.form_submit_button("Generate Insights")
 
 # --- GPT + PDF Output ---
@@ -67,7 +66,7 @@ Generate an in-depth analysis:
 
         try:
             response = client.chat.completions.create(
-                model="gpt-4",
+                model="gpt-3.5-turbo",  # ✅ Updated model
                 messages=[
                     {"role": "system", "content": "You are an expert in restaurant consumer psychology and marketing."},
                     {"role": "user", "content": prompt}
@@ -80,7 +79,7 @@ Generate an in-depth analysis:
             st.markdown("### 📋 Results:\n")
             st.markdown(output)
 
-            # Generate PDF + Download
+            # PDF download
             pdf_buffer = generate_pdf(output)
             st.download_button(
                 label="📄 Download PDF Report",
