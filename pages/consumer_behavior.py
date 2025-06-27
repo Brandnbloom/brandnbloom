@@ -1,81 +1,62 @@
 import streamlit as st
 import openai
-import io, json
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-from utils import can_use_tool, increment_usage
 
-# 🔐 Streamlit Secrets
-import os
-openai.api_key = os.environ.get("OPENAI_API_KEY")
+st.set_page_config(page_title="DinePsych AI - Brand n Bloom", layout="wide")
 
-# 🌸 Title
-st.set_page_config(page_title="DinePsych AI", layout="centered")
-st.title("🍽️ DinePsych AI — Customer Behavior Analyzer")
+st.title("🧠 DinePsych AI — Behavioral Marketing Insights")
 
-# ✅ Usage Check
-user_email = "guest@example.com"
-allowed, remaining = can_use_tool(user_email)
-if not allowed:
-    st.warning("You've used all 3 free tries! Please upgrade via PayPal to continue.")
-    st.markdown("[Upgrade here](https://www.paypal.com/brandnbloom)")
-    st.stop()
+st.markdown("Let our AI analyze your ideal customer behavior & psychology to refine your restaurant's strategy.")
 
-# 📝 Form Input
+# --- Input Form ---
 with st.form("behavior_form"):
-    st.subheader("🔍 Describe Your Customer")
-    name = st.text_input("Customer's Name or Initials (optional)")
-    customer_type = st.selectbox("Type of Customer", ["First-time", "Occasional", "Regular", "Loyal"])
-    order_behavior = st.text_area("Typical Orders or Patterns (e.g., Only visits on offers, loves trying new dishes)")
-    social_behavior = st.radio("Engages on Instagram?", ["Yes", "No"])
-    feedback = st.text_area("Paste review or feedback (if any)")
-    submitted = st.form_submit_button("🧠 Analyze Behavior")
+    restaurant_type = st.selectbox("Type of Restaurant", ["Fine Dining", "Cafe", "Quick Service", "Cloud Kitchen", "Bar"])
+    audience = st.text_input("Target Audience (e.g. Gen Z, Office-goers, Parents)")
+    location = st.text_input("City / Area")
+    aov = st.text_input("Avg Order Value (₹)", placeholder="e.g. 700")
+    peak_hours = st.text_input("Peak Hours (e.g. 12-2pm, 7-10pm)")
+    common_feedback = st.text_area("Common Customer Feedback Themes (Optional)")
 
-# 🧠 GPT-Based Analysis
+    submitted = st.form_submit_button("Generate Insights")
+
 if submitted:
-    increment_usage(user_email)
-    st.info("Analyzing with AI...")
+    with st.spinner("Analyzing customer psychology..."):
+        prompt = f"""
+You are a behavioral marketing strategist for restaurants.
 
-    prompt = f"""
-    Analyze this restaurant customer based on behavior:
-    - Type: {customer_type}
-    - Order Style: {order_behavior}
-    - Social Engagement: {social_behavior}
-    - Feedback: {feedback}
+Based on the following:
 
-    Classify personality (e.g. loyalist, adventurer, price-sensitive, visual-lover) and give restaurant-specific strategies:
-    - Personality Type:
-    - Suggested Engagement:
-    - What to Avoid:
-    - Loyalty Strategy:
-    """
+- Type of restaurant: {restaurant_type}
+- Audience: {audience}
+- Location: {location}
+- Average order value: ₹{aov}
+- Peak hours: {peak_hours}
+- Feedback themes: {common_feedback}
 
-    response = openai.ChatCompletion.create(
-        model="gpt-4",
-        messages=[{"role": "user", "content": prompt}],
-        temperature=0.7
-    )
+Generate an in-depth analysis:
+1. Ideal customer persona & emotional drivers
+2. Marketing tone & style that appeals
+3. Visual aesthetics for ads/menu
+4. Instagram content suggestions
+5. Promotions that would convert
+"""
+import os
+        # Replace with your OpenAI key
+        openai.api_key = os.environ("OPENAI_API_KEY")
 
-    ai_output = response['choices'][0]['message']['content']
-    st.success("🎯 Behavioral Analysis")
-    st.markdown(ai_output)
+        try:
+            response = openai.ChatCompletion.create(
+                model="gpt-4",
+                messages=[
+                    {"role": "system", "content": "You're an expert in consumer psychology and restaurant marketing."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.7,
+                max_tokens=800
+            )
 
-    # 📄 PDF Export
-    buffer = io.BytesIO()
-    pdf = canvas.Canvas(buffer, pagesize=letter)
-    pdf.drawString(50, 750, "🍽️ DinePsych AI Report")
-    pdf.drawString(50, 730, f"Customer Type: {customer_type}")
-    pdf.drawString(50, 710, f"Instagram Engagement: {social_behavior}")
-    pdf.drawString(50, 690, f"Order Behavior: {order_behavior[:60]}...")
-    pdf.drawString(50, 670, f"Feedback: {feedback[:60]}...")
-    pdf.drawString(50, 640, "AI Analysis Summary:")
-    text_lines = ai_output.split("\n")
-    y = 620
-    for line in text_lines:
-        if y < 100: break
-        pdf.drawString(60, y, line.strip()[:100])
-        y -= 20
-    pdf.save()
-    buffer.seek(0)
+            output = response["choices"][0]["message"]["content"]
+            st.success("✅ Insights Ready!")
+            st.markdown(f"### 📋 Result:\n\n{output}")
 
-    st.download_button("📥 Download PDF Report", buffer, file_name=f"{name or 'customer'}_DinePsych.pdf", mime="application/pdf")
+        except Exception as e:
+            st.error(f"Error: {e}")
