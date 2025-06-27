@@ -1,6 +1,6 @@
 import streamlit as st
 import os
-from openai import OpenAI
+import openai
 from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
@@ -10,10 +10,11 @@ st.set_page_config(page_title="🌸 BloomScore - Brand n Bloom", layout="wide")
 st.title("🌸 BloomScore – Brand Audit Tool")
 st.markdown("Enter your restaurant’s social media or website and let AI score your brand’s online presence.")
 
-# OpenAI client
-client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+# Use OpenRouter instead of OpenAI directly
+openai.api_base = "https://openrouter.ai/api/v1"
+openai.api_key = os.environ["OPENROUTER_API_KEY"]
 
-# PDF generator
+# PDF generation function
 def generate_pdf(text):
     buffer = BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
@@ -29,56 +30,53 @@ def generate_pdf(text):
     buffer.seek(0)
     return buffer
 
-# --- Input form ---
+# Input Form
 with st.form("bloomscore_form"):
     insta_url = st.text_input("📷 Instagram Profile URL")
     website_url = st.text_input("🌐 Website URL")
     industry = st.selectbox("Restaurant Category", ["Fine Dining", "Cafe", "Fast Food", "Cloud Kitchen", "Bakery", "Bar"])
-    user_email = st.text_input("📧 Your Email (optional for emailing report)")
-    user_name = st.text_input("🧑‍🍳 Your Name (for personalization)", placeholder="Optional")
+    user_email = st.text_input("📧 Your Email (optional)")
+    user_name = st.text_input("🧑‍🍳 Your Name (optional)")
     submitted = st.form_submit_button("Generate BloomScore")
 
-# --- AI Audit Logic ---
+# Run audit
 if submitted:
-    with st.spinner("Auditing your brand..."):
+    with st.spinner("🌿 Auditing your digital brand presence..."):
         prompt = f"""
-You are a digital branding expert for restaurants.
+You are a digital brand strategist for restaurants.
 
-Based on the following:
-
+Based on this data:
 - Instagram: {insta_url}
 - Website: {website_url}
 - Category: {industry}
 
-Give a complete brand presence audit, including:
+Provide:
+1. First impression (logo, visuals, design consistency)
+2. Instagram tone, content types & hashtag usage
+3. Assumed follower quality (based on industry norm)
+4. Estimated website UX & mobile performance
+5. Overall branding memorability score out of 10
+6. 3 actionable improvements
 
-1. First impression (logo, visuals, consistency)
-2. Instagram content tone, format & hashtags
-3. Follower quality (assume publicly available info)
-4. Website usability, speed, and mobile experience (estimated)
-5. Overall brand consistency and memorability
-6. Final score out of 10 with reasoning
-7. 3 quick action tips to improve visibility
-
-Keep the tone friendly and actionable.
+Use friendly, creative, and marketing-savvy language.
 """
 
         try:
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",  # ✅ Updated model
+            response = openai.ChatCompletion.create(
+                model="openrouter/openai/gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are a digital brand strategist."},
+                    {"role": "system", "content": "You are a branding expert specializing in restaurants."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.7
             )
 
             output = response.choices[0].message.content
-            st.success("✅ BloomScore Audit Ready!")
-            st.markdown("### 📋 Audit Summary:\n")
+            st.success("✅ BloomScore Report Ready!")
+            st.markdown("### 🌼 Results:\n")
             st.markdown(output)
 
-            # PDF generation
+            # PDF
             pdf_buffer = generate_pdf(output)
             st.download_button(
                 label="📄 Download BloomScore PDF",
