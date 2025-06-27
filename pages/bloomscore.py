@@ -83,3 +83,9 @@ Give:
 
             except Exception as e:
                 st.error(f"⚠️ Error: {e}")
+# Email PDF
+email_status = send_pdf_email(user_email, user_name, pdf_buffer)
+if email_status == True:
+    st.success("📩 Report sent to your email!")
+else:
+    st.warning(f"⚠️ Email not sent. Reason: {email_status}")
