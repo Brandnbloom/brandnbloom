@@ -1,19 +1,20 @@
 import streamlit as st
 import os
-from openai import OpenAI
+import openai
 from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
-# Page setup
+# Set page config
 st.set_page_config(page_title="DinePsych AI - Brand n Bloom", layout="wide")
-st.title("🧠 DinePsych AI — Behavioral Marketing Insights")
-st.markdown("Let our AI analyze your ideal customer behavior & psychology to refine your restaurant's strategy.")
+st.title("🧠 DinePsych AI — Behavioral Marketing Tool")
+st.markdown("Let AI decode your ideal customer's psychology and help optimize your strategy.")
 
-# OpenAI Client
-client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
+# Use OpenRouter instead of OpenAI directly
+openai.api_base = "https://openrouter.ai/api/v1"
+openai.api_key = os.environ["OPENROUTER_API_KEY"]
 
-# PDF Generator
+# Function to generate a PDF from the output
 def generate_pdf(text):
     buffer = BytesIO()
     p = canvas.Canvas(buffer, pagesize=letter)
@@ -29,7 +30,7 @@ def generate_pdf(text):
     buffer.seek(0)
     return buffer
 
-# --- Input Form ---
+# --- Input form ---
 with st.form("behavior_form"):
     restaurant_type = st.selectbox("Type of Restaurant", ["Fine Dining", "Cafe", "Quick Service", "Cloud Kitchen", "Bar"])
     audience = st.text_input("Target Audience (e.g. Gen Z, Office-goers, Parents)")
@@ -37,54 +38,53 @@ with st.form("behavior_form"):
     aov = st.text_input("Avg Order Value (₹)", placeholder="e.g. 700")
     peak_hours = st.text_input("Peak Hours (e.g. 12-2pm, 7-10pm)")
     common_feedback = st.text_area("Common Customer Feedback Themes (Optional)")
-    user_email = st.text_input("📧 Enter your email to receive the report (Optional)")
-    user_name = st.text_input("🧑‍🍳 Your Name (for personalization)", placeholder="Optional")
+    user_email = st.text_input("📧 Your Email (Optional)")
+    user_name = st.text_input("🧑‍🍳 Your Name (Optional)", placeholder="Optional")
     submitted = st.form_submit_button("Generate Insights")
 
-# --- GPT + PDF Output ---
+# --- Run AI and show output ---
 if submitted:
-    with st.spinner("Analyzing customer psychology..."):
+    with st.spinner("🔍 Analyzing customer psychology..."):
         prompt = f"""
-You are a behavioral marketing strategist for restaurants.
+You are a restaurant marketing expert with a focus on consumer psychology.
 
-Based on the following:
-
-- Type of restaurant: {restaurant_type}
+Based on the following details:
+- Restaurant type: {restaurant_type}
 - Audience: {audience}
 - Location: {location}
-- Average order value: ₹{aov}
-- Peak hours: {peak_hours}
-- Feedback themes: {common_feedback}
+- Avg Order Value: ₹{aov}
+- Peak Hours: {peak_hours}
+- Feedback: {common_feedback}
 
-Generate an in-depth analysis:
-1. Ideal customer persona & emotional drivers
-2. Marketing tone & style that appeals
-3. Visual aesthetics for ads/menu
-4. Instagram content suggestions
-5. Promotions that would convert
+Create a report including:
+1. Customer behavior patterns & emotional motivators
+2. Ideal brand tone and design cues
+3. Suggested Instagram content types
+4. Promotion styles that would work
+5. One-line customer persona summary
 """
 
         try:
-            response = client.chat.completions.create(
-                model="gpt-3.5-turbo",  # ✅ Updated model
+            response = openai.ChatCompletion.create(
+                model="openrouter/openai/gpt-3.5-turbo",
                 messages=[
-                    {"role": "system", "content": "You are an expert in restaurant consumer psychology and marketing."},
+                    {"role": "system", "content": "You are a restaurant marketing and behavioral expert."},
                     {"role": "user", "content": prompt}
                 ],
                 temperature=0.7
             )
 
             output = response.choices[0].message.content
-            st.success("✅ Insights Ready!")
+            st.success("✅ Insight Report Ready!")
             st.markdown("### 📋 Results:\n")
             st.markdown(output)
 
-            # PDF download
+            # PDF generation
             pdf_buffer = generate_pdf(output)
             st.download_button(
-                label="📄 Download PDF Report",
+                label="📄 Download DinePsych Report",
                 data=pdf_buffer,
-                file_name="dinepsych_ai_report.pdf",
+                file_name="dinepsych_report.pdf",
                 mime="application/pdf"
             )
 
