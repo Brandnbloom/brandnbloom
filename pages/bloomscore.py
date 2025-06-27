@@ -4,17 +4,17 @@ import openai
 from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+from utils import can_use_tool, increment_usage
 
-# Streamlit page config
+# Streamlit config
 st.set_page_config(page_title="🌸 BloomScore - Brand n Bloom", layout="wide")
 st.title("🌸 BloomScore – Brand Audit Tool")
-st.markdown("Enter your restaurant’s social media or website and let AI score your brand’s online presence.")
 
-# Use OpenRouter instead of OpenAI directly
+# OpenRouter setup
 openai.api_base = "https://openrouter.ai/api/v1"
 openai.api_key = os.environ["OPENROUTER_API_KEY"]
 
-# PDF generation function
+# PDF generator
 def generate_pdf(text):
     buffer = BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
@@ -30,60 +30,56 @@ def generate_pdf(text):
     buffer.seek(0)
     return buffer
 
-# Input Form
+# User form
 with st.form("bloomscore_form"):
     insta_url = st.text_input("📷 Instagram Profile URL")
     website_url = st.text_input("🌐 Website URL")
-    industry = st.selectbox("Restaurant Category", ["Fine Dining", "Cafe", "Fast Food", "Cloud Kitchen", "Bakery", "Bar"])
-    user_email = st.text_input("📧 Your Email (optional)")
-    user_name = st.text_input("🧑‍🍳 Your Name (optional)")
+    industry = st.selectbox("🍽️ Restaurant Type", ["Cafe", "Fine Dining", "Fast Food", "Cloud Kitchen", "Bakery", "Bar"])
+    user_email = st.text_input("📧 Email (required to generate report)")
     submitted = st.form_submit_button("Generate BloomScore")
 
-# Run audit
+# Logic
 if submitted:
-    with st.spinner("🌿 Auditing your digital brand presence..."):
-        prompt = f"""
-You are a digital brand strategist for restaurants.
+    if not user_email:
+        st.warning("⚠️ Please enter your email to continue.")
+    elif not can_use_tool(user_email):
+        st.error("❌ You’ve used your 3 free reports.")
+        st.markdown("💳 [Click here to subscribe for unlimited access](https://buy.stripe.com/test_00g12345678abcdeEF)")
+        st.info("₹400/month or ₹4000/year. UPI, Cards, Wallets accepted.")
+    else:
+        increment_usage(user_email)
+        with st.spinner("🌿 Generating your BloomScore..."):
+            prompt = f"""
+You are a digital brand strategist.
 
-Based on this data:
+Based on:
 - Instagram: {insta_url}
 - Website: {website_url}
-- Category: {industry}
+- Industry: {industry}
 
-Provide:
-1. First impression (logo, visuals, design consistency)
-2. Instagram tone, content types & hashtag usage
-3. Assumed follower quality (based on industry norm)
-4. Estimated website UX & mobile performance
-5. Overall branding memorability score out of 10
-6. 3 actionable improvements
-
-Use friendly, creative, and marketing-savvy language.
+Give:
+1. First impressions
+2. Instagram content & tone
+3. Hashtag insights
+4. UX estimation
+5. Score out of 10
+6. 3 brand improvement tips
 """
+            try:
+                response = openai.ChatCompletion.create(
+                    model="openrouter/openai/gpt-3.5-turbo",
+                    messages=[
+                        {"role": "system", "content": "You are a brand audit expert."},
+                        {"role": "user", "content": prompt}
+                    ],
+                    temperature=0.7
+                )
+                result = response.choices[0].message.content
+                st.success("✅ BloomScore Ready!")
+                st.markdown(result)
 
-        try:
-            response = openai.ChatCompletion.create(
-                model="openrouter/openai/gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "You are a branding expert specializing in restaurants."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7
-            )
+                pdf = generate_pdf(result)
+                st.download_button("📄 Download PDF", pdf, "bloomscore.pdf", "application/pdf")
 
-            output = response.choices[0].message.content
-            st.success("✅ BloomScore Report Ready!")
-            st.markdown("### 🌼 Results:\n")
-            st.markdown(output)
-
-            # PDF
-            pdf_buffer = generate_pdf(output)
-            st.download_button(
-                label="📄 Download BloomScore PDF",
-                data=pdf_buffer,
-                file_name="bloomscore_report.pdf",
-                mime="application/pdf"
-            )
-
-        except Exception as e:
-            st.error(f"⚠️ Error: {e}")
+            except Exception as e:
+                st.error(f"⚠️ Error: {e}")
