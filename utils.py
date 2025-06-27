@@ -1,31 +1,69 @@
 import json
 import os
+import streamlit as st
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+from email.mime.application import MIMEApplication
+import pdfkit  # Optional, or use reportlab
+import stripe
 
-# File to store usage tracking
+# ----- Stripe Setup -----
+stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+
+# ----- Usage Tracker -----
 USAGE_FILE = "usage.json"
 
-# Load existing usage data or create new file
 def load_usage():
-    if not os.path.exists(USAGE_FILE):
-        with open(USAGE_FILE, "w") as f:
-            json.dump({}, f)
-    with open(USAGE_FILE, "r") as f:
-        return json.load(f)
+    if os.path.exists(USAGE_FILE):
+        with open(USAGE_FILE, "r") as f:
+            return json.load(f)
+    return {}
 
-# Save updated usage data
-def save_usage(data):
+def save_usage(usage_data):
     with open(USAGE_FILE, "w") as f:
-        json.dump(data, f, indent=2)
+        json.dump(usage_data, f)
 
-# Check if user can still use the tool (limit: 3)
-def can_use_tool(email):
-    usage_data = load_usage()
-    if email not in usage_data:
-        usage_data[email] = 0
-    return usage_data[email] < 3
+def can_use_tool(tool_name):
+    usage = load_usage()
+    count = usage.get(tool_name, 0)
+    return count < 3
 
-# Increase usage count by 1
-def increment_usage(email):
-    usage_data = load_usage()
-    usage_data[email] = usage_data.get(email, 0) + 1
-    save_usage(usage_data)
+def increment_usage(tool_name):
+    usage = load_usage()
+    usage[tool_name] = usage.get(tool_name, 0) + 1
+    save_usage(usage)
+
+# ----- Stripe Button -----
+def show_stripe_buttons():
+    st.warning("🔒 Free limit reached. Please subscribe to continue.")
+    st.markdown("💳 $5/month or $50/year to unlock unlimited access.")
+    st.link_button("Subscribe Monthly", "https://buy.stripe.com/test_xyz123month")
+    st.link_button("Subscribe Yearly", "https://buy.stripe.com/test_abc456year")
+
+# ----- Email PDF -----
+def send_email_with_pdf(subject, recipient, content):
+    msg = MIMEMultipart()
+    msg["From"] = os.getenv("EMAIL_USER")
+    msg["To"] = recipient
+    msg["Subject"] = subject
+
+    body = MIMEText("Hi,\n\nPlease find your AI-generated report attached.\n\nRegards,\nTeam Brand n Bloom", "plain")
+    msg.attach(body)
+
+    pdf_path = "report.pdf"
+    with open(pdf_path, "w") as f:
+        f.write(content)
+
+    with open(pdf_path, "rb") as f:
+        part = MIMEApplication(f.read(), Name="report.pdf")
+        part["Content-Disposition"] = 'attachment; filename="report.pdf"'
+        msg.attach(part)
+
+    try:
+        with smtplib.SMTP_SSL("smtp.zoho.in", 465) as server:
+            server.login(os.getenv("EMAIL_USER"), os.getenv("EMAIL_PASS"))
+            server.send_message(msg)
+        st.success("📧 Report sent to your email!")
+    except Exception as e:
+        st.error(f"Email failed: {e}")
