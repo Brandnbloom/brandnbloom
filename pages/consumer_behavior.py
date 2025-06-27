@@ -40,8 +40,31 @@ Generate an in-depth analysis:
 5. Promotions that would convert
 """
 import os
-        # Replace with your OpenAI key
-        openai.api_key = os.environ("OPENAI_API_KEY")
+
+if submitted:
+    with st.spinner("Analyzing customer psychology..."):
+        prompt = f"""
+You are a behavioral marketing strategist for restaurants.
+
+Based on the following:
+
+- Type of restaurant: {restaurant_type}
+- Audience: {audience}
+- Location: {location}
+- Average order value: ₹{aov}
+- Peak hours: {peak_hours}
+- Feedback themes: {common_feedback}
+
+Generate an in-depth analysis:
+1. Ideal customer persona & emotional drivers
+2. Marketing tone & style that appeals
+3. Visual aesthetics for ads/menu
+4. Instagram content suggestions
+5. Promotions that would convert
+"""
+
+        openai.api_key = os.environ["OPENAI_API_KEY"]  # ✅ FIXED
+
 
         try:
             response = openai.ChatCompletion.create(
