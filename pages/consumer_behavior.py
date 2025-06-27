@@ -1,92 +1,61 @@
 import streamlit as st
 import os
 import openai
-from io import BytesIO
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
+from utils import can_use_tool, increment_usage, show_stripe_buttons, send_email_with_pdf
 
-# Set page config
-st.set_page_config(page_title="DinePsych AI - Brand n Bloom", layout="wide")
-st.title("🧠 DinePsych AI — Behavioral Marketing Tool")
-st.markdown("Let AI decode your ideal customer's psychology and help optimize your strategy.")
+# ✅ API Key Fallback
+if "OPENROUTER_API_KEY" not in os.environ:
+    st.error("❌ Missing environment variable: OPENROUTER_API_KEY")
+    st.stop()
+else:
+    openai.api_key = os.environ["OPENROUTER_API_KEY"]
 
-# Use OpenRouter instead of OpenAI directly
-openai.api_base = "https://openrouter.ai/api/v1"
-openai.api_key = os.environ["OPENROUTER_API_KEY"]
+st.title("🌸 BloomScore – Brand Health Audit")
 
-# Function to generate a PDF from the output
-def generate_pdf(text):
-    buffer = BytesIO()
-    p = canvas.Canvas(buffer, pagesize=letter)
-    width, height = letter
-    y = height - 40
-    for line in text.split('\n'):
-        if y < 40:
-            p.showPage()
-            y = height - 40
-        p.drawString(40, y, line.strip())
-        y -= 15
-    p.save()
-    buffer.seek(0)
-    return buffer
+# ✅ Check Usage Limit
+if not can_use_tool("bloomscore"):
+    show_stripe_buttons()
+    st.stop()
 
-# --- Input form ---
-with st.form("behavior_form"):
-    restaurant_type = st.selectbox("Type of Restaurant", ["Fine Dining", "Cafe", "Quick Service", "Cloud Kitchen", "Bar"])
-    audience = st.text_input("Target Audience (e.g. Gen Z, Office-goers, Parents)")
-    location = st.text_input("City / Area")
-    aov = st.text_input("Avg Order Value (₹)", placeholder="e.g. 700")
-    peak_hours = st.text_input("Peak Hours (e.g. 12-2pm, 7-10pm)")
-    common_feedback = st.text_area("Common Customer Feedback Themes (Optional)")
-    user_email = st.text_input("📧 Your Email (Optional)")
-    user_name = st.text_input("🧑‍🍳 Your Name (Optional)", placeholder="Optional")
-    submitted = st.form_submit_button("Generate Insights")
+# ✅ Input Form
+with st.form("bloomscore_form"):
+    st.markdown("Enter your brand’s Instagram handles or website URLs:")
+    brand1 = st.text_input("Brand 1", "")
+    brand2 = st.text_input("Brand 2", "")
+    brand3 = st.text_input("Brand 3", "")
+    email = st.text_input("Your Email")
+    submit = st.form_submit_button("Generate Report")
 
-# --- Run AI and show output ---
-if submitted:
-    with st.spinner("🔍 Analyzing customer psychology..."):
+if submit and all([brand1, brand2, brand3, email]):
+    with st.spinner("Generating your AI-powered brand score report..."):
         prompt = f"""
-You are a restaurant marketing expert with a focus on consumer psychology.
+        Compare the following 3 restaurant brands based on their online presence.
+        - Instagram or website link 1: {brand1}
+        - Link 2: {brand2}
+        - Link 3: {brand3}
+        
+        Provide insights in the following format:
+        1. Content Themes
+        2. Posting Frequency
+        3. Hashtag Strategy
+        4. Visual Tone
+        5. Follower Quality
+        6. Final Score out of 100 for each
+        
+        Return this in a short, clean summary format.
+        """
 
-Based on the following details:
-- Restaurant type: {restaurant_type}
-- Audience: {audience}
-- Location: {location}
-- Avg Order Value: ₹{aov}
-- Peak Hours: {peak_hours}
-- Feedback: {common_feedback}
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "user", "content": prompt}],
+        )
 
-Create a report including:
-1. Customer behavior patterns & emotional motivators
-2. Ideal brand tone and design cues
-3. Suggested Instagram content types
-4. Promotion styles that would work
-5. One-line customer persona summary
-"""
+        ai_report = response.choices[0].message.content
 
-        try:
-            response = openai.ChatCompletion.create(
-                model="openrouter/openai/gpt-3.5-turbo",
-                messages=[
-                    {"role": "system", "content": "You are a restaurant marketing and behavioral expert."},
-                    {"role": "user", "content": prompt}
-                ],
-                temperature=0.7
-            )
+        st.success("Report generated!")
+        st.markdown(ai_report)
 
-            output = response.choices[0].message.content
-            st.success("✅ Insight Report Ready!")
-            st.markdown("### 📋 Results:\n")
-            st.markdown(output)
+        # Send to email as PDF
+        send_email_with_pdf(subject="🌸 BloomScore Report", recipient=email, content=ai_report)
 
-            # PDF generation
-            pdf_buffer = generate_pdf(output)
-            st.download_button(
-                label="📄 Download DinePsych Report",
-                data=pdf_buffer,
-                file_name="dinepsych_report.pdf",
-                mime="application/pdf"
-            )
-
-        except Exception as e:
-            st.error(f"⚠️ Error: {e}")
+        increment_usage("bloomscore")
