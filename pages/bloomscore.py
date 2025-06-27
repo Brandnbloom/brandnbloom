@@ -5,15 +5,15 @@ from io import BytesIO
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
 
-# Streamlit config
+# Streamlit page config
 st.set_page_config(page_title="🌸 BloomScore - Brand n Bloom", layout="wide")
 st.title("🌸 BloomScore – Brand Audit Tool")
 st.markdown("Enter your restaurant’s social media or website and let AI score your brand’s online presence.")
 
-# OpenAI client setup
+# OpenAI client
 client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
 
-# PDF Generator
+# PDF generator
 def generate_pdf(text):
     buffer = BytesIO()
     pdf = canvas.Canvas(buffer, pagesize=letter)
@@ -29,7 +29,7 @@ def generate_pdf(text):
     buffer.seek(0)
     return buffer
 
-# --- Form Input ---
+# --- Input form ---
 with st.form("bloomscore_form"):
     insta_url = st.text_input("📷 Instagram Profile URL")
     website_url = st.text_input("🌐 Website URL")
@@ -38,31 +38,34 @@ with st.form("bloomscore_form"):
     user_name = st.text_input("🧑‍🍳 Your Name (for personalization)", placeholder="Optional")
     submitted = st.form_submit_button("Generate BloomScore")
 
-# --- GPT Analysis ---
+# --- AI Audit Logic ---
 if submitted:
     with st.spinner("Auditing your brand..."):
         prompt = f"""
-You are a branding expert for hospitality businesses. Based on the following inputs:
+You are a digital branding expert for restaurants.
+
+Based on the following:
 
 - Instagram: {insta_url}
 - Website: {website_url}
 - Category: {industry}
 
-Perform a full brand presence audit including:
-1. First impression (consistency, logo, design)
-2. Instagram content style (reels vs static, tone)
-3. Use of hashtags and captions
-4. Follower quality (assume public stats)
-5. Website speed, UX, SEO structure (estimate)
-6. Overall branding score (out of 10)
-7. Actionable tips to improve
+Give a complete brand presence audit, including:
 
-Format output in clean, easy-to-read points.
+1. First impression (logo, visuals, consistency)
+2. Instagram content tone, format & hashtags
+3. Follower quality (assume publicly available info)
+4. Website usability, speed, and mobile experience (estimated)
+5. Overall brand consistency and memorability
+6. Final score out of 10 with reasoning
+7. 3 quick action tips to improve visibility
+
+Keep the tone friendly and actionable.
 """
 
         try:
             response = client.chat.completions.create(
-                model="gpt-4",
+                model="gpt-3.5-turbo",  # ✅ Updated model
                 messages=[
                     {"role": "system", "content": "You are a digital brand strategist."},
                     {"role": "user", "content": prompt}
@@ -75,6 +78,7 @@ Format output in clean, easy-to-read points.
             st.markdown("### 📋 Audit Summary:\n")
             st.markdown(output)
 
+            # PDF generation
             pdf_buffer = generate_pdf(output)
             st.download_button(
                 label="📄 Download BloomScore PDF",
