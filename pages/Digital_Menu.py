@@ -1,5 +1,6 @@
 import streamlit as st
-from utils import can_use_tool, increment_usage, send_email_with_pdf, show_stripe_buttons
+from utils import can_use_tool, increment_usage, send_email_with_pdf
+# show_stripe_buttons removed temporarily
 
 st.title("📄 Digital Menu Creator")
 
