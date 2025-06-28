@@ -19,7 +19,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 with st.container():
-    st.image("assets/banner.png", caption="AI Marketing Tools for Restaurants", use_column_width=True)
+    st.image("assets/banner.png", caption="AI Marketing Tools for Restaurants", use_container_width=True)
     st.markdown("""
         <h1 style='text-align: center; color: #6C4F77;'>Welcome to Brand n Bloom 🌸</h1>
         <p style='text-align: center; font-size: 18px;'>Where restaurants & cafes blossom with powerful digital strategies</p>
