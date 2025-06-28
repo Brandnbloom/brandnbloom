@@ -22,8 +22,9 @@ def save_usage(usage):
         json.dump(usage, f, indent=4)
 
 def can_use_tool(user_email, tool_name):
-    usage = load_usage()
-    return usage.get(user_email, {}).get(tool_name, 0) < USAGE_LIMIT
+    usage = load_usage() 
+    count = usage.get(tool_name, 0)
+    return count < 3
 
 def increment_usage(user_email, tool_name):
     usage = load_usage()
