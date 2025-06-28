@@ -120,3 +120,7 @@ st.markdown("### 👇 Get started with your favorite tool below!")
 from components.seo import inject_seo
 inject_seo()
 
+with st.sidebar:
+    st.image("assets/logo.png", width=150)  # 🌸 Your logo
+    st.page_link("app.py", label="🏠 Home")
+    st.page_link("pages/BloomInsight.py", label="📈 BloomInsight")
