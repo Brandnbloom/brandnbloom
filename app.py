@@ -1,9 +1,25 @@
 import streamlit as st
 
-st.set_page_config(page_title="Brand n Bloom", page_icon="🌸", layout="wide")
+# ✅ SEO & Page Setup
+st.set_page_config(
+    page_title="Brand n Bloom – AI Tools for Restaurant Marketing",
+    page_icon="🌸",
+    layout="wide"
+)
+
+# ✅ Inject SEO meta tags
+st.markdown("""
+    <meta name="description" content="Brand n Bloom is an AI-powered marketing agency for restaurants and hospitality businesses. Try our tools for SEO, Instagram audits, and more.">
+    <meta name="keywords" content="Restaurant Marketing, AI Tools, Instagram Audit, SEO for Cafe, Digital Menu, Hospitality Growth">
+    <meta name="author" content="Brand n Bloom">
+    <meta property="og:title" content="Brand n Bloom – AI Tools for Restaurants" />
+    <meta property="og:description" content="Grow your restaurant online with AI-powered tools like BloomScore, DinePsych & more." />
+    <meta property="og:image" content="https://brand-n-bloom.com/assets/banner.png" />
+    <meta property="og:url" content="https://www.brand-n-bloom.com/" />
+""", unsafe_allow_html=True)
 
 with st.container():
-    st.image("assets/banner.png", use_column_width=True)
+    st.image("assets/banner.png", caption="AI Marketing Tools for Restaurants", use_column_width=True)
     st.markdown("""
         <h1 style='text-align: center; color: #6C4F77;'>Welcome to Brand n Bloom 🌸</h1>
         <p style='text-align: center; font-size: 18px;'>Where restaurants & cafes blossom with powerful digital strategies</p>
@@ -20,3 +36,7 @@ with st.container():
 
     st.subheader("Explore Our AI Tools")
     st.markdown("Use the sidebar to access BloomScore, DinePsych, Digital Menu, and more!")
+    
+    # Load logo
+with st.sidebar:
+    st.image("assets/logo.png", width=180)  # ✅ Adjust width if needed
