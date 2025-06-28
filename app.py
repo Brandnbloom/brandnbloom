@@ -95,6 +95,10 @@ st.markdown("""
     <p>Tools for Instagram, website audit, reviews, digital menu, and more — all tailored for restaurants.</p>
 </div>
 """, unsafe_allow_html=True)
+st.markdown("### 👇 Get started with your favorite tool below!")
+from components.seo import inject_seo
+inject_seo()
+
 
 # -------------------
 # Menu (Internal Navigation)
@@ -116,9 +120,6 @@ st.markdown("""
 # -------------------
 # Optional CTA or Image
 # -------------------
-st.markdown("### 👇 Get started with your favorite tool below!")
-from components.seo import inject_seo
-inject_seo()
 
 with st.sidebar:
     st.image("assets/logo.png", width=150)  # 🌸 Your logo
