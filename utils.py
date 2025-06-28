@@ -1,55 +1,36 @@
-import json
 import os
-import streamlit as st
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
-from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+import streamlit as st
 
-# ---------- USAGE LIMIT FUNCTIONS ----------
-USAGE_FILE = "usage.json"
-MAX_FREE_USES = 3
-
-def load_usage():
-    if os.path.exists(USAGE_FILE):
-        with open(USAGE_FILE, "r") as f:
-            return json.load(f)
-    return {}
-
-def save_usage(data):
-    with open(USAGE_FILE, "w") as f:
-        json.dump(data, f)
+USAGE_FILE = "usage_counts.txt"
 
 def can_use_tool(tool_name):
-    usage = load_usage()
-    user_ip = st.session_state.get("user_ip", st.experimental_get_query_params().get("ip", ["anon"])[0])
-    count = usage.get(user_ip, {}).get(tool_name, 0)
-    return count < MAX_FREE_USES
+    if not os.path.exists(USAGE_FILE):
+        return True
+    with open(USAGE_FILE, "r") as f:
+        for line in f:
+            name, count = line.strip().split(":")
+            if name == tool_name and int(count) >= 3:
+                return False
+    return True
 
 def increment_usage(tool_name):
-    usage = load_usage()
-    user_ip = st.session_state.get("user_ip", st.experimental_get_query_params().get("ip", ["anon"])[0])
-    if user_ip not in usage:
-        usage[user_ip] = {}
-    usage[user_ip][tool_name] = usage[user_ip].get(tool_name, 0) + 1
-    save_usage(usage)
+    counts = {}
+    if os.path.exists(USAGE_FILE):
+        with open(USAGE_FILE, "r") as f:
+            for line in f:
+                name, count = line.strip().split(":")
+                counts[name] = int(count)
+    counts[tool_name] = counts.get(tool_name, 0) + 1
+    with open(USAGE_FILE, "w") as f:
+        for name, count in counts.items():
+            f.write(f"{name}:{count}\n")
 
-# ---------- STRIPE PLACEHOLDER ----------
-def show_stripe_buttons():
-    st.warning("🔒 You've reached the limit of 3 free uses for this tool.")
-    st.markdown("""
-    #### 🚀 Unlock Unlimited Access
-    - $5/month 🌱
-    - $50/year 🌸
-    
-    *Payment options coming soon.*
-    """)
-
-    st.button("🔁 Try Again Later")
-
-# ---------- EMAIL WITH PDF ----------
 def send_email_with_pdf(subject, recipient, content):
     msg = MIMEMultipart()
     msg["From"] = os.getenv("EMAIL_USER")
@@ -59,7 +40,6 @@ def send_email_with_pdf(subject, recipient, content):
     body = MIMEText("Hi,\n\nPlease find your AI-generated report attached.\n\nRegards,\nTeam Brand n Bloom", "plain")
     msg.attach(body)
 
-    # Create PDF with reportlab
     pdf_path = "report.pdf"
     c = canvas.Canvas(pdf_path, pagesize=letter)
     width, height = letter
@@ -73,7 +53,10 @@ def send_email_with_pdf(subject, recipient, content):
             y = height - 50
     c.save()
 
-    with open(pdf_path, "rb") as f:
-        part = MIMEApplication(f.read(), Name="report.pdf")
-        part["Content-Disposition"] = 'attachment; filename="report.pdf"'
-        msg.attach(part)
+    try:
+        with smtplib.SMTP_SSL("smtp.zoho.in", 465) as server:
+            server.login(os.getenv("EMAIL_USER"), os.getenv("EMAIL_PASS"))
+            server.send_message(msg)
+        st.success("📧 Report sent to your email!")
+    except Exception as e:
+        st.error(f"Email failed: {e}")
