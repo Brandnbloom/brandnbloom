@@ -117,3 +117,6 @@ st.markdown("""
 # Optional CTA or Image
 # -------------------
 st.markdown("### 👇 Get started with your favorite tool below!")
+from components.seo import inject_seo
+inject_seo()
+
