@@ -3,7 +3,8 @@ import openai
 import os
 from PIL import Image
 import io
-from utils import can_use_tool, increment_usage, send_email_with_pdf, show_stripe_buttons
+from utils import can_use_tool, increment_usage, send_email_with_pdf
+# show_stripe_buttons removed temporarily
 
 openai.api_key = os.getenv("OPENROUTER_API_KEY")
 
