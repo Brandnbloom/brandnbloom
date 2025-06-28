@@ -5,11 +5,10 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
-import pdfkit  # Optional, or use reportlab
-import stripe
+from reportlab.pdfgen import canvas
+from reportlab.lib.pagesizes import letter
+import streamlit as st
 
-# ----- Stripe Setup -----
-stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
 
 # ----- Usage Tracker -----
 USAGE_FILE = "usage.json"
