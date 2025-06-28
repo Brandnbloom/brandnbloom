@@ -86,9 +86,14 @@ with col2:
     st.markdown("<h1 style='margin-bottom: 0;'>Brand n Bloom</h1>", unsafe_allow_html=True)
     st.caption("Where local brands blossom globally 💫")
 
-# -------------------
-# Banner
-# -------------------
+with st.container():
+    st.image("assets/banner.png", caption="AI Marketing Tools for Restaurants", use_container_width=True)
+    st.markdown("""
+        <h1 style='text-align: center; color: #6C4F77;'>Welcome to Brand n Bloom 🌸</h1>
+        <p style='text-align: center; font-size: 18px;'>Where restaurants & cafes blossom with powerful digital strategies</p>
+        <hr style='border:1px solid #DABECF;'>
+    """, unsafe_allow_html=True)
+
 st.markdown("""
 <div class='banner'>
     <h2>Grow your hospitality brand with our AI-powered marketing tools 🚀</h2>
