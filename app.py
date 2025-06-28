@@ -1,4 +1,6 @@
 import streamlit as st
+from PIL import Image
+import base64
 
 # ✅ SEO & Page Setup
 st.set_page_config(
@@ -18,35 +20,100 @@ st.markdown("""
     <meta property="og:url" content="https://www.brand-n-bloom.com/" />
 """, unsafe_allow_html=True)
 
-with st.container():
-    st.image("assets/banner.png", caption="AI Marketing Tools for Restaurants", use_container_width=True)
-    st.markdown("""
-        <h1 style='text-align: center; color: #6C4F77;'>Welcome to Brand n Bloom 🌸</h1>
-        <p style='text-align: center; font-size: 18px;'>Where restaurants & cafes blossom with powerful digital strategies</p>
-        <hr style='border:1px solid #DABECF;'>
-    """, unsafe_allow_html=True)
 
-with st.container():
-    st.header("✨ Why Choose Us?")
-    st.markdown("""
-    - 🌍 Global strategy for local brands  
-    - 📈 AI-powered SEO & Instagram growth  
-    - 🎯 Lead generation, content, website & analytics  
-    """)
+# -------------------
+# Custom Navbar Styling
+# -------------------
+custom_css = """
+<style>
+/* Banner */
+.banner {
+    width: 100%;
+    padding: 2rem;
+    background-color: #FAF3F0;
+    text-align: center;
+    border-radius: 15px;
+    margin-top: 1rem;
+}
 
-    st.subheader("Explore Our AI Tools")
-    st.markdown("Use the sidebar to access BloomScore, DinePsych, Digital Menu, and more!")
-    
-    # Load logo
-with st.sidebar:
-    st.image("assets/logo.png", width=180)  # ✅ Adjust width if needed
-    st.page_link("app.py", label="🏠 Home")
-    st.page_link("pages/BloomInsight.py", label="📈 BloomInsight")
-    st.page_link("pages/BloomScore.py", label="📊 BloomScore")
-    st.page_link("pages/Consumer_Behavior.py", label="🧠 DinePsych")
-    st.page_link("pages/Visual_Audit.py", label="🎨 Visual Audit")
-    st.page_link("pages/Review_Reply.py", label="💬 Review Assistant")
-    st.page_link("pages/Digital_Menu.py", label="📄 Digital Menu")
-    st.page_link("pages/blogs.py", label="📝 Blogs")
-    st.page_link("pages/contact_us.py", label="📬 Contact")
-    st.page_link("pages/legal.py", label="⚖️ Terms & Privacy")
+/* Logo + Title */
+.logo-title {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.logo-title img {
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+}
+
+/* Menu */
+.menu {
+    margin-top: 2rem;
+    background-color: #FFF0F5;
+    padding: 1rem;
+    border-radius: 10px;
+}
+
+.menu a {
+    text-decoration: none;
+    color: #3B3B3B;
+    font-weight: bold;
+    padding: 0.5rem 1rem;
+    display: inline-block;
+    transition: background-color 0.2s ease-in-out;
+}
+.menu a:hover {
+    background-color: #FADADD;
+    border-radius: 5px;
+}
+</style>
+"""
+
+st.markdown(custom_css, unsafe_allow_html=True)
+
+# -------------------
+# Logo & Title
+# -------------------
+col1, col2 = st.columns([0.1, 0.9])
+
+with col1:
+    st.image("assets/logo.png", width=70)  # <-- Use your actual logo path
+
+with col2:
+    st.markdown("<h1 style='margin-bottom: 0;'>Brand n Bloom</h1>", unsafe_allow_html=True)
+    st.caption("Where local brands blossom globally 💫")
+
+# -------------------
+# Banner
+# -------------------
+st.markdown("""
+<div class='banner'>
+    <h2>Grow your hospitality brand with our AI-powered marketing tools 🚀</h2>
+    <p>Tools for Instagram, website audit, reviews, digital menu, and more — all tailored for restaurants.</p>
+</div>
+""", unsafe_allow_html=True)
+
+# -------------------
+# Menu (Internal Navigation)
+# -------------------
+st.markdown("""
+<div class='menu'>
+    <a href="/bloomscore" target="_self">🌺 BloomScore</a>
+    <a href="/consumer_behavior" target="_self">🧠 DinePsych</a>
+    <a href="/review_reply_assistant" target="_self">💬 Review Assistant</a>
+    <a href="/visual_brand_audit" target="_self">🎨 Visual Brand Audit</a>
+    <a href="/competitor_snapshot" target="_self">📊 Competitor Tool</a>
+    <a href="/digital_menu_creator" target="_self">📋 Menu Creator</a>
+    <a href="/about_us" target="_self">👤 About Us</a>
+    <a href="/services" target="_self">🛠️ Services</a>
+    <a href="/manifesto" target="_self">📜 Manifesto</a>
+</div>
+""", unsafe_allow_html=True)
+
+# -------------------
+# Optional CTA or Image
+# -------------------
+st.markdown("### 👇 Get started with your favorite tool below!")
