@@ -39,7 +39,7 @@ with st.container():
     
     # Load logo
 with st.sidebar:
-    st.image("assets/logo.png.png", width=180)  # ✅ Adjust width if needed
+    st.image("assets/logo.png", width=180)  # ✅ Adjust width if needed
     st.page_link("app.py", label="🏠 Home")
     st.page_link("pages/BloomInsight.py", label="📈 BloomInsight")
     st.page_link("pages/BloomScore.py", label="📊 BloomScore")
