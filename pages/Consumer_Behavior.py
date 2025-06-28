@@ -2,6 +2,7 @@ import streamlit as st
 from utils import can_use_tool, increment_usage, send_email_with_pdf
 # show_stripe_buttons removed temporarily
 
+openai.api_key = os.getenv("OPENROUTER_API_KEY")
 st.title("🧠 DinePsych – Consumer Behavior Insights")
 
 if can_use_tool("DinePsych"):
