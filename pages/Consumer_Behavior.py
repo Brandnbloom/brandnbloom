@@ -1,6 +1,5 @@
 import streamlit as st
-from utils import can_use_tool, increment_usage, send_email_with_pdf
-
+from utils import can_use_tool, increment_usage, send_email_with_pdf, show_stripe_buttons
 st.title("🧠 DinePsych – Consumer Behavior Insights")
 
 if can_use_tool("DinePsych"):
