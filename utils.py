@@ -1,16 +1,14 @@
-import json
 import os
-import streamlit as st
+import json
 import smtplib
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
 import streamlit as st
 
-
-# ----- Usage Tracker -----
+# ---------- 📊 Usage Limit ----------
 USAGE_FILE = "usage.json"
 
 def load_usage():
@@ -19,28 +17,20 @@ def load_usage():
             return json.load(f)
     return {}
 
-def save_usage(usage_data):
+def save_usage(data):
     with open(USAGE_FILE, "w") as f:
-        json.dump(usage_data, f)
+        json.dump(data, f)
 
-def can_use_tool(tool_name):
-    usage = load_usage()
-    count = usage.get(tool_name, 0)
-    return count < 3
+def can_use_tool(email):
+    usage_data = load_usage()
+    return usage_data.get(email, 0) < 3  # 3 free uses
 
-def increment_usage(tool_name):
-    usage = load_usage()
-    usage[tool_name] = usage.get(tool_name, 0) + 1
-    save_usage(usage)
+def increment_usage(email):
+    usage_data = load_usage()
+    usage_data[email] = usage_data.get(email, 0) + 1
+    save_usage(usage_data)
 
-# ----- Stripe Button -----
-def show_stripe_buttons():
-    st.warning("🔒 Free limit reached. Please subscribe to continue.")
-    st.markdown("💳 $5/month or $50/year to unlock unlimited access.")
-    st.link_button("Subscribe Monthly", "https://buy.stripe.com/test_xyz123month")
-    st.link_button("Subscribe Yearly", "https://buy.stripe.com/test_abc456year")
-
-# ----- Email PDF -----
+# ---------- 💌 Email with PDF ----------
 def send_email_with_pdf(subject, recipient, content):
     msg = MIMEMultipart()
     msg["From"] = os.getenv("EMAIL_USER")
@@ -50,10 +40,20 @@ def send_email_with_pdf(subject, recipient, content):
     body = MIMEText("Hi,\n\nPlease find your AI-generated report attached.\n\nRegards,\nTeam Brand n Bloom", "plain")
     msg.attach(body)
 
+    # ✅ Generate PDF from content
     pdf_path = "report.pdf"
-    with open(pdf_path, "w") as f:
-        f.write(content)
+    c = canvas.Canvas(pdf_path, pagesize=letter)
+    width, height = letter
+    y = height - 50
+    for line in content.split("\n"):
+        c.drawString(50, y, line.strip())
+        y -= 15
+        if y < 50:
+            c.showPage()
+            y = height - 50
+    c.save()
 
+    # ✅ Attach PDF
     with open(pdf_path, "rb") as f:
         part = MIMEApplication(f.read(), Name="report.pdf")
         part["Content-Disposition"] = 'attachment; filename="report.pdf"'
@@ -65,4 +65,20 @@ def send_email_with_pdf(subject, recipient, content):
             server.send_message(msg)
         st.success("📧 Report sent to your email!")
     except Exception as e:
-        st.error(f"Email failed: {e}")
+        st.error(f"❌ Email failed: {e}")
+
+# ---------- 💳 Stripe Payment Option ----------
+def show_stripe_buttons():
+    st.info("⚠️ You’ve used your 3 free attempts. To continue, please subscribe.")
+
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown(
+            "[Subscribe Monthly – $5](https://buy.stripe.com/test_a1b2c3monthly)",  # Replace with real link
+            unsafe_allow_html=True,
+        )
+    with col2:
+        st.markdown(
+            "[Subscribe Yearly – $50](https://buy.stripe.com/test_a1b2c3yearly)",   # Replace with real link
+            unsafe_allow_html=True,
+        )
