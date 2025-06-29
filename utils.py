@@ -40,6 +40,37 @@ def apply_custom_css():
         </style>
     """, unsafe_allow_html=True)
 
+def responsive_cards_css():
+    st.markdown("""
+    <style>
+    .tool-card-container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 20px;
+    }
+    .tool-card {
+        background-color: #f8f3ff;
+        border-radius: 12px;
+        padding: 20px;
+        width: 100%;
+        max-width: 350px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+        flex: 1;
+    }
+    .tool-card:hover {
+        transform: scale(1.02);
+        background-color: #efe7fd;
+    }
+    @media (max-width: 768px) {
+        .tool-card-container {
+            flex-direction: column;
+        }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
 def can_use_tool(tool_name):
     if not os.path.exists(USAGE_FILE):
         return True
