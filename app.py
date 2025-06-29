@@ -120,3 +120,8 @@ components.html(
     """,
     height=0
 )
+
+st.markdown("""
+<hr>
+<p style='text-align: center; font-size: 0.9em;'>© 2025 Brand n Bloom. All rights reserved.</p>
+""", unsafe_allow_html=True)
