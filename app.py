@@ -55,6 +55,7 @@ with st.expander("📂 Click here to explore all tools and info sections"):
         st.page_link("pages/legal.py", label="⚖️ Terms & Privacy")
         st.page_link("pages/disclaimer.py", label="🛑 Disclaimer")
 
+
 # ✅ Google Translate Integration
 st.markdown("""
 <!-- Google Translate Widget -->
