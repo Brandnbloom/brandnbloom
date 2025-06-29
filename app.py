@@ -121,6 +121,31 @@ components.html(
     height=0
 )
 
+from utils import responsive_cards_css
+responsive_cards_css()
+
+tools = [
+    {"name": "BloomScore", "desc": "Audit your social & web presence.", "url": "/BloomScore"},
+    {"name": "DinePsych", "desc": "Analyze customer behavior in restaurants.", "url": "/Consumer-Behavior"},
+    {"name": "Visual Audit", "desc": "Screenshot-based brand tone check.", "url": "/Visual-Audit"},
+    {"name": "Review Assistant", "desc": "Reply to reviews with emotion-based tone.", "url": "/Review-Reply"},
+    {"name": "Digital Menu Creator", "desc": "Generate restaurant menus with Canva-ready design.", "url": "/Digital-Menu"},
+    {"name": "BloomInsight", "desc": "Track SEO, traffic, and GMB in one dashboard.", "url": "/BloomInsight"}
+]
+
+st.markdown("<div class='tool-card-container'>", unsafe_allow_html=True)
+
+for tool in tools:
+    st.markdown(f"""
+    <div class='tool-card'>
+        <h4>{tool["name"]}</h4>
+        <p>{tool["desc"]}</p>
+        <a href="{tool['url']}">🚀 Try Now</a>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.markdown("</div>", unsafe_allow_html=True)
+
 st.markdown("""
 <hr>
 <p style='text-align: center; font-size: 0.9em;'>© 2025 Brand n Bloom. All rights reserved.</p>
