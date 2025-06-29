@@ -3,7 +3,7 @@ import streamlit as st
 st.set_page_config(page_title="Brand n Bloom", layout="wide")
 
 # 🌸 Banner
-st.image("assets/banner.png", use_column_width=True)
+st.image("assets/banner.png", use_container_width=True)
 
 # 🌟 Introduction
 st.markdown("""
