@@ -103,3 +103,19 @@ st.markdown(
     "<hr><center>© 2025 Brand n Bloom. All Rights Reserved. | Contact: agency@brand-and-bloom.com</center>",
     unsafe_allow_html=True
 )
+
+import streamlit.components.v1 as components
+
+components.html(
+    """
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-0GBTQZDD53');
+    </script>
+    """,
+    height=0
+)
