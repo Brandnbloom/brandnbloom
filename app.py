@@ -146,6 +146,9 @@ for tool in tools:
 
 st.markdown("</div>", unsafe_allow_html=True)
 
+from utils import check_usage_and_alert
+check_usage_and_alert()
+
 st.markdown("""
 <hr>
 <p style='text-align: center; font-size: 0.9em;'>© 2025 Brand n Bloom. All rights reserved.</p>
