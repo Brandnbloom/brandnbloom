@@ -167,5 +167,34 @@ def send_alert_email(subject, content):
         print("✅ Alert email sent")
     except Exception as e:
         print(f"❌ Failed to send alert: {e}")
-        
+
+def is_subscribed_user(email):
+    try:
+        with open("subscribers.json", "r") as f:
+            data = json.load(f)
+            return email in data.get("subscribers", [])
+    except:
+        return False
+
+def can_use_tool(email, tool_name):
+    if is_subscribed_user(email):
+        return True  # Unlimited usage
+
+    usage_data = load_usage()
+    today = datetime.date.today().isoformat()
+
+    if tool_name not in usage_data:
+        usage_data[tool_name] = {}
+
+    if today not in usage_data[tool_name]:
+        usage_data[tool_name][today] = {}
+
+    if email not in usage_data[tool_name][today]:
+        usage_data[tool_name][today][email] = 0
+
+    return usage_data[tool_name][today][email] < 3
+
+Now if the user is subscribed → they can use tools unlimited.
+Others will see "3 uses per day" limit.
+
 check_usage_and_alert()
