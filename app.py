@@ -1,13 +1,17 @@
 import streamlit as st
-
-<meta name="google-site-verification" content="YE75SNSAONjr9Y4IYqOZiA1dkG5OYRIstxk-SdSJEZY" />
+import streamlit.components.v1 as components
 
 st.set_page_config(page_title="Brand n Bloom", layout="wide")
 
-# 🌸 Banner
+# ✅ SEO: Google Search Console Verification
+st.markdown("""
+<meta name="google-site-verification" content="YE75SNSAONjr9Y4IYqOZiA1dkG5OYRIstxk-SdSJEZY" />
+""", unsafe_allow_html=True)
+
+# ✅ Banner
 st.image("assets/banner.png", use_container_width=True)
 
-# 🌟 Introduction
+# ✅ Welcome Text
 st.markdown("""
 <style>
     .main-title {
@@ -27,60 +31,31 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# 🌿 Sidebar Navigation
-with st.sidebar:
-    st.image("assets/logo.png", width=150)
-    st.markdown("### Navigate")
-    
-    st.page_link("app.py", label="🏠 Home", icon="🏠")
-    st.page_link("pages/BloomScore.py", label="📊 BloomScore")
-    st.page_link("pages/Consumer_Behavior.py", label="🧠 DinePsych")
-    st.page_link("pages/Visual_Audit.py", label="🎨 Visual Audit")
-    st.page_link("pages/Review_Reply.py", label="💬 Review Assistant")
-    st.page_link("pages/Digital_Menu.py", label="📄 Digital Menu")
-    st.page_link("pages/BloomInsight.py", label="📈 BloomInsight")
+# ✅ Collapsible Menu (replaces sidebar)
+with st.expander("📂 Click here to explore all tools and info sections"):
+    col1, col2, col3 = st.columns(3)
 
-    st.markdown("### 📚 Info")
-    st.page_link("pages/about_us.py", label="👥 About Us")
-    st.page_link("pages/about_ceo.py", label="👩‍💼 About CEO")
-    st.page_link("pages/our_services.py", label="🛠️ Products & Services")
-    st.page_link("pages/manifesto.py", label="📜 Manifesto")
+    with col1:
+        st.page_link("pages/BloomScore.py", label="📊 BloomScore")
+        st.page_link("pages/Consumer_Behavior.py", label="🧠 DinePsych")
+        st.page_link("pages/Visual_Audit.py", label="🎨 Visual Audit")
+        st.page_link("pages/Review_Reply.py", label="💬 Review Assistant")
 
-    st.markdown("### 📝 More")
-    st.page_link("pages/blogs.py", label="📝 Blogs")
-    st.page_link("pages/contact_us.py", label="📬 Contact")
-    st.page_link("pages/legal.py", label="⚖️ Terms & Privacy")
-    st.page_link("pages/disclaimer.py", label="🛑 Disclaimer")
+    with col2:
+        st.page_link("pages/Digital_Menu.py", label="📄 Digital Menu")
+        st.page_link("pages/BloomInsight.py", label="📈 BloomInsight")
+        st.page_link("pages/blogs.py", label="📝 Blogs")
+        st.page_link("pages/contact_us.py", label="📬 Contact")
 
-import streamlit.components.v1 as components
-st.markdown("""
-<!-- Google Translate Widget -->
-<div id="google_translate_element"></div>
-<script type="text/javascript">
-function googleTranslateElementInit() {
-  new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
-}
-</script>
-<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-""", unsafe_allow_html=True)
+    with col3:
+        st.page_link("pages/about_us.py", label="👥 About Us")
+        st.page_link("pages/about_ceo.py", label="👩‍💼 About CEO")
+        st.page_link("pages/our_services.py", label="🛠️ Our Services")
+        st.page_link("pages/manifesto.py", label="📜 Manifesto")
+        st.page_link("pages/legal.py", label="⚖️ Terms & Privacy")
+        st.page_link("pages/disclaimer.py", label="🛑 Disclaimer")
 
-st.markdown("""
-<!--Start of Tawk.to Script-->
-<script type="text/javascript">
-var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
-(function(){
-var 
-s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
-s1.async=true;
-s1.src='https://embed.tawk.to/6860e99d73af5e1912a4fcb7/1iut914c9';
-s1.charset='UTF-8';
-s1.setAttribute('crossorigin','*');
-s0.parentNode.insertBefore(s1,s0);
-})();
-</script>
-""", unsafe_allow_html=True)
-
-
+# ✅ Cookie Consent
 def cookie_consent():
     if "accepted_cookies" not in st.session_state:
         st.session_state.accepted_cookies = False
@@ -92,8 +67,37 @@ def cookie_consent():
                 st.success("Thank you for accepting cookies!")
 
 cookie_consent()
+
+# ✅ Google Translate Integration
+st.markdown("""
+<!-- Google Translate Widget -->
+<div id="google_translate_element"></div>
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
+}
+</script>
+<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+""", unsafe_allow_html=True)
+
+# ✅ Tawk.to Live Chat
+st.markdown("""
+<!--Start of Tawk.to Script-->
+<script type="text/javascript">
+var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
+(function(){
+var s1=document.createElement("script"),s0=document.getElementsByTagName("script")[0];
+s1.async=true;
+s1.src='https://embed.tawk.to/6860e99d73af5e1912a4fcb7/1iut914c9';
+s1.charset='UTF-8';
+s1.setAttribute('crossorigin','*');
+s0.parentNode.insertBefore(s1,s0);
+})();
+</script>
+""", unsafe_allow_html=True)
+
+# ✅ Footer
 st.markdown(
-    "<hr><center>© 2025 Brand n Bloom. All Rights Reserved.</center>",
+    "<hr><center>© 2025 Brand n Bloom. All Rights Reserved. | Contact: agency@brand-and-bloom.com</center>",
     unsafe_allow_html=True
 )
-
