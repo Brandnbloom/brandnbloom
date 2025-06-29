@@ -5,6 +5,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
+import datetime
 import streamlit as st
 
 USAGE_FILE = "usage_counts.txt"
@@ -122,3 +123,49 @@ def send_email_with_pdf(subject, recipient, content):
         st.success("📧 Report sent to your email!")
     except Exception as e:
         st.error(f"Email failed: {e}")
+
+def check_usage_and_alert():
+    today = datetime.date.today().isoformat()
+    usage_data = load_usage()
+
+    total_today = sum(
+        usage_data.get(tool, {}).get(today, 0)
+        for tool in usage_data
+    )
+
+    if total_today > 50:
+        send_alert_email("🚨 High Traffic Alert", f"🔥 You had {total_today} tool usages today!")
+
+Then call it once per session in app.py like:
+
+def check_usage_and_alert():
+    today = datetime.date.today().isoformat()
+    usage_data = load_usage()
+    total_today = sum(
+        usage_data.get(tool, {}).get(today, 0)
+        for tool in usage_data
+    )
+
+    # Set your alert threshold here
+    if total_today > 50:
+        subject = "🚨 Brand n Bloom High Traffic Alert"
+        content = f"Hi Shreya,\n\nToday you had {total_today} total tool usages.\n\nCheck your analytics for insights.\n\n– Brand n Bloom Bot 🌸"
+        send_alert_email(subject, content)
+
+def send_alert_email(subject, content):
+    msg = MIMEMultipart()
+    msg["From"] = os.getenv("EMAIL_USER")
+    msg["To"] = os.getenv("ALERT_EMAIL")
+    msg["Subject"] = subject
+
+    msg.attach(MIMEText(content, "plain"))
+
+    try:
+        with smtplib.SMTP_SSL("smtp.zoho.in", 465) as server:
+            server.login(os.getenv("EMAIL_USER"), os.getenv("EMAIL_PASS"))
+            server.send_message(msg)
+        print("✅ Alert email sent")
+    except Exception as e:
+        print(f"❌ Failed to send alert: {e}")
+        
+check_usage_and_alert()
