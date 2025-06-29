@@ -9,6 +9,37 @@ import streamlit as st
 
 USAGE_FILE = "usage_counts.txt"
 
+def apply_custom_css():
+    st.markdown("""
+        <style>
+        html, body, [class*="css"] {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #FAF5FF;
+        }
+        .stApp {
+            background-color: #ffffff;
+            padding: 1rem;
+        }
+        h1, h2, h3 {
+            color: #8A4FFF;
+        }
+        .css-1v3fvcr {  /* Sidebar title */
+            color: #8A4FFF;
+            font-weight: bold;
+        }
+        .stButton>button {
+            background-color: #8A4FFF;
+            color: white;
+            border-radius: 8px;
+            border: none;
+            padding: 0.5rem 1rem;
+        }
+        .stButton>button:hover {
+            background-color: #6D28D9;
+        }
+        </style>
+    """, unsafe_allow_html=True)
+
 def can_use_tool(tool_name):
     if not os.path.exists(USAGE_FILE):
         return True
