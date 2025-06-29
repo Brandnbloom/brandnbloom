@@ -40,3 +40,7 @@ if can_use_tool("BloomInsight"):
 else:
     st.warning("🛑 Free usage limit reached. Please upgrade to continue.")
     st.page_link("https://brand-n-bloom.com/upgrade", label="Upgrade Plan", icon="💳")
+
+st.info("""
+🧠 *Note:* The insights provided by this tool are generated using AI and public data. While helpful, they may not reflect 100% accuracy or real-time changes. Always consult professionals before making critical decisions.
+""")
