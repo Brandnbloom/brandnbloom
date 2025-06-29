@@ -127,15 +127,8 @@ st.markdown("""
 # -------------------
 
 with st.sidebar:
-    st.image("assets/logo.png", width=150)  # 🌸 Your logo
-
+ 
     st.page_link("app.py", label="🏠 Home")
-    st.page_link("pages/BloomInsight.py", label="📈 BloomInsight")
-    st.page_link("pages/BloomScore.py", label="📊 BloomScore")
-    st.page_link("pages/Consumer_Behavior.py", label="🧠 DinePsych")
-    st.page_link("pages/Visual_Audit.py", label="🎨 Visual Audit")
-    st.page_link("pages/Review_Reply.py", label="💬 Review Assistant")
-    st.page_link("pages/Digital_Menu.py", label="📄 Digital Menu")
     st.page_link("pages/blogs.py", label="📝 Blogs")
     st.page_link("pages/contact_us.py", label="📬 Contact")
     st.page_link("pages/legal.py", label="⚖️ Terms & Privacy")
