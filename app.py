@@ -94,7 +94,8 @@ s1.setAttribute('crossorigin','*');
 s0.parentNode.insertBefore(s1,s0);
 })();
 </script>
-""", unsafe_allow_html=True)
+""", height=0, # Keeps layout clean
+)
 
 # ✅ Footer
 st.markdown(
