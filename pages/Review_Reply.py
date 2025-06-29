@@ -55,3 +55,7 @@ Be respectful, brand-positive, and professional. Keep it short and sweet.
 else:
     if submit:
         st.warning("Please paste a review to generate a reply.")
+
+st.info("""
+🧠 *Note:* The insights provided by this tool are generated using AI and public data. While helpful, they may not reflect 100% accuracy or real-time changes. Always consult professionals before making critical decisions.
+""")
