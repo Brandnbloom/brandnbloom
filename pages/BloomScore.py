@@ -62,3 +62,7 @@ Then give a final 'BloomScore' (out of 100) and a 1-line summary.
 else:
     if submit:
         st.warning("Please enter at least one valid input.")
+
+st.info("""
+🧠 *Note:* The insights provided by this tool are generated using AI and public data. While helpful, they may not reflect 100% accuracy or real-time changes. Always consult professionals before making critical decisions.
+""")
