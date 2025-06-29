@@ -55,19 +55,6 @@ with st.expander("📂 Click here to explore all tools and info sections"):
         st.page_link("pages/legal.py", label="⚖️ Terms & Privacy")
         st.page_link("pages/disclaimer.py", label="🛑 Disclaimer")
 
-# ✅ Cookie Consent
-def cookie_consent():
-    if "accepted_cookies" not in st.session_state:
-        st.session_state.accepted_cookies = False
-
-    if not st.session_state.accepted_cookies:
-        with st.expander("🍪 We use cookies! Click to accept."):
-            if st.button("Accept Cookies"):
-                st.session_state.accepted_cookies = True
-                st.success("Thank you for accepting cookies!")
-
-cookie_consent()
-
 # ✅ Google Translate Integration
 st.markdown("""
 <!-- Google Translate Widget -->
@@ -94,8 +81,22 @@ s1.setAttribute('crossorigin','*');
 s0.parentNode.insertBefore(s1,s0);
 })();
 </script>
-""", height=0, # Keeps layout clean
-)
+""", unsafe_allow_html=True)
+
+
+# ✅ Cookie Consent
+def cookie_consent():
+    if "accepted_cookies" not in st.session_state:
+        st.session_state.accepted_cookies = False
+
+    if not st.session_state.accepted_cookies:
+        with st.expander("🍪 We use cookies! Click to accept."):
+            if st.button("Accept Cookies"):
+                st.session_state.accepted_cookies = True
+                st.success("Thank you for accepting cookies!")
+
+cookie_consent()
+
 
 # ✅ Footer
 st.markdown(
