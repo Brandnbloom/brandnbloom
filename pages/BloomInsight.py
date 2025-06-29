@@ -1,46 +1,39 @@
 import streamlit as st
 from utils import can_use_tool, increment_usage, send_email_with_pdf
-# show_stripe_buttons removed temporarily
+import pandas as pd
+import plotly.express as px
 
-openai.api_key = os.getenv("OPENROUTER_API_KEY")
-
-st.title("📈 BloomInsight – Performance Dashboard")
+st.set_page_config(page_title="BloomInsight", layout="wide")
+st.title("📈 BloomInsight – Instagram Engagement Analyzer")
 
 if can_use_tool("BloomInsight"):
-    instagram_followers = st.number_input("📷 Instagram Followers", min_value=0)
-    instagram_engagement = st.number_input("❤️ Instagram Engagement Rate (%)", min_value=0.0)
+    uploaded_file = st.file_uploader("Upload your Instagram data CSV", type=["csv"])
 
-    gmb_views = st.number_input("📍 Google My Business Monthly Views", min_value=0)
-    gmb_rating = st.slider("⭐ GMB Rating", min_value=1.0, max_value=5.0, value=4.0)
+    if uploaded_file is not None:
+        df = pd.read_csv(uploaded_file)
 
-    website_visits = st.number_input("🌐 Website Visits (monthly)", min_value=0)
-    bounce_rate = st.slider("↩️ Bounce Rate (%)", min_value=0, max_value=100, value=50)
+        if 'Post Date' in df.columns and 'Likes' in df.columns:
+            df['Post Date'] = pd.to_datetime(df['Post Date'])
+            df['Month'] = df['Post Date'].dt.to_period("M").astype(str)
 
-    if st.button("🔍 Analyze & Email Report"):
-        summary = f"""
-        🌸 BloomInsight Report 🌸
+            st.subheader("Monthly Engagement Overview")
+            monthly = df.groupby("Month")[["Likes"]].mean().reset_index()
+            fig = px.bar(monthly, x="Month", y="Likes", title="📊 Average Likes per Month", color="Likes", color_continuous_scale="sunset")
+            st.plotly_chart(fig, use_container_width=True)
 
-        Instagram:
-        - Followers: {instagram_followers}
-        - Engagement Rate: {instagram_engagement}%
+            st.subheader("📌 Top Performing Posts")
+            top_posts = df.sort_values("Likes", ascending=False).head(5)
+            st.write(top_posts[["Post Date", "Caption", "Likes"]])
 
-        Google My Business:
-        - Monthly Views: {gmb_views}
-        - Rating: {gmb_rating}/5
+            # Email PDF option
+            if st.checkbox("📤 Email me this report"):
+                email = st.text_input("Enter your email")
+                if st.button("Send Report"):
+                    report_text = f"Instagram Performance Summary\n\nTop Posts:\n{top_posts.to_string(index=False)}"
+                    send_email_with_pdf("BloomInsight Report", email, report_text)
 
-        Website:
-        - Monthly Visits: {website_visits}
-        - Bounce Rate: {bounce_rate}%
-        """
-
-        email = st.text_input("Enter your email to receive the report:")
-        if email:
-            send_email_with_pdf("Your BloomInsight Report", email, summary)
             increment_usage("BloomInsight")
+        else:
+            st.warning("❗ Ensure your CSV has 'Post Date', 'Caption', and 'Likes' columns.")
 else:
-    st.warning("🛑 Free usage limit reached. Please upgrade to continue.")
-    st.page_link("https://brand-n-bloom.com/upgrade", label="Upgrade Plan", icon="💳")
-
-st.info("""
-🧠 *Note:* The insights provided by this tool are generated using AI and public data. While helpful, they may not reflect 100% accuracy or real-time changes. Always consult professionals before making critical decisions.
-""")
+    st.error("⚠️ You've reached the usage limit for BloomInsight.")
