@@ -1,5 +1,7 @@
 import streamlit as st
 
+<meta name="google-site-verification" content="YE75SNSAONjr9Y4IYqOZiA1dkG5OYRIstxk-SdSJEZY" />
+
 st.set_page_config(page_title="Brand n Bloom", layout="wide")
 
 # 🌸 Banner
