@@ -37,3 +37,7 @@ if can_use_tool("BloomInsight"):
             st.warning("❗ Ensure your CSV has 'Post Date', 'Caption', and 'Likes' columns.")
 else:
     st.error("⚠️ You've reached the usage limit for BloomInsight.")
+
+st.info("""
+🧠 *Note:* The insights provided by this tool are generated using AI and public data. While helpful, they may not reflect 100% accuracy or real-time changes. Always consult professionals before making critical decisions.
+""")
