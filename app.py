@@ -48,3 +48,22 @@ with st.sidebar:
     st.page_link("pages/blogs.py", label="📝 Blogs")
     st.page_link("pages/contact_us.py", label="📬 Contact")
     st.page_link("pages/legal.py", label="⚖️ Terms & Privacy")
+    st.page_link("pages/disclaimer.py", label="🛑 Disclaimer")
+
+
+def cookie_consent():
+    if "accepted_cookies" not in st.session_state:
+        st.session_state.accepted_cookies = False
+
+    if not st.session_state.accepted_cookies:
+        with st.expander("🍪 We use cookies! Click to accept."):
+            if st.button("Accept Cookies"):
+                st.session_state.accepted_cookies = True
+                st.success("Thank you for accepting cookies!")
+
+cookie_consent()
+st.markdown(
+    "<hr><center>© 2025 Brand n Bloom. All Rights Reserved.</center>",
+    unsafe_allow_html=True
+)
+
