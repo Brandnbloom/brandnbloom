@@ -136,7 +136,6 @@ def check_usage_and_alert():
     if total_today > 50:
         send_alert_email("🚨 High Traffic Alert", f"🔥 You had {total_today} tool usages today!")
 
-Then call it once per session in app.py like:
 
 def check_usage_and_alert():
     today = datetime.date.today().isoformat()
