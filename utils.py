@@ -194,7 +194,7 @@ def can_use_tool(email, tool_name):
 
     return usage_data[tool_name][today][email] < 3
 
-Now if the user is subscribed → they can use tools unlimited.
+# Now if the user is subscribed, they can use tools unlimited.
 Others will see "3 uses per day" limit.
 
 check_usage_and_alert()
