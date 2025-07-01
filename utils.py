@@ -1,15 +1,17 @@
 import os
 import smtplib
+import json
+import datetime
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from reportlab.lib.pagesizes import letter
 from reportlab.pdfgen import canvas
-import datetime
 import streamlit as st
 
 USAGE_FILE = "usage_counts.txt"
 
+# ✅ Styling
 def apply_custom_css():
     st.markdown("""
         <style>
@@ -41,6 +43,7 @@ def apply_custom_css():
         </style>
     """, unsafe_allow_html=True)
 
+# ✅ Tool cards layout
 def responsive_cards_css():
     st.markdown("""
     <style>
@@ -72,6 +75,7 @@ def responsive_cards_css():
     </style>
     """, unsafe_allow_html=True)
 
+# ✅ Old anonymous usage logic (optional fallback)
 def can_use_tool(tool_name):
     if not os.path.exists(USAGE_FILE):
         return True
@@ -94,6 +98,7 @@ def increment_usage(tool_name):
         for name, count in counts.items():
             f.write(f"{name}:{count}\n")
 
+# ✅ Email report with PDF
 def send_email_with_pdf(subject, recipient, content):
     msg = MIMEMultipart()
     msg["From"] = os.getenv("EMAIL_USER")
@@ -103,6 +108,7 @@ def send_email_with_pdf(subject, recipient, content):
     body = MIMEText("Hi,\n\nPlease find your AI-generated report attached.\n\nRegards,\nTeam Brand n Bloom", "plain")
     msg.attach(body)
 
+    # Create PDF
     pdf_path = "report.pdf"
     c = canvas.Canvas(pdf_path, pagesize=letter)
     width, height = letter
@@ -116,6 +122,11 @@ def send_email_with_pdf(subject, recipient, content):
             y = height - 50
     c.save()
 
+    with open(pdf_path, "rb") as f:
+        attachment = MIMEApplication(f.read(), _subtype="pdf")
+        attachment.add_header('Content-Disposition', 'attachment', filename="report.pdf")
+        msg.attach(attachment)
+
     try:
         with smtplib.SMTP_SSL("smtp.zoho.in", 465) as server:
             server.login(os.getenv("EMAIL_USER"), os.getenv("EMAIL_PASS"))
@@ -124,28 +135,27 @@ def send_email_with_pdf(subject, recipient, content):
     except Exception as e:
         st.error(f"Email failed: {e}")
 
+# ✅ Load JSON usage data for per-user limits
+def load_usage():
+    if os.path.exists("usage_data.json"):
+        with open("usage_data.json", "r") as f:
+            return json.load(f)
+    return {}
+
+def save_usage(data):
+    with open("usage_data.json", "w") as f:
+        json.dump(data, f)
+
+# ✅ Alert for high daily usage
 def check_usage_and_alert():
     today = datetime.date.today().isoformat()
     usage_data = load_usage()
-
     total_today = sum(
-        usage_data.get(tool, {}).get(today, 0)
+        usage_data.get(tool, {}).get(today, {}).get(email, 0)
         for tool in usage_data
+        for email in usage_data[tool].get(today, {})
     )
 
-    if total_today > 50:
-        send_alert_email("🚨 High Traffic Alert", f"🔥 You had {total_today} tool usages today!")
-
-
-def check_usage_and_alert():
-    today = datetime.date.today().isoformat()
-    usage_data = load_usage()
-    total_today = sum(
-        usage_data.get(tool, {}).get(today, 0)
-        for tool in usage_data
-    )
-
-    # Set your alert threshold here
     if total_today > 50:
         subject = "🚨 Brand n Bloom High Traffic Alert"
         content = f"Hi Shreya,\n\nToday you had {total_today} total tool usages.\n\nCheck your analytics for insights.\n\n– Brand n Bloom Bot 🌸"
@@ -156,7 +166,6 @@ def send_alert_email(subject, content):
     msg["From"] = os.getenv("EMAIL_USER")
     msg["To"] = os.getenv("ALERT_EMAIL")
     msg["Subject"] = subject
-
     msg.attach(MIMEText(content, "plain"))
 
     try:
@@ -167,6 +176,7 @@ def send_alert_email(subject, content):
     except Exception as e:
         print(f"❌ Failed to send alert: {e}")
 
+# ✅ Subscription check
 def is_subscribed_user(email):
     try:
         with open("subscribers.json", "r") as f:
@@ -175,9 +185,10 @@ def is_subscribed_user(email):
     except:
         return False
 
+# ✅ New per-user daily usage limit logic
 def can_use_tool(email, tool_name):
     if is_subscribed_user(email):
-        return True  # Unlimited usage
+        return True  # Unlimited for subscribed users
 
     usage_data = load_usage()
     today = datetime.date.today().isoformat()
@@ -193,7 +204,11 @@ def can_use_tool(email, tool_name):
 
     return usage_data[tool_name][today][email] < 3
 
-# Now if the user is subscribed, they can use tools unlimited.
-Others will see "3 uses per day" limit.
+def increment_user_usage(email, tool_name):
+    usage_data = load_usage()
+    today = datetime.date.today().isoformat()
 
-check_usage_and_alert()
+    usage_data.setdefault(tool_name, {}).setdefault(today, {}).setdefault(email, 0)
+    usage_data[tool_name][today][email] += 1
+
+    save_usage(usage_data)
