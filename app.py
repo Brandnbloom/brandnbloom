@@ -98,15 +98,6 @@ def cookie_consent():
 
 cookie_consent()
 
-
-# ✅ Footer
-st.markdown(
-    "<hr><center>© 2025 Brand n Bloom. All Rights Reserved. | Contact: agency@brand-and-bloom.com</center>",
-    unsafe_allow_html=True
-)
-
-import streamlit.components.v1 as components
-
 components.html(
     """
     <!-- Google tag (gtag.js) -->
