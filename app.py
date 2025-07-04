@@ -1,6 +1,18 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
+st.markdown("""
+<!-- Favicon -->
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
+
+<!-- Web App Manifest -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#FF2898">
+
+<!-- Apple Touch Icon -->
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+""", unsafe_allow_html=True)
+
 st.set_page_config(page_title="Brand n Bloom", layout="wide")
 
 # ✅ SEO: Google Search Console Verification
