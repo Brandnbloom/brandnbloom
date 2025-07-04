@@ -2,6 +2,14 @@ import streamlit as st
 import streamlit.components.v1 as components
 
 st.markdown("""
+<!-- ✅ Inject PWA Meta -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#FF2898" />
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
+""", unsafe_allow_html=True)
+
+st.markdown("""
 <!-- Favicon -->
 <link rel="icon" href="/favicon.ico" type="image/x-icon">
 
