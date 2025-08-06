@@ -17,18 +17,17 @@ st.markdown("""
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#FF2898">
 
-# Inject JavaScript for service worker registration
 st.markdown("""
 <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function() {
-      navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
-        console.log('✅ ServiceWorker registration successful with scope: ', registration.scope);
-      }, function(err) {
-        console.log('❌ ServiceWorker registration failed: ', err);
-      });
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js')
+    .then(function(registration) {
+        console.log('ServiceWorker registration successful with scope: ', registration.scope);
+    })
+    .catch(function(error) {
+        console.log('ServiceWorker registration failed:', error);
     });
-  }
+}
 </script>
 """, unsafe_allow_html=True)
 
