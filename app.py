@@ -17,13 +17,20 @@ st.markdown("""
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#FF2898">
 
-components.html("""
+# Inject JavaScript for service worker registration
+st.markdown("""
 <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/service-worker.js');
+    window.addEventListener('load', function() {
+      navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
+        console.log('✅ ServiceWorker registration successful with scope: ', registration.scope);
+      }, function(err) {
+        console.log('❌ ServiceWorker registration failed: ', err);
+      });
+    });
   }
 </script>
-""", height=0)
+""", unsafe_allow_html=True)
 
 <!-- Apple Touch Icon -->
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
