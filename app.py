@@ -10,13 +10,14 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.markdown("""
-<!-- Favicon -->
+<!-- Favicon and Manifest -->
 <link rel="icon" href="/favicon.ico" type="image/x-icon">
-
-<!-- Web App Manifest -->
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#FF2898">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
+""", unsafe_allow_html=True)
 
+# Register service worker
 st.markdown("""
 <script>
 if ("serviceWorker" in navigator) {
@@ -28,10 +29,6 @@ if ("serviceWorker" in navigator) {
   });
 }
 </script>
-""", unsafe_allow_html=True)
-
-<!-- Apple Touch Icon -->
-<link rel="apple-touch-icon" href="/icons/icon-192.png">
 """, unsafe_allow_html=True)
 
 st.set_page_config(page_title="Brand n Bloom", layout="wide")
