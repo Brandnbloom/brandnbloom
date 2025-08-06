@@ -17,6 +17,14 @@ st.markdown("""
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#FF2898">
 
+components.html("""
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/service-worker.js');
+  }
+</script>
+""", height=0)
+
 <!-- Apple Touch Icon -->
 <link rel="apple-touch-icon" href="/icons/icon-192.png">
 """, unsafe_allow_html=True)
