@@ -14,7 +14,9 @@ if can_use_tool("DinePsych"):
         df = pd.read_csv(uploaded_file)
         st.success("✅ File Uploaded Successfully")
 
-        if 'Visit Time' in df.columns and 'Amount Spent' in df.columns:
+        if df.empty:
+            st.warning("⚠️ No data available to display right now.")
+        elif 'Visit Time' in df.columns and 'Amount Spent' in df.columns:
             df['Visit Time'] = pd.to_datetime(df['Visit Time'])
 
             st.subheader("🕓 Visit Time Distribution")
@@ -38,9 +40,13 @@ if can_use_tool("DinePsych"):
             increment_usage("DinePsych")
         else:
             st.warning("❗ Required columns: 'Visit Time' and 'Amount Spent'")
+    else:
+        st.info("📤 Please upload a CSV file to get started.")
 else:
     st.error("⚠️ You've reached the usage limit for DinePsych.")
 
 st.info("""
-🧠 *Note:* The insights provided by this tool are generated using AI and public data. While helpful, they may not reflect 100% accuracy or real-time changes. Always consult professionals before making critical decisions.
+🧠 *Note:* The insights provided by this tool are generated using AI and public data.
+While helpful, they may not reflect 100% accuracy or real-time changes.
+Always consult professionals before making critical decisions.
 """)
