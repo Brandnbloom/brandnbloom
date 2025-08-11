@@ -1,7 +1,6 @@
 import os
+import requests
 from datetime import datetime
-from googleapiclient.discovery import build
-from google_auth_oauthlib.flow import InstalledAppFlow
 
 # ===== CONFIG =====
 DOMAIN = "https://www.brand-and-bloom.com"
@@ -18,9 +17,8 @@ STATIC_ROUTES = [
 ]
 CHANGEFREQ = "weekly"
 PRIORITY = "0.7"
-SCOPES = ['https://www.googleapis.com/auth/webmasters']
 SITEMAP_FILENAME = "static/sitemap.xml"
-SITEMAP_URL = f"{DOMAIN}/sitemap.xml"  # Make sure sitemap is hosted at this path
+SITEMAP_URL = f"{DOMAIN}/sitemap.xml"  # Must match your hosted path
 # ==================
 
 def generate_sitemap():
@@ -55,18 +53,17 @@ def generate_sitemap():
 
     print(f"✅ Sitemap generated at {SITEMAP_FILENAME}")
 
-def submit_to_gsc():
-    # Authenticate
-    flow = InstalledAppFlow.from_client_secrets_file("client_secret.json", SCOPES)
-    creds = flow.run_local_server(port=0)
-    service = build('searchconsole', 'v1', credentials=creds)
-
+def ping_google():
+    ping_url = f"https://www.google.com/ping?sitemap={SITEMAP_URL}"
     try:
-        service.sitemaps().submit(siteUrl=DOMAIN, feedpath=SITEMAP_URL).execute()
-        print(f"🚀 Sitemap submitted to Google Search Console: {SITEMAP_URL}")
+        r = requests.get(ping_url, timeout=10)
+        if r.status_code == 200:
+            print(f"🚀 Successfully pinged Google: {ping_url}")
+        else:
+            print(f"⚠ Google ping returned status {r.status_code}")
     except Exception as e:
-        print(f"❌ Error submitting sitemap: {e}")
+        print(f"❌ Error pinging Google: {e}")
 
 if __name__ == "__main__":
     generate_sitemap()
-    submit_to_gsc()
+    ping_google()
