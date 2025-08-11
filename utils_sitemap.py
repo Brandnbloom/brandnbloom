@@ -3,12 +3,12 @@ import requests
 from datetime import datetime
 
 # ================= CONFIG =================
-DOMAIN = "https://your-domain.onrender.com"  # Change this to your deployed domain
+DOMAIN = "https://brand-n-bloom.com"  
 STATIC_DIR = "static"
 SITEMAP_FILE = os.path.join(STATIC_DIR, "sitemap.xml")
 # ===========================================
 
-# Pages you want in your sitemap
+# List of pages for the sitemap
 PAGES = [
     "/",  # Homepage
     "/BloomScore",
@@ -28,9 +28,8 @@ PAGES = [
 ]
 
 def generate_sitemap():
-    """Generate sitemap.xml file."""
-    if not os.path.exists(STATIC_DIR):
-        os.makedirs(STATIC_DIR)
+    """Generate sitemap.xml in static/."""
+    os.makedirs(STATIC_DIR, exist_ok=True)
 
     urlset_open = '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
     urlset_close = '</urlset>'
@@ -55,9 +54,8 @@ def generate_sitemap():
 
     print(f"✅ Sitemap generated at {SITEMAP_FILE}")
 
-
 def ping_search_engines():
-    """Ping Google and Bing to notify about updated sitemap."""
+    """Notify Google and Bing about the updated sitemap."""
     sitemap_url = f"{DOMAIN}/static/sitemap.xml"
     engines = {
         "Google": f"https://www.google.com/ping?sitemap={sitemap_url}",
@@ -70,15 +68,11 @@ def ping_search_engines():
             if resp.status_code == 200:
                 print(f"✅ {name} ping successful")
             else:
-                print(f"⚠️ {name} ping returned {resp.status_code}")
+                print(f"⚠️ {name} ping returned status {resp.status_code}")
         except Exception as e:
             print(f"❌ {name} ping failed: {e}")
 
-
 def update_sitemap_and_ping():
-    """Full process: generate sitemap then ping search engines."""
-    try:
-        generate_sitemap()
-        ping_search_engines()
-    except Exception as e:
-        print(f"❌ Failed to update sitemap: {e}")
+    """Generate sitemap and then ping search engines."""
+    generate_sitemap()
+    ping_search_engines()
