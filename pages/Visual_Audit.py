@@ -1,6 +1,7 @@
 import streamlit as st
 import openai
 import os
+import base64
 from PIL import Image
 import io
 from utils import can_use_tool, increment_usage, send_email_with_pdf
@@ -18,7 +19,7 @@ Perfect for designers, restaurateurs, and marketers who care about their visual 
 
 # Usage control
 if not can_use_tool("visual_brand_audit"):
-    show_stripe_buttons()
+    st.error("⚠️ You've reached the usage limit for this tool.")
     st.stop()
 
 # Form
@@ -30,6 +31,7 @@ with st.form("audit_form"):
 if submit and uploaded_files:
     with st.spinner("Analyzing visual style..."):
         descriptions = []
+
         for uploaded_file in uploaded_files:
             image = Image.open(uploaded_file)
             buf = io.BytesIO()
@@ -37,8 +39,7 @@ if submit and uploaded_files:
             byte_data = buf.getvalue()
             base64_image = base64.b64encode(byte_data).decode("utf-8")
 
-            # Send image description to GPT
-            prompt = f"""
+            prompt = """
 You are a brand designer AI. Analyze this image for:
 - Brand tone (fun, modern, luxurious, minimal, etc.)
 - Color psychology
@@ -46,6 +47,7 @@ You are a brand designer AI. Analyze this image for:
 - Moodboard feel
 Be short (max 4 bullet points).
 """
+
             try:
                 response = openai.ChatCompletion.create(
                     model="gpt-4-vision-preview",
@@ -76,10 +78,12 @@ Be short (max 4 bullet points).
 
         if email:
             send_email_with_pdf("Your Visual Brand Audit", email, final_output)
-else:
-    if submit:
-        st.warning("Please upload at least 1 image.")
+
+elif submit:
+    st.warning("Please upload at least 1 image.")
 
 st.info("""
-🧠 *Note:* The insights provided by this tool are generated using AI and public data. While helpful, they may not reflect 100% accuracy or real-time changes. Always consult professionals before making critical decisions.
+🧠 *Note:* The insights provided by this tool are generated using AI and public data. 
+While helpful, they may not reflect 100% accuracy or real-time changes. 
+Always consult professionals before making critical decisions.
 """)
