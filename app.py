@@ -1,47 +1,36 @@
 import streamlit as st
 import streamlit.components.v1 as components
 
+# Page settings
+st.set_page_config(page_title="Brand n Bloom", layout="wide")
+
+# --- PWA + Meta tags ---
 st.markdown("""
-<!-- ✅ Inject PWA Meta -->
-<link rel="manifest" href="/manifest.json" />
+<link rel="manifest" href="static/manifest.json" />
 <meta name="theme-color" content="#FF2898" />
-<link rel="apple-touch-icon" href="/icons/icon-192.png">
-<link rel="icon" href="/favicon.ico" type="image/x-icon">
+<link rel="apple-touch-icon" href="static/icon-192.png">
+<link rel="icon" href="static/favicon.ico" type="image/x-icon">
+<meta name="google-site-verification" content="YE75SNSAONjr9Y4IYqOZiA1dkG5OYRIstxk-SdSJEZY" />
 """, unsafe_allow_html=True)
 
-st.markdown("""
-<!-- Favicon and Manifest -->
-<link rel="icon" href="/favicon.ico" type="image/x-icon">
-<link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#FF2898">
-<link rel="apple-touch-icon" href="/icons/icon-192.png">
-""", unsafe_allow_html=True)
-
-# Register service worker
-st.markdown("""
+# --- Service Worker Registration ---
+components.html("""
 <script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker
-      .register("/service-worker.js")
+      .register("static/service-worker.js")
       .then((reg) => console.log("✅ SW registered", reg))
       .catch((err) => console.error("❌ SW registration failed", err));
   });
 }
 </script>
-""", unsafe_allow_html=True)
+""", height=0)
 
-st.set_page_config(page_title="Brand n Bloom", layout="wide")
-
-# ✅ SEO: Google Search Console Verification
-st.markdown("""
-<meta name="google-site-verification" content="YE75SNSAONjr9Y4IYqOZiA1dkG5OYRIstxk-SdSJEZY" />
-""", unsafe_allow_html=True)
-
-# ✅ Banner
+# Banner
 st.image("assets/banner.png", use_container_width=True)
 
-# ✅ Welcome Text
+# Welcome text
 st.markdown("""
 <style>
     .main-title {
@@ -61,7 +50,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ✅ Collapsible Menu (replaces sidebar)
+# --- Collapsible Menu ---
 with st.expander("📂 Click here to explore all tools and info sections"):
     col1, col2, col3 = st.columns(3)
 
@@ -85,22 +74,19 @@ with st.expander("📂 Click here to explore all tools and info sections"):
         st.page_link("pages/legal.py", label="⚖️ Terms & Privacy")
         st.page_link("pages/disclaimer.py", label="🛑 Disclaimer")
 
-
-# ✅ Google Translate Integration
-st.markdown("""
-<!-- Google Translate Widget -->
+# --- Google Translate ---
+components.html("""
 <div id="google_translate_element"></div>
 <script type="text/javascript">
 function googleTranslateElementInit() {
   new google.translate.TranslateElement({pageLanguage: 'en'}, 'google_translate_element');
 }
 </script>
-<script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
-""", unsafe_allow_html=True)
+<script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+""", height=60)
 
-# ✅ Tawk.to Live Chat
-st.markdown("""
-<!--Start of Tawk.to Script-->
+# --- Tawk.to Live Chat ---
+components.html("""
 <script type="text/javascript">
 var Tawk_API=Tawk_API||{}, Tawk_LoadStart=new Date();
 (function(){
@@ -112,10 +98,9 @@ s1.setAttribute('crossorigin','*');
 s0.parentNode.insertBefore(s1,s0);
 })();
 </script>
-""", unsafe_allow_html=True)
+""", height=0)
 
-
-# ✅ Cookie Consent
+# --- Cookie Consent ---
 def cookie_consent():
     if "accepted_cookies" not in st.session_state:
         st.session_state.accepted_cookies = False
@@ -128,23 +113,22 @@ def cookie_consent():
 
 cookie_consent()
 
-components.html(
-    """
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-0GBTQZDD53"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-0GBTQZDD53');
-    </script>
-    """,
-    height=0
-)
+# --- Google Analytics ---
+components.html("""
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-0GBTQZDD53"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-0GBTQZDD53');
+</script>
+""", height=0)
 
+# --- Responsive Cards CSS ---
 from utils import responsive_cards_css
 responsive_cards_css()
 
+# --- Tool Cards ---
 tools = [
     {"name": "BloomScore", "desc": "Audit your social & web presence.", "url": "/BloomScore"},
     {"name": "DinePsych", "desc": "Analyze customer behavior in restaurants.", "url": "/Consumer-Behavior"},
@@ -155,7 +139,6 @@ tools = [
 ]
 
 st.markdown("<div class='tool-card-container'>", unsafe_allow_html=True)
-
 for tool in tools:
     st.markdown(f"""
     <div class='tool-card'>
@@ -164,12 +147,13 @@ for tool in tools:
         <a href="{tool['url']}">🚀 Try Now</a>
     </div>
     """, unsafe_allow_html=True)
-
 st.markdown("</div>", unsafe_allow_html=True)
 
+# --- Usage Check ---
 from utils import check_usage_and_alert
 check_usage_and_alert()
 
+# Footer
 st.markdown("""
 <hr>
 <p style='text-align: center; font-size: 0.9em;'>© 2025 Brand n Bloom. All rights reserved.</p>
