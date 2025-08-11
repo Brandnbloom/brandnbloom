@@ -18,7 +18,7 @@ STATIC_ROUTES = [
 CHANGEFREQ = "weekly"
 PRIORITY = "0.7"
 SITEMAP_FILENAME = "static/sitemap.xml"
-SITEMAP_URL = f"{DOMAIN}/static/sitemap.xml"  # Must match your hosted path
+SITEMAP_URL = https://www.brand-and-bloom.com/static/sitemap.xml  # Must match your hosted path
 # ==================
 
 def generate_sitemap():
