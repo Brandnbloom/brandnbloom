@@ -2,71 +2,83 @@ import os
 import requests
 from datetime import datetime
 
-# ===== CONFIG =====
-DOMAIN = "https://www.brand-and-bloom.com"
-STATIC_ROUTES = [
-    "",  # Home
-    "pages/about_us",
-    "pages/about_ceo",
-    "pages/our_services",
-    "pages/contact_us",
-    "pages/legal",
-    "pages/disclaimer",
-    "pages/manifesto",
-    "pages/blogs",
+# ================= CONFIG =================
+DOMAIN = "https://your-domain.onrender.com"  # Change this to your deployed domain
+STATIC_DIR = "static"
+SITEMAP_FILE = os.path.join(STATIC_DIR, "sitemap.xml")
+# ===========================================
+
+# Pages you want in your sitemap
+PAGES = [
+    "/",  # Homepage
+    "/BloomScore",
+    "/Consumer-Behavior",
+    "/Visual-Audit",
+    "/Review-Reply",
+    "/Digital-Menu",
+    "/BloomInsight",
+    "/blogs",
+    "/contact_us",
+    "/about_us",
+    "/about_ceo",
+    "/our_services",
+    "/manifesto",
+    "/legal",
+    "/disclaimer"
 ]
-CHANGEFREQ = "weekly"
-PRIORITY = "0.7"
-SITEMAP_FILENAME = "static/sitemap.xml"
-SITEMAP_URL = f"{DOMAIN}/static/sitemap.xml"  # Must match hosted path
-# ==================
 
 def generate_sitemap():
-    try:
-        all_routes = STATIC_ROUTES.copy()
+    """Generate sitemap.xml file."""
+    if not os.path.exists(STATIC_DIR):
+        os.makedirs(STATIC_DIR)
 
-        # Add any ".py" pages from "pages" folder
-        if os.path.exists("pages"):
-            for filename in os.listdir("pages"):
-                if filename.endswith(".py"):
-                    route = f"pages/{filename.replace('.py', '')}"
-                    if route not in all_routes:
-                        all_routes.append(route)
+    urlset_open = '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
+    urlset_close = '</urlset>'
+    urls = []
 
-        # Build XML content
-        lines = ['<?xml version="1.0" encoding="UTF-8"?>']
-        lines.append('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">')
+    for page in PAGES:
+        loc = f"{DOMAIN}{page}"
+        lastmod = datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+        urls.append(f"""
+        <url>
+            <loc>{loc}</loc>
+            <lastmod>{lastmod}</lastmod>
+            <changefreq>weekly</changefreq>
+            <priority>0.8</priority>
+        </url>
+        """)
 
-        for route in all_routes:
-            url = f"{DOMAIN}/{route}" if route else DOMAIN
-            lines.append("  <url>")
-            lines.append(f"    <loc>{url}</loc>")
-            lines.append(f"    <lastmod>{datetime.today().date()}</lastmod>")
-            lines.append(f"    <changefreq>{CHANGEFREQ}</changefreq>")
-            lines.append(f"    <priority>{PRIORITY}</priority>")
-            lines.append("  </url>")
+    sitemap_content = f"{urlset_open}{''.join(urls)}{urlset_close}"
 
-        lines.append("</urlset>")
+    with open(SITEMAP_FILE, "w", encoding="utf-8") as f:
+        f.write(sitemap_content.strip())
 
-        os.makedirs("static", exist_ok=True)
-        with open(SITEMAP_FILENAME, "w", encoding="utf-8") as f:
-            f.write("\n".join(lines))
+    print(f"✅ Sitemap generated at {SITEMAP_FILE}")
 
-        print(f"✅ Sitemap generated at {SITEMAP_FILENAME}")
-    except Exception as e:
-        print(f"⚠️ Sitemap generation failed: {e}")
 
-def ping_google():
-    try:
-        ping_url = f"https://www.google.com/ping?sitemap={SITEMAP_URL}"
-        r = requests.get(ping_url, timeout=10)
-        if r.status_code == 200:
-            print(f"🚀 Google ping successful: {ping_url}")
-        else:
-            print(f"⚠️ Google ping returned status {r.status_code}")
-    except Exception as e:
-        print(f"❌ Error pinging Google: {e}")
+def ping_search_engines():
+    """Ping Google and Bing to notify about updated sitemap."""
+    sitemap_url = f"{DOMAIN}/static/sitemap.xml"
+    engines = {
+        "Google": f"https://www.google.com/ping?sitemap={sitemap_url}",
+        "Bing": f"https://www.bing.com/ping?sitemap={sitemap_url}"
+    }
+
+    for name, url in engines.items():
+        try:
+            resp = requests.get(url, timeout=10)
+            if resp.status_code == 200:
+                print(f"✅ {name} ping successful")
+            else:
+                print(f"⚠️ {name} ping returned {resp.status_code}")
+        except Exception as e:
+            print(f"❌ {name} ping failed: {e}")
+
 
 def update_sitemap_and_ping():
-    generate_sitemap()
-    ping_google()
+    """Full process: generate sitemap then ping search engines."""
+    try:
+        generate_sitemap()
+        ping_search_engines()
+    except Exception as e:
+        print(f"❌ Failed to update sitemap: {e}")
