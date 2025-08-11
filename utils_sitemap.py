@@ -3,7 +3,7 @@ import requests
 from datetime import datetime
 
 # ================= CONFIG =================
-DOMAIN = "https://brand-n-bloom.com"  
+DOMAIN = "https://www.brand-n-bloom.com"  
 STATIC_DIR = "static"
 SITEMAP_FILE = os.path.join(STATIC_DIR, "sitemap.xml")
 # ===========================================
