@@ -9,6 +9,10 @@ from utils_sitemap import update_sitemap_and_ping  # NEW import
 threading.Thread(target=update_sitemap_and_ping, daemon=True).start()
 # =============================================================
 
+# Run this only once when starting
+if __name__ == "__main__":
+  utils_sitemap.update_sitemap_and_ping()
+  
 # Page settings
 st.set_page_config(page_title="Brand n Bloom", layout="wide")
 
