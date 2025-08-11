@@ -12,27 +12,50 @@ if can_use_tool("BloomInsight"):
     if uploaded_file is not None:
         df = pd.read_csv(uploaded_file)
 
+        # Check for required columns
         if 'Post Date' in df.columns and 'Likes' in df.columns:
-            df['Post Date'] = pd.to_datetime(df['Post Date'])
-            df['Month'] = df['Post Date'].dt.to_period("M").astype(str)
+            if df.empty:
+                st.warning("❗ Your CSV file is empty. Please upload a file with data.")
+            else:
+                df['Post Date'] = pd.to_datetime(df['Post Date'], errors='coerce')
+                df = df.dropna(subset=['Post Date'])  # Remove rows where Post Date couldn't be parsed
+                df['Month'] = df['Post Date'].dt.to_period("M").astype(str)
 
-            st.subheader("Monthly Engagement Overview")
-            monthly = df.groupby("Month")[["Likes"]].mean().reset_index()
-            fig = px.bar(monthly, x="Month", y="Likes", title="📊 Average Likes per Month", color="Likes", color_continuous_scale="sunset")
-            st.plotly_chart(fig, use_container_width=True)
+                # Double-check after cleaning that there's still data
+                if df.empty:
+                    st.warning("❗ No valid data found after processing dates. Please check your file.")
+                else:
+                    st.subheader("Monthly Engagement Overview")
+                    monthly = df.groupby("Month")[["Likes"]].mean().reset_index()
 
-            st.subheader("📌 Top Performing Posts")
-            top_posts = df.sort_values("Likes", ascending=False).head(5)
-            st.write(top_posts[["Post Date", "Caption", "Likes"]])
+                    if monthly.empty:
+                        st.warning("❗ No monthly engagement data available to plot.")
+                    else:
+                        fig = px.bar(
+                            monthly,
+                            x="Month",
+                            y="Likes",
+                            title="📊 Average Likes per Month",
+                            color="Likes",
+                            color_continuous_scale="sunset"
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
 
-            # Email PDF option
-            if st.checkbox("📤 Email me this report"):
-                email = st.text_input("Enter your email")
-                if st.button("Send Report"):
-                    report_text = f"Instagram Performance Summary\n\nTop Posts:\n{top_posts.to_string(index=False)}"
-                    send_email_with_pdf("BloomInsight Report", email, report_text)
+                    st.subheader("📌 Top Performing Posts")
+                    top_posts = df.sort_values("Likes", ascending=False).head(5)
+                    if top_posts.empty:
+                        st.warning("❗ No top posts to display.")
+                    else:
+                        st.write(top_posts[["Post Date", "Caption", "Likes"]])
 
-            increment_usage("BloomInsight")
+                        # Email PDF option
+                        if st.checkbox("📤 Email me this report"):
+                            email = st.text_input("Enter your email")
+                            if st.button("Send Report"):
+                                report_text = f"Instagram Performance Summary\n\nTop Posts:\n{top_posts.to_string(index=False)}"
+                                send_email_with_pdf("BloomInsight Report", email, report_text)
+
+                    increment_usage("BloomInsight")
         else:
             st.warning("❗ Ensure your CSV has 'Post Date', 'Caption', and 'Likes' columns.")
 else:
