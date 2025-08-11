@@ -2,9 +2,9 @@ import streamlit as st
 import openai
 import os
 from utils import can_use_tool, increment_usage, send_email_with_pdf
-# show_stripe_buttons removed temporarily
 
 openai.api_key = os.getenv("OPENROUTER_API_KEY")
+openai.api_base = "https://openrouter.ai/api/v1"  # Only if using OpenRouter
 
 st.title("🍽️ Digital Menu Creator")
 
@@ -15,7 +15,7 @@ Just enter dish names, categories, and our AI will craft a clean, classy menu fo
 
 # Usage control
 if not can_use_tool("digital_menu_creator"):
-    show_stripe_buttons()
+    st.error("⚠️ You've reached the usage limit for this tool.")
     st.stop()
 
 # Form
@@ -51,7 +51,11 @@ Input:\n{user_input}
                 model="gpt-3.5-turbo",
                 messages=[{"role": "user", "content": prompt}]
             )
-            ai_menu = response.choices[0].message["content"]
+
+            if response and response.choices:
+                ai_menu = response.choices[0].message["content"].strip()
+            else:
+                ai_menu = "⚠️ The AI could not generate a menu at this time."
 
             st.markdown("### 📋 Your AI-Generated Menu")
             st.markdown(ai_menu)
@@ -68,5 +72,7 @@ else:
         st.warning("Please enter dish data to proceed.")
 
 st.info("""
-🧠 *Note:* The insights provided by this tool are generated using AI and public data. While helpful, they may not reflect 100% accuracy or real-time changes. Always consult professionals before making critical decisions.
+🧠 *Note:* The insights provided by this tool are generated using AI and public data. 
+While helpful, they may not reflect 100% accuracy or real-time changes. 
+Always consult professionals before making critical decisions.
 """)
