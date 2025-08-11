@@ -1,7 +1,7 @@
 streamlit==1.38.0
 reportlab==4.2.2
 openai==1.91.0
-requests>=2.32.3,<3
+requests
 Pillow>=10.2.0,<11
 python-dotenv==1.0.1
 google-api-core==2.25.1
@@ -15,8 +15,8 @@ seaborn==0.13.2
 altair==5.5.0
 beautifulsoup4==4.13.4
 Flask==3.1.1
-packaging>=24.1,<25
+packaging
 pandas==2.3.0
-protobuf==6.31.1
+protobuf
 tqdm==4.67.1
 Werkzeug==3.1.3
