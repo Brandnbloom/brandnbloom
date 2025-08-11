@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brand n Bloom 🌸</title>
+
+  <!-- Favicon & Icons -->
+  <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#FF2898" />
+</head>
+<body style="margin: 0; padding: 0;">
+  <iframe 
+    src="https://brand-n-bloom.onrender.com"
+    width="100%"
+    height="100%"
+    style="border: none; position: fixed; top: 0; left: 0; height: 100vh; width: 100vw;"
+    allowfullscreen
+  ></iframe>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(reg => console.log("✅ Service worker registered!", reg))
+        .catch(err => console.warn("❌ Service worker failed:", err));
+    }
+  </script>
+</body>
+</html>
