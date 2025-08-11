@@ -1,7 +1,7 @@
 streamlit==1.38.0
 reportlab==4.2.2
 openai==1.91.0
-requests==2.32.3
+requests==2.32.4
 pillow==11.2.1
 python-dotenv==1.0.1
 google-api-core==2.25.1
@@ -55,7 +55,6 @@ pyparsing==3.2.3
 python-dateutil==2.9.0.post0
 pytz==2025.2
 referencing==0.36.2
-requests==2.32.4
 requests-oauthlib==2.0.0
 rpds-py==0.25.1
 rsa==4.9.1
