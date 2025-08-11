@@ -3,7 +3,7 @@ import requests
 from datetime import datetime
 
 # ===== CONFIG =====
-DOMAIN = "https://www.brand-and-bloom.com"
+DOMAIN = "https://www.brand-n-bloom.com"
 STATIC_ROUTES = [
     "",  # Home
     "pages/about_us",
@@ -18,7 +18,7 @@ STATIC_ROUTES = [
 CHANGEFREQ = "weekly"
 PRIORITY = "0.7"
 SITEMAP_FILENAME = "static/sitemap.xml"
-SITEMAP_URL = https://www.brand-and-bloom.com/static/sitemap.xml  # Must match your hosted path
+SITEMAP_URL = https://www.brand-n-bloom.com/static/sitemap.xml  # Must match your hosted path
 # ==================
 
 def generate_sitemap():
