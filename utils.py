@@ -1,217 +1,93 @@
 import os
-import smtplib
 import json
-import datetime
+import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
-from reportlab.lib.pagesizes import letter
-from reportlab.pdfgen import canvas
-import streamlit as st
+from dotenv import load_dotenv
 
-USAGE_FILE = "usage_counts.txt"
+# Load environment variables from .env file
+load_dotenv()
 
-# ✅ Styling
-def apply_custom_css():
-    st.markdown("""
-        <style>
-        html, body, [class*="css"] {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: #FAF5FF;
-        }
-        .stApp {
-            background-color: #ffffff;
-            padding: 1rem;
-        }
-        h1, h2, h3 {
-            color: #8A4FFF;
-        }
-        .css-1v3fvcr {  /* Sidebar title */
-            color: #8A4FFF;
-            font-weight: bold;
-        }
-        .stButton>button {
-            background-color: #8A4FFF;
-            color: white;
-            border-radius: 8px;
-            border: none;
-            padding: 0.5rem 1rem;
-        }
-        .stButton>button:hover {
-            background-color: #6D28D9;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+# ------------- 1️⃣ USAGE TRACKER ----------------
+# This will store how many times a tool was used
+usage_file = "usage.json"
 
-# ✅ Tool cards layout
-def responsive_cards_css():
-    st.markdown("""
-    <style>
-    .tool-card-container {
-        display: flex;
-        flex-wrap: wrap;
-        justify-content: space-between;
-        gap: 20px;
-    }
-    .tool-card {
-        background-color: #f8f3ff;
-        border-radius: 12px;
-        padding: 20px;
-        width: 100%;
-        max-width: 350px;
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        transition: all 0.3s ease;
-        flex: 1;
-    }
-    .tool-card:hover {
-        transform: scale(1.02);
-        background-color: #efe7fd;
-    }
-    @media (max-width: 768px) {
-        .tool-card-container {
-            flex-direction: column;
-        }
-    }
-    </style>
-    """, unsafe_allow_html=True)
+def _load_usage():
+    """Reads the usage data from file, or creates an empty one if not present."""
+    if not os.path.exists(usage_file):
+        with open(usage_file, "w") as f:
+            json.dump({}, f)
+    with open(usage_file, "r") as f:
+        return json.load(f)
 
-# ✅ Old anonymous usage logic (optional fallback)
-def can_use_tool_old(tool_name):
-    if not os.path.exists(USAGE_FILE):
-        return True
-    with open(USAGE_FILE, "r") as f:
-        for line in f:
-            name, count = line.strip().split(":")
-            if name == tool_name and int(count) >= 3:
-                return False
-    return True
+def _save_usage(data):
+    """Saves updated usage data back to file."""
+    with open(usage_file, "w") as f:
+        json.dump(data, f, indent=4)
+
+def can_use_tool(tool_name, limit=5):
+    """
+    Checks if a tool can be used.
+    Example: can_use_tool("BloomInsight") → returns True/False
+    """
+    usage_data = _load_usage()
+    return usage_data.get(tool_name, 0) < limit
 
 def increment_usage(tool_name):
-    counts = {}
-    if os.path.exists(USAGE_FILE):
-        with open(USAGE_FILE, "r") as f:
-            for line in f:
-                name, count = line.strip().split(":")
-                counts[name] = int(count)
-    counts[tool_name] = counts.get(tool_name, 0) + 1
-    with open(USAGE_FILE, "w") as f:
-        for name, count in counts.items():
-            f.write(f"{name}:{count}\n")
+    """
+    Adds +1 to the usage count for a tool.
+    """
+    usage_data = _load_usage()
+    usage_data[tool_name] = usage_data.get(tool_name, 0) + 1
+    _save_usage(usage_data)
 
-# ✅ Email report with PDF
-def send_email_with_pdf(subject, recipient, content):
+# ------------- 2️⃣ EMAIL SENDER ----------------
+def send_email_with_pdf(to_email, subject, body, pdf_path):
+    """
+    Sends an email with a PDF attachment.
+    Needs EMAIL_USER and EMAIL_PASS in .env file.
+    """
+    email_user = os.getenv("EMAIL_USER")
+    email_pass = os.getenv("EMAIL_PASS")
+
+    if not email_user or not email_pass:
+        raise ValueError("EMAIL_USER and EMAIL_PASS must be set in .env")
+
+    # Create email
     msg = MIMEMultipart()
-    msg["From"] = os.getenv("EMAIL_USER")
-    msg["To"] = recipient
+    msg["From"] = email_user
+    msg["To"] = to_email
     msg["Subject"] = subject
 
-    body = MIMEText(
-        "Hi,\n\nPlease find your AI-generated report attached.\n\nRegards,\nTeam Brand n Bloom",
-        "plain"
-    )
-    msg.attach(body)
+    # Add text body
+    msg.attach(MIMEText(body, "plain"))
 
-    # Create PDF
-    pdf_path = "report.pdf"
-    c = canvas.Canvas(pdf_path, pagesize=letter)
-    width, height = letter
-    lines = content.split("\n")
-    y = height - 50
-    for line in lines:
-        c.drawString(50, y, line.strip())
-        y -= 15
-        if y < 50:
-            c.showPage()
-            y = height - 50
-    c.save()
-
+    # Attach PDF
     with open(pdf_path, "rb") as f:
-        attachment = MIMEApplication(f.read(), _subtype="pdf")
-        attachment.add_header('Content-Disposition', 'attachment', filename="report.pdf")
-        msg.attach(attachment)
+        pdf_attachment = MIMEApplication(f.read(), _subtype="pdf")
+        pdf_attachment.add_header("Content-Disposition", "attachment", filename=os.path.basename(pdf_path))
+        msg.attach(pdf_attachment)
 
-    try:
-        with smtplib.SMTP_SSL("smtp.zoho.in", 465) as server:
-            server.login(os.getenv("EMAIL_USER"), os.getenv("EMAIL_PASS"))
-            server.send_message(msg)
-        st.success("📧 Report sent to your email!")
-    except Exception as e:
-        st.error(f"Email failed: {e}")
+    # Send email
+    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+        server.login(email_user, email_pass)
+        server.send_message(msg)
 
-# ✅ Load JSON usage data for per-user limits
-def load_usage():
-    if os.path.exists("usage_data.json"):
-        with open("usage_data.json", "r") as f:
-            return json.load(f)
-    return {}
+    print(f"✅ Email sent to {to_email} with {pdf_path}")
 
-def save_usage(data):
-    with open("usage_data.json", "w") as f:
-        json.dump(data, f)
-
-# ✅ Alert for high daily usage
-def check_usage_and_alert():
-    today = datetime.date.today().isoformat()
-    usage_data = load_usage()
-    total_today = sum(
-        usage_data.get(tool, {}).get(today, {}).get(email, 0)
-        for tool in usage_data
-        for email in usage_data[tool].get(today, {})
-    )
-
-    if total_today > 50:
-        subject = "🚨 Brand n Bloom High Traffic Alert"
-        content = f"Hi Shreya,\n\nToday you had {total_today} total tool usages.\n\nCheck your analytics for insights.\n\n– Brand n Bloom Bot 🌸"
-        send_alert_email(subject, content)
-
-def send_alert_email(subject, content):
-    msg = MIMEMultipart()
-    msg["From"] = os.getenv("EMAIL_USER")
-    msg["To"] = os.getenv("ALERT_EMAIL")
-    msg["Subject"] = subject
-    msg.attach(MIMEText(content, "plain"))
-
-    try:
-        with smtplib.SMTP_SSL("smtp.zoho.in", 465) as server:
-            server.login(os.getenv("EMAIL_USER"), os.getenv("EMAIL_PASS"))
-            server.send_message(msg)
-        print("✅ Alert email sent")
-    except Exception as e:
-        print(f"❌ Failed to send alert: {e}")
-
-# ✅ Subscription check
-def is_subscribed_user(email):
-    try:
-        with open("subscribers.json", "r") as f:
-            data = json.load(f)
-            return email in data.get("subscribers", [])
-    except:
-        return False
-
-# ✅ New per-user daily usage limit logic
-def can_use_tool(email, tool_name):
-    if is_subscribed_user(email):
-        return True  # Unlimited for subscribed users
-
-    usage_data = load_usage()
-    today = datetime.date.today().isoformat()
-
-    if tool_name not in usage_data:
-        usage_data[tool_name] = {}
-
-    if today not in usage_data[tool_name]:
-        usage_data[tool_name][today] = {}
-
-    if email not in usage_data[tool_name][today]:
-        usage_data[tool_name][today][email] = 0
-
-    return usage_data[tool_name][today][email] < 3
-
-def increment_user_usage(email, tool_name):
-    usage_data = load_usage()
-    today = datetime.date.today().isoformat()
-
-    usage_data.setdefault(tool_name, {}).setdefault(today, {}).setdefault(email, 0)
-    usage_data[tool_name][today][email] += 1
-
-    save_usage(usage_data)
+# ------------- 3️⃣ HELPER FOR STATIC FILES ----------------
+def inject_pwa_tags():
+    """
+    Injects PWA manifest & service worker tags into Streamlit HTML.
+    Use in app.py → st.markdown(inject_pwa_tags(), unsafe_allow_html=True)
+    """
+    return """
+    <link rel="manifest" href="manifest.json">
+    <script>
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(() => console.log('Service Worker Registered'));
+      }
+    </script>
+    """
