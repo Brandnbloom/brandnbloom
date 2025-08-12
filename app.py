@@ -40,7 +40,7 @@ if ("serviceWorker" in navigator) {
 """, height=0)
 
 # Banner
-st.image("assets/banner.png", use_container_width=True)
+st.image("assets/banner.png", use_column_width=True)
 
 # Welcome text
 st.markdown("""
