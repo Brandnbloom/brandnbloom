@@ -26,12 +26,13 @@ def _save_usage(data):
     with open(usage_file, "w") as f:
         json.dump(data, f, indent=4)
 
-def can_use_tool(tool_name, limit=5):
-    """
-    Checks if a tool can be used.
-    Example: can_use_tool("BloomInsight") → returns True/False
-    """
-    usage_data = _load_usage()
+def can_use_tool(user_email, tool_name):
+    usage_data = get_usage_data(user_email)  # however you fetch it
+    limit = get_tool_limit(tool_name)        # however you fetch the limit
+    try:
+        limit = int(limit)  # make sure limit is a number
+    except ValueError:
+        limit = 0           # if it's not a number, default to 0
     return usage_data.get(tool_name, 0) < limit
 
 def increment_usage(tool_name):
