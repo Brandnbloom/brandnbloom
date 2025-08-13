@@ -2,7 +2,7 @@ import os
 import streamlit as st
 import streamlit.components.v1 as components
 import threading
-from utils import responsive_cards_css, check_usage_and_alert
+from utils import check_usage_and_alert
 from utils_sitemap import update_sitemap_and_ping  # NEW import
 from flask import Flask, request, jsonify
 import instaloader
@@ -167,9 +167,6 @@ components.html("""
   gtag('config', 'G-0GBTQZDD53');
 </script>
 """, height=0)
-
-# --- Responsive Cards CSS ---
-responsive_cards_css()
 
 # --- Tool Cards ---
 tools = [
