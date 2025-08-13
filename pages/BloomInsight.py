@@ -2,6 +2,12 @@ import streamlit as st
 from utils import can_use_tool, increment_usage, send_email_with_pdf
 import plotly.express as px
 import pandas as pd
+import requests
+
+username = st.text_input("Enter Instagram Username")
+if st.button("Scrape Data"):
+    response = requests.get(f"https://YOUR_RENDER_URL/scrape?username={username}")
+    st.json(response.json())
 
 st.set_page_config(page_title="BloomInsight", layout="wide")
 st.title("📈 BloomInsight – Instagram Engagement Analyzer")
