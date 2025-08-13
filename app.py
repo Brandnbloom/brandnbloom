@@ -4,7 +4,39 @@ import streamlit.components.v1 as components
 import threading
 from utils import responsive_cards_css, check_usage_and_alert
 from utils_sitemap import update_sitemap_and_ping  # NEW import
+from flask import Flask, request, jsonify
+import instaloader
+from dotenv import load_dotenv
+import os
 
+load_dotenv()
+
+app = Flask(__name__)
+L = instaloader.Instaloader()
+
+@app.route("/scrape", methods=["GET"])
+def scrape_instagram():
+    username = request.args.get("username")
+    if not username:
+        return jsonify({"error": "Username is required"}), 400
+    
+    try:
+        profile = instaloader.Profile.from_username(L.context, username)
+        data = {
+            "username": profile.username,
+            "full_name": profile.full_name,
+            "followers": profile.followers,
+            "following": profile.followees,
+            "bio": profile.biography,
+            "posts": profile.mediacount
+        }
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == "__main__":
+    app.run(debug=True)
+  
 # ================= Run sitemap in background =================
 threading.Thread(target=update_sitemap_and_ping, daemon=True).start()
 # =============================================================
