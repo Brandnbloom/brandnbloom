@@ -5,6 +5,15 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 from dotenv import load_dotenv
+import requests
+
+def get_instagram_data(username):
+    api_url = f"https://myinstascraper.onrender.com/user/{username}"
+    response = requests.get(api_url)
+    if response.status_code == 200:
+        return response.json()
+    else:
+        return {"error": "Could not fetch data"}
 
 # Load environment variables from .env file
 load_dotenv()
