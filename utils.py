@@ -101,3 +101,37 @@ def inject_pwa_tags():
       }
     </script>
     """
+
+def responsive_cards_css():
+    st.markdown("""
+    <style>
+    .tool-card-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-top: 20px;
+    }
+    .tool-card {
+        background-color: #fff;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        flex: 1 1 calc(33% - 20px);
+        min-width: 250px;
+    }
+    .tool-card h4 {
+        margin: 0 0 10px 0;
+        font-size: 20px;
+    }
+    .tool-card p {
+        margin: 0 0 10px 0;
+        font-size: 14px;
+        color: #555;
+    }
+    .tool-card a {
+        text-decoration: none;
+        color: #FF2898;
+        font-weight: 500;
+    }
+    </style>
+    """, unsafe_allow_html=True)
