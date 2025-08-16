@@ -7,6 +7,16 @@ from email.mime.application import MIMEApplication
 from dotenv import load_dotenv
 import requests
 
+from dotenv import load_dotenv
+
+load_dotenv()
+
+def get_env(name: str, default: str | None = None) -> str:
+    value = os.getenv(name, default)
+    if value is None:
+        raise RuntimeError(f"Missing required env var: {name}")
+    return value
+    
 def get_instagram_data(username):
     api_url = f"https://myinstascraper.onrender.com/user/{username}"
     response = requests.get(api_url)
