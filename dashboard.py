@@ -1,28 +1,26 @@
 import streamlit as st
-import requests
+import pandas as pd
 import plotly.express as px
+import requests
 
-st.set_page_config(page_title="BloomInsight", layout="wide")
-st.title("📊 BloomInsight – Instagram Insights Dashboard")
+ACCESS_TOKEN = "YOUR_LONG_LIVED_ACCESS_TOKEN"
+IG_BUSINESS_ID = "YOUR_INSTAGRAM_BUSINESS_ID"
 
-api_base = "https://your-api-url.onrender.com"
+st.title("📊 BloomInsight Instagram Dashboard")
 
-access_token = st.text_input("Enter your access token")
-ig_user_id = st.text_input("Enter your Instagram User ID")
+# Fetch data
+url = f"https://graph.facebook.com/v18.0/{IG_BUSINESS_ID}/insights"
+params = {
+    "metric": "impressions,reach,profile_views,followers_count",
+    "period": "day",
+    "access_token": ACCESS_TOKEN
+}
+data = requests.get(url, params=params).json()
 
-if st.button("Get Report"):
-    data = requests.get(f"{api_base}/insights", params={
-        "token": access_token,
-        "ig_user_id": ig_user_id
-    }).json()
+# Convert to DataFrame
+df = pd.DataFrame(data['data'][0]['values'])  # Example for impressions
+st.write(df)
 
-    # Example chart
-    for metric in data.get("data", []):
-        st.subheader(metric["name"])
-        df = [{"date": v["end_time"], "value": v["value"]} for v in metric["values"]]
-        fig = px.line(df, x="date", y="value", title=metric["name"])
-        st.plotly_chart(fig)
-
-    # KPI example
-    st.metric("Latest Reach", df[-1]["value"])
-
+# Chart
+fig = px.line(df, x="end_time", y="value", title="Daily Impressions")
+st.plotly_chart(fig)
