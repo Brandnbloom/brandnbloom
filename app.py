@@ -3,47 +3,14 @@ import streamlit as st
 import streamlit.components.v1 as components
 import threading
 from utils_sitemap import update_sitemap_and_ping  # NEW import
-from flask import Flask, request, jsonify
-import instaloader
-from dotenv import load_dotenv
-import os
+from bloominsight.scraper import scrape_instagram_profile
+from bloominsight.analysis import analyze_profile
+from bloominsight.dashboard import render_dashboard
 
-load_dotenv()
-
-app = Flask(__name__)
-L = instaloader.Instaloader()
-
-@app.route("/scrape", methods=["GET"])
-def scrape_instagram():
-    username = request.args.get("username")
-    if not username:
-        return jsonify({"error": "Username is required"}), 400
-    
-    try:
-        profile = instaloader.Profile.from_username(L.context, username)
-        data = {
-            "username": profile.username,
-            "full_name": profile.full_name,
-            "followers": profile.followers,
-            "following": profile.followees,
-            "bio": profile.biography,
-            "posts": profile.mediacount
-        }
-        return jsonify(data)
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-if __name__ == "__main__":
-    app.run(debug=True)
-  
 # ================= Run sitemap in background =================
 threading.Thread(target=update_sitemap_and_ping, daemon=True).start()
 # =============================================================
 
-# Run this only once when starting
-if __name__ == "__main__":
-  update_sitemap_and_ping()
-  
 # Page settings
 st.set_page_config(page_title="Brand n Bloom", layout="wide")
 
@@ -117,6 +84,21 @@ with st.expander("📂 Click here to explore all tools and info sections"):
         st.page_link("pages/legal.py", label="⚖️ Terms & Privacy")
         st.page_link("pages/disclaimer.py", label="🛑 Disclaimer")
 
+# --- BloomInsight Section ---
+st.markdown("## 📈 BloomInsight - Instagram Analytics")
+
+username = st.text_input("Enter Instagram Username")
+if st.button("Analyze"):
+    if username:
+        profile_data = scrape_instagram_profile(username)
+        if profile_data:
+            insights = analyze_profile(profile_data)
+            render_dashboard(profile_data, insights)
+        else:
+            st.error("Could not fetch Instagram profile. Try again or check proxies.")
+    else:
+        st.warning("Please enter a username.")
+
 # --- Google Translate ---
 components.html("""
 <div id="google_translate_element"></div>
@@ -166,30 +148,6 @@ components.html("""
   gtag('config', 'G-0GBTQZDD53');
 </script>
 """, height=0)
-
-# --- Tool Cards ---
-tools = [
-    {"name": "BloomScore", "desc": "Audit your social & web presence.", "url": "/BloomScore"},
-    {"name": "DinePsych", "desc": "Analyze customer behavior in restaurants.", "url": "/Consumer-Behavior"},
-    {"name": "Visual Audit", "desc": "Screenshot-based brand tone check.", "url": "/Visual-Audit"},
-    {"name": "Review Assistant", "desc": "Reply to reviews with emotion-based tone.", "url": "/Review-Reply"},
-    {"name": "Digital Menu Creator", "desc": "Generate restaurant menus with Canva-ready design.", "url": "/Digital-Menu"},
-    {"name": "BloomInsight", "desc": "Track SEO, traffic, and GMB in one dashboard.", "url": "/BloomInsight"}
-]
-
-st.markdown("<div class='tool-card-container'>", unsafe_allow_html=True)
-for tool in tools:
-    st.markdown(f"""
-    <div class='tool-card'>
-        <h4>{tool["name"]}</h4>
-        <p>{tool["desc"]}</p>
-        <a href="{tool['url']}">🚀 Try Now</a>
-    </div>
-    """, unsafe_allow_html=True)
-st.markdown("</div>", unsafe_allow_html=True)
-
-# --- Usage Check ---
-check_usage_and_alert()
 
 # Footer
 st.markdown("""
