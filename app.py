@@ -3,9 +3,6 @@ import streamlit as st
 import streamlit.components.v1 as components
 import threading
 from utils_sitemap import update_sitemap_and_ping  # NEW import
-from bloominsight.scraper import scrape_instagram_profile
-from bloominsight.analysis import analyze_profile
-from bloominsight.dashboard import render_dashboard
 
 # ================= Run sitemap in background =================
 threading.Thread(target=update_sitemap_and_ping, daemon=True).start()
