@@ -23,6 +23,5 @@ Werkzeug==3.1.3
 plotly==5.23.0
 instaloader
 reportlab
-sqlite3-binary
 apscheduler
 fpdf
