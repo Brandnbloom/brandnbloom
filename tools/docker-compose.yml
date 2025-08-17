@@ -1,0 +1,39 @@
+version: '3.8'
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: bloom
+      POSTGRES_PASSWORD: bloom_pass
+      POSTGRES_DB: bloominsight
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/backend.Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://bloom:bloom_pass@db:5432/bloominsight
+      - STORAGE_STATE_PATH=/app/scraper/storage_state.json
+      - PROXY_LIST_FILE=/app/proxies.txt
+    depends_on:
+      - db
+    ports:
+      - '8000:8000'
+
+  streamlit:
+    build:
+      context: .
+      dockerfile: docker/streamlit.Dockerfile
+    environment:
+      - BACKEND_SCRAPE_URL=http://backend:8000/scrape
+    ports:
+      - '8501:8080'
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:
