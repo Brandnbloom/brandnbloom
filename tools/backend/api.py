@@ -3,8 +3,10 @@ from scraper.playwright_scraper import fetch_profile_and_posts
 from backend.crud import upsert_account, insert_posts
 from backend.db import create_tables
 import os
+import logging
 
 app = Flask(__name__)
+logging.basicConfig(level=logging.INFO)
 create_tables()
 
 @app.route('/scrape', methods=['POST'])
@@ -21,7 +23,8 @@ def scrape():
             insert_posts(acc_id, posts)
         return jsonify({'profile': profile, 'posts_count': len(posts)})
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        logging.exception("Error in /scrape endpoint")
+        return jsonify({'error': 'An internal error has occurred.'}), 500
 
 @app.route('/health')
 def health():
