@@ -2,6 +2,16 @@ import os
 import streamlit as st
 import streamlit.components.v1 as components
 import threading
+from flask import Flask, request, jsonify
+from bloominsight.scraper import fetch_public_profile
+from bloominsight.analyzer import analyze_profile
+from ai_tools.bloomscore import compute_bloomscore
+from ai_tools.influencer_finder import find_influencers
+from ai_tools.business_compare import compare_handles
+from ai_tools.menu_pricing import suggest_prices
+from ai_tools.consumer_behavior import run_questionnaire
+from bloominsight.report_api import generate_and_send_weekly_report
+from db.models import log_kpis, save_report
 from utils_sitemap import update_sitemap_and_ping  # NEW import
 
 # ================= Run sitemap in background =================
@@ -57,44 +67,111 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# --- Collapsible Menu ---
-with st.expander("📂 Click here to explore all tools and info sections"):
-    col1, col2, col3 = st.columns(3)
+app = Flask(__name__)
 
-    with col1:
-        st.page_link("pages/BloomScore.py", label="📊 BloomScore")
-        st.page_link("pages/Consumer_Behavior.py", label="🧠 DinePsych")
-        st.page_link("pages/Visual_Audit.py", label="🎨 Visual Audit")
-        st.page_link("pages/Review_Reply.py", label="💬 Review Assistant")
+@app.route('/health', methods=['GET'])
+def health():
+    return jsonify({"ok": True, "mode": os.environ.get("IG_SCRAPER_MODE","fallback")})
 
-    with col2:
-        st.page_link("pages/Digital_Menu.py", label="📄 Digital Menu")
-        st.page_link("pages/BloomInsight.py", label="📈 BloomInsight")
-        st.page_link("pages/blogs.py", label="📝 Blogs")
-        st.page_link("pages/contact_us.py", label="📬 Contact")
+@app.route('/scrape', methods=['POST'])
+def scrape():
+    data = request.get_json() or {}
+    handle = data.get('handle')
+    if not handle:
+        return jsonify({"error": "missing handle"}), 400
+    profile = fetch_public_profile(handle)
+    return jsonify(profile)
 
-    with col3:
-        st.page_link("pages/about_us.py", label="👥 About Us")
-        st.page_link("pages/about_ceo.py", label="👩‍💼 About CEO")
-        st.page_link("pages/our_services.py", label="🛠️ Our Services")
-        st.page_link("pages/manifesto.py", label="📜 Manifesto")
-        st.page_link("pages/legal.py", label="⚖️ Terms & Privacy")
-        st.page_link("pages/disclaimer.py", label="🛑 Disclaimer")
+@app.route('/analyze', methods=['POST'])
+def analyze():
+    data = request.get_json() or {}
+    handle = data.get('handle')
+    if not handle:
+        return jsonify({"error": "missing handle"}), 400
+    profile = fetch_public_profile(handle)
+    analysis = analyze_profile(profile)
+    # Log KPIs
+    try:
+        log_kpis(handle, analysis['followers'], analysis['likes'], analysis['reach'], analysis['impressions'], analysis['engagement_rate'])
+    except Exception as e:
+        app.logger.debug("DB log error: %s", e)
+    return jsonify(analysis)
 
-# --- BloomInsight Section ---
-st.markdown("## 📈 BloomInsight - Instagram Analytics")
+@app.route('/send-report', methods=['POST'])
+def send_report():
+    data = request.get_json() or {}
+    handle = data.get('handle')
+    to_email = data.get('email')
+    user_id = data.get('user_id', 1)
+    if not handle or not to_email:
+        return jsonify({"error":"missing handle or email"}), 400
+    profile = fetch_public_profile(handle)
+    analysis = analyze_profile(profile)
+    kpis = {
+        "Followers": analysis["followers"],
+        "Likes": analysis["likes"],
+        "Reach": analysis["reach"],
+        "Impressions": analysis["impressions"],
+        "Engagement Rate (%)": analysis["engagement_rate"],
+    }
+    pdf = generate_and_send_weekly_report(user_id, to_email, handle, kpis)
+    return jsonify({"status":"sent", "pdf": pdf})
 
-username = st.text_input("Enter Instagram Username")
-if st.button("Analyze"):
-    if username:
-        profile_data = scrape_instagram_profile(username)
-        if profile_data:
-            insights = analyze_profile(profile_data)
-            render_dashboard(profile_data, insights)
-        else:
-            st.error("Could not fetch Instagram profile. Try again or check proxies.")
-    else:
-        st.warning("Please enter a username.")
+@app.route('/compare', methods=['POST'])
+@app.route('/bloomscore', methods=['POST'])
+def bloomscore_api():
+    data = request.get_json() or {}
+    handle = data.get('handle')
+    if not handle:
+        return jsonify({'error':'missing handle'}),400
+    p = fetch_public_profile(handle)
+    return jsonify(compute_bloomscore(p))
+
+@app.route('/influencers', methods=['POST'])
+def influencers_api():
+    data = request.get_json() or {}
+    handles = data.get('handles', [])
+    return jsonify(find_influencers(handles))
+
+@app.route('/menu-suggest', methods=['POST'])
+def menu_suggest_api():
+    data = request.get_json() or {}
+    cost = float(data.get('cost',0))
+    margin = float(data.get('margin',40))
+    comp = data.get('competitor')
+    comp = float(comp) if comp else None
+    return jsonify(suggest_prices(cost, margin, comp))
+
+@app.route('/consumer', methods=['POST'])
+def consumer_api():
+    data = request.get_json() or {}
+    answers = data.get('answers',{})
+    return jsonify(run_questionnaire(answers))
+
+@app.route('/influencer-find', methods=['POST'])
+def influencer_find_api():
+    data = request.get_json() or {}
+    handles = data.get('handles',[])
+    return jsonify(find_influencers(handles))
+
+def compare():
+    data = request.get_json() or {}
+    handles = data.get('handles', [])
+    if not handles or not isinstance(handles, list):
+        return jsonify({"error":"missing handles list"}), 400
+    results = {}
+    for h in handles:
+        try:
+            p = fetch_public_profile(h)
+            a = analyze_profile(p)
+            results[h] = {"followers": a["followers"], "engagement_rate": a["engagement_rate"]}
+        except Exception as e:
+            results[h] = {"error": str(e)}
+    return jsonify(results)
+
+if __name__ == '__main__':
+    port = int(os.environ.get("PORT", 8000))
+    app.run(host='0.0.0.0', port=port)
 
 # --- Google Translate ---
 components.html("""
