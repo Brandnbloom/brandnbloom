@@ -197,7 +197,10 @@ except ImportError:
                 "ssl_version": self.protocol,
                 "server_side": server_side,
             }
-            return wrap_socket(socket, ciphers=self.ciphers, **kwargs)
+            context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+context.minimum_version = ssl.TLSVersion.TLSv1_2
+context.set_ciphers("HIGH:!aNULL:!MD5:!3DES")
+return context.wrap_socket(socket, server_side=server_side)
 
 
 def assert_fingerprint(cert, fingerprint):
