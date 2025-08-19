@@ -3,7 +3,7 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
 
-# Setup logging (prints to console, can be redirected to file if needed)
+# Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("mailer")
 
@@ -14,10 +14,14 @@ SMTP_USER = os.environ.get("SMTP_USER")
 SMTP_PASS = os.environ.get("SMTP_PASS")
 SMTP_FROM = os.environ.get("SMTP_FROM", "Brand N Bloom <noreply@example.com>")
 
+# Restrict attachments to this directory
+SAFE_UPLOAD_DIR = os.path.abspath("uploads")  # ensure this folder exists
+
 
 def send_email(to_email: str, subject: str, html: str, attachments: list[str] | None = None):
     """
     Send an email with optional attachments using secure TLS.
+    Attachments are restricted to the SAFE_UPLOAD_DIR for security.
     """
     try:
         # Build email
@@ -31,12 +35,22 @@ def send_email(to_email: str, subject: str, html: str, attachments: list[str] | 
         attachments = attachments or []
         for path in attachments:
             try:
-                with open(path, "rb") as f:
-                    part = MIMEApplication(f.read(), Name=os.path.basename(path))
-                    part["Content-Disposition"] = f'attachment; filename="{os.path.basename(path)}"'
+                abs_path = os.path.abspath(path)
+
+                # Security check: ensure path is inside SAFE_UPLOAD_DIR
+                if not abs_path.startswith(SAFE_UPLOAD_DIR):
+                    raise ValueError(f"Invalid attachment path: {path}")
+
+                if not os.path.isfile(abs_path):
+                    raise FileNotFoundError(f"Attachment not found: {path}")
+
+                with open(abs_path, "rb") as f:
+                    part = MIMEApplication(f.read(), Name=os.path.basename(abs_path))
+                    part["Content-Disposition"] = f'attachment; filename="{os.path.basename(abs_path)}"'
                     msg.attach(part)
+
             except Exception as e:
-                logger.warning(f"Failed to attach {path}: {e}")
+                logger.warning(f"⚠️ Failed to attach {path}: {e}")
 
         # Secure TLS context
         context = ssl.create_default_context()
@@ -46,7 +60,7 @@ def send_email(to_email: str, subject: str, html: str, attachments: list[str] | 
         # Connect & send
         with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
             server.ehlo()
-            server.starttls(context=context)  # 👈 secure TLS
+            server.starttls(context=context)  # Secure TLS
             server.ehlo()
             if SMTP_USER and SMTP_PASS:
                 server.login(SMTP_USER, SMTP_PASS)
