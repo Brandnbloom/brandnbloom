@@ -33,11 +33,11 @@ jobs:
 
     # Initialize CodeQL with custom config
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
+             uses: github/codeql-action/init@v3
       with:
-        languages: ${{ matrix.language }}
+         languages: ${{ matrix.language }}
         build-mode: ${{ matrix.build-mode }}
-        config-file: ./.github/codeql/config.yml   # 👈 Added
+        config-file: ./.github/codeql/config.yml   # Remove or comment out this line
 
     - if: matrix.build-mode == 'manual'
       shell: bash
