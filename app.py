@@ -173,6 +173,27 @@ if __name__ == '__main__':
     port = int(os.environ.get("PORT", 8000))
     app.run(host='0.0.0.0', port=port)
 
+@app.route('/signup', methods=['POST'])
+def signup():
+    data = request.get_json() or {}
+    email = data.get("email")
+    name = data.get("name")
+    password = data.get("password")
+    if not email or not password:
+        return jsonify({"error": "missing fields"}), 400
+    user_id = create_user(email, name, password)
+    return jsonify({"status": "ok", "user_id": user_id})
+
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.get_json() or {}
+    email = data.get("email")
+    password = data.get("password")
+    if verify_user(email, password):
+        return jsonify({"status": "ok"})
+    return jsonify({"error": "invalid credentials"}), 401
+
 # --- Google Translate ---
 components.html("""
 <div id="google_translate_element"></div>
