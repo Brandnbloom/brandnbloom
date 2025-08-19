@@ -1,9 +1,10 @@
-
 services:
   - type: web
     name: brand-n-bloom-app
     env: python
     plan: free
+    runtime: python
+    pythonVersion: 3.12.3   # 👈 force Python 3.12
     buildCommand: pip install -r requirements.txt
     startCommand: streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0
     autoDeploy: true
@@ -28,10 +29,13 @@ services:
         sync: false
       - key: DATABASE_URL
         sync: false
+
   - type: web
     name: brand-n-bloom-api
     env: python
     plan: free
+    runtime: python
+    pythonVersion: 3.12.3   # 👈 force Python 3.12 here too
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
     autoDeploy: true
