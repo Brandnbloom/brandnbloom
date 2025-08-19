@@ -1,25 +1,24 @@
 name: "Custom CodeQL Config"
 
 paths:
-  - .  # include your repo root
+  - .   # analyze everything in repo
 
 paths-ignore:
   - "*/site-packages/**"
   - "**/venv/**"
   - "**/.venv/**"
   - "**/env/**"
-  - "*/requests/**"
+  - "*/requests/**"        # 👈 ignore requests internals
   - "*/streamlit/**"
 
 queries:
   - uses: security-extended
   - uses: security-and-quality
 
-# Optionally, suppress known safe false-positives:
 query-filters:
   - exclude:
       id: py/weak-sensitive-data-hashing
-      reason: "Used only inside requests.auth for RFC Digest Auth, not for storing user passwords."
+      reason: "False positive in requests.auth (sha512_utf8 for HTTP Digest Auth, not password hashing)."
   - exclude:
       id: py/path-injection
-      reason: "Attachments path is sanitized in mailer.py; exclude library false-positives."
+      reason: "Handled safely in mailer.py; exclude noisy library findings."
