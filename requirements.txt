@@ -2,7 +2,7 @@
 streamlit==1.38.0
 pandas==2.3.0
 numpy==1.26.4
-requests==2.32.3
+requests>=2.32.4
 python-dotenv==1.0.1
 packaging==24.1
 
