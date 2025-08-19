@@ -134,8 +134,26 @@ try:
 except ImportError:
 
     class SSLContext(object):  # Platform-specific: Python 2
-        def __init__(self, protocol_version):
-            self.protocol = protocol_version
+        def __init__(self, protocol_version=None):
+            # Use a secure default protocol if none is provided
+            if protocol_version is not None:
+                self.protocol = protocol_version
+            else:
+                # Prefer TLSv1_2 if available, else fallback to highest available
+                if hasattr(ssl, "PROTOCOL_TLSv1_2"):
+                    self.protocol = ssl.PROTOCOL_TLSv1_2
+                elif hasattr(ssl, "PROTOCOL_TLSv1_3"):
+                    self.protocol = ssl.PROTOCOL_TLSv1_3
+                elif hasattr(ssl, "PROTOCOL_TLS"):
+                    self.protocol = ssl.PROTOCOL_TLS
+                else:
+                    # Fallback to whatever is available, but warn
+                    self.protocol = ssl.PROTOCOL_SSLv23
+                    warnings.warn(
+                        "No secure TLS protocol available; falling back to potentially insecure default.",
+                        InsecurePlatformWarning,
+                    )
+                    
             # Use default values from a real SSLContext
             self.check_hostname = False
             self.verify_mode = ssl.CERT_NONE
