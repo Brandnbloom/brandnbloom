@@ -2,7 +2,7 @@
 streamlit==1.38.0
 pandas==2.3.0
 numpy==1.26.4
-requests==2.32.3
+requests==2.32.4
 python-dotenv==1.0.1
 packaging==24.1
 
@@ -39,7 +39,7 @@ google-auth==2.40.3
 google-auth-httplib2==0.2.0
 google-auth-oauthlib==1.2.2
 googleapis-common-protos==1.70.0
-protobuf==5.28.3
+protobuf==5.29.5
 
 # Instagram tools
 instaloader==4.13.1
