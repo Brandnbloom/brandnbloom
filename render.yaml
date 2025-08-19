@@ -28,3 +28,6 @@ services:
       - key: JWT_SECRET
         sync: false
       # ... rest of your env vars ...
+
+      buildCommand: pip install -r requirements.lock
+
