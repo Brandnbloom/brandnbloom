@@ -14,22 +14,15 @@ SMTP_USER = os.environ.get("SMTP_USER")
 SMTP_PASS = os.environ.get("SMTP_PASS")
 SMTP_FROM = os.environ.get("SMTP_FROM", "Brand N Bloom <noreply@example.com>")
 
-# Safe uploads directory
-SAFE_UPLOAD_DIR = os.path.abspath("uploads")
-os.makedirs(SAFE_UPLOAD_DIR, exist_ok=True)
-
-
-def sanitize_filename(filename: str) -> str:
-    """
-    Prevent path traversal by returning only the basename.
-    Example: '../../etc/passwd' -> 'passwd'
-    """
-    return os.path.basename(filename)
+# Restrict all attachments to this directory
+UPLOAD_DIR = os.path.abspath("uploads")
+os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 
 def send_email(to_email: str, subject: str, html: str, attachments: list[str] | None = None):
     """
-    Send an email with optional attachments securely.
+    Send an email with optional attachments using secure TLS.
+    All attachments must exist inside the UPLOAD_DIR folder.
     """
     try:
         # Build email
@@ -39,12 +32,16 @@ def send_email(to_email: str, subject: str, html: str, attachments: list[str] | 
         msg["Subject"] = subject
         msg.attach(MIMEText(html, "html"))
 
-        # Attachments (safe)
+        # Attachments (if any)
         attachments = attachments or []
         for path in attachments:
             try:
-                safe_name = sanitize_filename(path)
-                abs_path = os.path.join(SAFE_UPLOAD_DIR, safe_name)
+                # Normalize & enforce restriction
+                safe_name = os.path.basename(path)  # strip directory traversal
+                abs_path = os.path.abspath(os.path.join(UPLOAD_DIR, safe_name))
+
+                if not abs_path.startswith(UPLOAD_DIR):
+                    raise ValueError("Invalid attachment path")
 
                 if not os.path.isfile(abs_path):
                     raise FileNotFoundError(f"File not found: {safe_name}")
@@ -55,14 +52,14 @@ def send_email(to_email: str, subject: str, html: str, attachments: list[str] | 
                     msg.attach(part)
 
             except Exception as e:
-                logger.warning(f"⚠️ Could not attach {path}: {e}")
+                logger.warning(f"⚠️ Skipped attachment {path}: {e}")
 
         # Secure TLS context
         context = ssl.create_default_context()
         context.options |= ssl.OP_NO_TLSv1
         context.options |= ssl.OP_NO_TLSv1_1
 
-        # Send
+        # Connect & send
         with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
             server.ehlo()
             server.starttls(context=context)
