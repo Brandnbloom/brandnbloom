@@ -3,7 +3,6 @@ reportlab==4.2.2
 openai==1.91.0
 requests
 Pillow>=10.2.0,<11
-python_version=="3.12.*"
 python-dotenv==1.0.1
 greenlet>=3.0.3
 SQLAlchemy==2.0.31
