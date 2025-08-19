@@ -423,7 +423,7 @@ class PipSession(requests.Session):
             string came from.
         """
         if not suppress_logging:
-            msg = f"adding trusted host: {host!r}"
+            msg = "adding trusted host"
             if source is not None:
                 msg += f" (from {source})"
             logger.info(msg)
