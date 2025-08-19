@@ -8,7 +8,13 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0
     autoDeploy: true
-    ...
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      # ... rest of your env vars ...
+
   - type: web
     name: brand-n-bloom-api
     env: python
@@ -18,4 +24,7 @@ services:
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
     autoDeploy: true
-    ...
+    envVars:
+      - key: JWT_SECRET
+        sync: false
+      # ... rest of your env vars ...
