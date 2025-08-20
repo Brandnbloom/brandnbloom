@@ -17,6 +17,7 @@ from ._internal_utils import to_native_string
 from .compat import basestring, str, urlparse
 from .cookies import extract_cookies_to_jar
 from .utils import parse_dict_header
+from security import verify_password
 
 CONTENT_TYPE_FORM_URLENCODED = "application/x-www-form-urlencoded"
 CONTENT_TYPE_MULTI_PART = "multipart/form-data"
@@ -166,12 +167,17 @@ class HTTPDigestAuth(AuthBase):
             hash_utf8 = sha256_utf8
         elif _algorithm == "SHA-512":
 
-            def sha512_utf8(x):
-                if isinstance(x, str):
-                    x = x.encode("utf-8")
-                return hashlib.sha512(x).hexdigest()
+            # User enters password at login
+entered_password = "mysecret123"
 
-            hash_utf8 = sha512_utf8
+# Fetch the saved hash from DB (from signup step)
+stored_hash = "$2b$12$MvnWZ9oEMbgh3vP7nl..../..."  # example
+
+# Verify
+if verify_password(entered_password, stored_hash):
+    print("✅ Login successful")
+else:
+    print("❌ Wrong password")
 
         KD = lambda s, d: hash_utf8(f"{s}:{d}")  # noqa:E731
 
