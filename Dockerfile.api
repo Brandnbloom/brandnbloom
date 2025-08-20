@@ -1,5 +1,5 @@
-# Use stable Python 3.12
-FROM python:3.12-slim
+# Use stable Python 3.11
+FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
