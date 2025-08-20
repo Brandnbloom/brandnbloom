@@ -24,6 +24,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 # Expose port for Render
+# Copy app files (including .streamlit/config.toml)
+COPY . .
+
+# Run Streamlit app with config
+CMD ["streamlit", "run", "streamlit_app.py", "--server.port=10000", "--server.address=0.0.0.0", "--server.headless=true"]
+
 EXPOSE 10000
 
 # Run Streamlit app
