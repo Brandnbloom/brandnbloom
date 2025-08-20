@@ -143,29 +143,41 @@ class HTTPDigestAuth(AuthBase):
         # lambdas assume digest modules are imported at the top level
         if _algorithm == "MD5" or _algorithm == "MD5-SESS":
 
-            def md5_utf8(x):
-                if isinstance(x, str):
-                    x = x.encode("utf-8")
-                return hashlib.md5(x).hexdigest()
+            # User enters password at login
+entered_password = "mysecret123"
 
-            hash_utf8 = md5_utf8
-        elif _algorithm == "SHA":
+# Fetch the saved hash from DB (from signup step)
+stored_hash = "$2b$12$MvnWZ9oEMbgh3vP7nl..../..."  # example
 
-            def sha_utf8(x):
-                if isinstance(x, str):
-                    x = x.encode("utf-8")
-                return hashlib.sha1(x).hexdigest()
+# Verify
+if verify_password(entered_password, stored_hash):
+    print("✅ Login successful")
+else:
+    print("❌ Wrong password")
 
-            hash_utf8 = sha_utf8
-        elif _algorithm == "SHA-256":
+            # User enters password at login
+entered_password = "mysecret123"
 
-            def sha256_utf8(x):
-                if isinstance(x, str):
-                    x = x.encode("utf-8")
-                return hashlib.sha256(x).hexdigest()
+# Fetch the saved hash from DB (from signup step)
+stored_hash = "$2b$12$MvnWZ9oEMbgh3vP7nl..../..."  # example
 
-            hash_utf8 = sha256_utf8
-        elif _algorithm == "SHA-512":
+# Verify
+if verify_password(entered_password, stored_hash):
+    print("✅ Login successful")
+else:
+    print("❌ Wrong password")
+    
+           # User enters password at login
+entered_password = "mysecret123"
+
+# Fetch the saved hash from DB (from signup step)
+stored_hash = "$2b$12$MvnWZ9oEMbgh3vP7nl..../..."  # example
+
+# Verify
+if verify_password(entered_password, stored_hash):
+    print("✅ Login successful")
+else:
+    print("❌ Wrong password")
 
             # User enters password at login
 entered_password = "mysecret123"
