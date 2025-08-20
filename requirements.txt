@@ -1,3 +1,4 @@
+pip>=25.2
 # Core
 streamlit==1.38.0
 pandas==2.3.0
