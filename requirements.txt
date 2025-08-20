@@ -51,3 +51,4 @@ playwright==1.47.0
 
 # Database
 SQLAlchemy==2.0.31
+greenlet==3.0.3   # 🔑 Fix build issues on Python 3.13
