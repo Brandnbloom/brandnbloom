@@ -1,33 +1,22 @@
 services:
   - type: web
     name: brand-n-bloom-app
-    env: python
+    env: docker
     plan: free
-    runtime: python
-    pythonVersion: 3.12.3   # 👈 Pin Python 3.12
-    buildCommand: pip install -r requirements.txt
-    startCommand: streamlit run streamlit_app.py --server.port $PORT --server.address 0.0.0.0
+    dockerfilePath: ./Dockerfile.dashboard
     autoDeploy: true
     envVars:
       - key: OPENAI_API_KEY
         sync: false
       - key: JWT_SECRET
         sync: false
-      # ... rest of your env vars ...
 
   - type: web
     name: brand-n-bloom-api
-    env: python
+    env: docker
     plan: free
-    runtime: python
-    pythonVersion: 3.12.3   # 👈 Pin here too
-    buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    dockerfilePath: ./Dockerfile.api
     autoDeploy: true
     envVars:
       - key: JWT_SECRET
         sync: false
-      # ... rest of your env vars ...
-
-      buildCommand: pip install -r requirements.lock
-
