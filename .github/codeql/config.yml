@@ -1,0 +1,5 @@
+# .github/codeql/config.yml
+name: "Default CodeQL config"
+disable-default-queries: false
+queries: []
+paths-ignore: []
