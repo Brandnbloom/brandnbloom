@@ -1,3 +1,5 @@
-name: "Default CodeQL Config"
-queries:
-  - uses: security-and-quality
+# .github/codeql/config.yml
+name: "Default CodeQL config"
+disable-default-queries: false
+queries: []
+paths-ignore: []
