@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: brand-n-bloom-app
+    name: brandnbloom-dashboard
     env: docker
     plan: free
     dockerfilePath: ./Dockerfile.dashboard
@@ -12,7 +12,7 @@ services:
         sync: false
 
   - type: web
-    name: brand-n-bloom-api
+    name: brandnbloom-api
     env: docker
     plan: free
     dockerfilePath: ./Dockerfile.api
