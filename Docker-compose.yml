@@ -1,0 +1,42 @@
+version: "3.9"
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    container_name: brandnbloom-api
+    ports:
+      - "10000:10000"
+    env_file:
+      - .env
+    depends_on:
+      - db
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    container_name: brandnbloom-dashboard
+    ports:
+      - "8501:10000"   # streamlit inside container runs on 10000, expose as 8501 outside
+    env_file:
+      - .env
+    depends_on:
+      - api
+
+  db:
+    image: postgres:15
+    container_name: brandnbloom-db
+    restart: always
+    environment:
+      POSTGRES_USER: brandnbloom
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: brandnbloom
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  pgdata:
