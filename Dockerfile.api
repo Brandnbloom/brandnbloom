@@ -1,4 +1,4 @@
-# Use stable Python (avoid 3.13 for now)
+# Use stable Python
 FROM python:3.11-slim
 
 # Prevents Python from writing .pyc files & enables unbuffered logs
@@ -29,5 +29,5 @@ COPY . .
 # Expose port for Render
 EXPOSE 10000
 
-# Run Streamlit app
-CMD ["streamlit", "run", "streamlit_app.py", "--server.port=10000", "--server.address=0.0.0.0", "--server.headless=true"]
+# Run Flask API with Gunicorn
+CMD ["gunicorn", "-b", "0.0.0.0:10000", "app:app"]
