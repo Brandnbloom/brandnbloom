@@ -1,4 +1,4 @@
-# Use stable Python
+# Use slim Python base
 FROM python:3.11-slim
 
 # Prevents Python from writing .pyc files & enables unbuffered logs
@@ -18,7 +18,7 @@ WORKDIR /app
 # Copy requirements first for caching
 COPY requirements.txt .
 
-# Upgrade pip & install requirements
+# Upgrade pip & install dependencies
 RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
  && pip install --no-cache-dir -r requirements.txt \
  || pip install --no-cache-dir --use-deprecated=legacy-resolver -r requirements.txt
@@ -26,8 +26,8 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel \
 # Copy rest of the app
 COPY . .
 
-# Expose port for Render
+# Expose port (Render expects 10000)
 EXPOSE 10000
 
-# Run FastAPI with Uvicorn (not Flask)
-CMD ["uvicorn", "api_server:app", "--host", "0.0.0.0", "--port", "10000"]
+# Run FastAPI with Uvicorn (reload OFF in prod, workers >1 for concurrency)
+CMD ["uvicorn", "api_server:app", "--host", "0.0.0.0", "--port", "10000", "--workers", "4"]
