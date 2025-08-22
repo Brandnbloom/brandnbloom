@@ -43,7 +43,7 @@ google-auth>=2.40.0
 google-auth-httplib2>=0.2.0
 google-auth-oauthlib>=1.2.0
 googleapis-common-protos>=1.70.0
-protobuf>=4.23,<5
+protobuf>=4.23,<7
 
 # Instagram tools
 instaloader>=4.13.1
