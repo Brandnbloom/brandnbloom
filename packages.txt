@@ -1,8 +1,5 @@
-# Core build tools
 build-essential
 python3-dev
-
-# For Playwright (Chromium dependencies)
 libglib2.0-0
 libnss3
 libx11-6
@@ -24,9 +21,5 @@ libgbm1
 libnspr4
 libxrandr2
 xdg-utils
-
-# For PDFs (reportlab / poppler utils)
 poppler-utils
-
-# For image/media handling
 ffmpeg
