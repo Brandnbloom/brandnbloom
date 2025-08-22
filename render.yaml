@@ -1,5 +1,37 @@
 services:
   - type: web
+    name: brandnbloom-api
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile.api
+    autoDeploy: true
+    envVars:
+      - key: JWT_SECRET
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: MAILERLITE_API_KEY
+        sync: false
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        sync: false
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        sync: false
+      - key: PROXY_SERVER
+        sync: false
+      - key: PROXY_USERNAME
+        sync: false
+      - key: PROXY_PASSWORD
+        sync: false
+
+  - type: web
     name: brandnbloom-dashboard
     env: docker
     plan: free
@@ -10,13 +42,5 @@ services:
         sync: false
       - key: JWT_SECRET
         sync: false
-
-  - type: web
-    name: brandnbloom-api
-    env: docker
-    plan: free
-    dockerfilePath: ./Dockerfile.api
-    autoDeploy: true
-    envVars:
-      - key: JWT_SECRET
-        sync: false
+      - key: BASE_URL
+        value: https://brandnbloom-api.onrender.com
