@@ -28,5 +28,5 @@ xdg-utils
 # For PDFs (reportlab / poppler utils)
 poppler-utils
 
-# For image/media handling (if needed by Pillow/ffmpeg)
+# For image/media handling
 ffmpeg
