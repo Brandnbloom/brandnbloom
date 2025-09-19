@@ -70,3 +70,7 @@ aiohttp
 Jinja2
 streamlit-components  # if using components, else use streamlit.components.v1
 pdfkit
+psycopg2-binary
+python-jose[cryptography]
+passlib[bcrypt]
+stripe
