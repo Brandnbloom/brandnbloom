@@ -3,6 +3,25 @@ from db import get_session
 from models import Lead, Event
 import json
 
+# In-memory simulation; replace with DB models in production
+leads_db = {}
+
+def create_lead(user_id: int, name: str, email: str, phone: str, source: str):
+    if user_id not in leads_db:
+        leads_db[user_id] = []
+    lead = {"name": name, "email": email, "phone": phone, "source": source, "status": "New"}
+    leads_db[user_id].append(lead)
+    return lead
+
+def get_leads(user_id: int):
+    return leads_db.get(user_id, [])
+
+def update_lead_status(user_id: int, lead_index: int, status: str):
+    if user_id not in leads_db or lead_index >= len(leads_db[user_id]):
+        return None
+    leads_db[user_id][lead_index]["status"] = status
+    return leads_db[user_id][lead_index]
+
 def capture_lead(data: dict):
     with get_session() as s:
         lead = Lead(**data)
