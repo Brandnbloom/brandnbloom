@@ -54,6 +54,7 @@ playwright>=1.47.0
 SQLAlchemy>=2.0.31
 greenlet>=3.0.3,<3.2
 
+# Backend + APIs
 fastapi==0.101.0
 uvicorn[standard]==0.23.2
 pydantic==1.10.11
@@ -61,14 +62,13 @@ language-tool-python==2.8.0
 transformers
 torch
 sentence-transformers
-diffusers            # optional, for local Stable Diffusion image gen
-faiss-cpu            # local similarity search (plagiarism/local search)
+diffusers
+faiss-cpu
 scikit-learn
 sqlmodel
 apscheduler
 aiohttp
 Jinja2
-streamlit-components  # if using components, else use streamlit.components.v1
 pdfkit
 psycopg2-binary
 python-jose[cryptography]
@@ -76,6 +76,6 @@ passlib[bcrypt]
 stripe
 celery==5.5.2
 redis==5.3.0
-python-jose==3.3.0       # JWT support
-sentry-sdk==1.27.2       # Error tracking
-python-multipart==0.0.6  # For file uploads if needed
+python-jose==3.3.0
+sentry-sdk==1.27.2
+python-multipart==0.0.6
