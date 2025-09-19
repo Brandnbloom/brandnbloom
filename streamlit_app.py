@@ -1,57 +1,5 @@
-import os
-import requests
+import os, threading, requests, pathlib
 import streamlit as st
-import pathlib, json
-from utils.ui import load_branding, inject_css, dark_mode_toggle
-
-# -------------------------------
-# Streamlit setup
-# -------------------------------
-st.set_page_config(page_title="Brand N Bloom", page_icon="🌸", layout="wide")
-b = load_branding()
-inject_css()
-dark_mode_toggle()
-
-logo_path = pathlib.Path("assets/logo.png")
-col1, col2 = st.columns([1,2])
-with col1:
-    if logo_path.exists():
-        st.image(str(logo_path), width=180)
-with col2:
-    st.title("Brand N Bloom")
-    st.caption(b.get("tagline","Because brands deserve to bloom."))
-
-st.page_link("pages/05_📊_Dashboard.py", label="Go to Dashboard", icon="📊")
-st.divider()
-st.write("Use the left sidebar to navigate all features.")
-
-# -------------------------------
-# API connection
-# -------------------------------
-BASE_URL = os.getenv("BASE_URL", "http://localhost:10000")  # Render injects BASE_URL
-
-# Simple health check
-try:
-    resp = requests.get(f"{BASE_URL}/health", timeout=5)
-    if resp.ok:
-        st.success("✅ Connected to API!")
-    else:
-        st.warning("⚠️ API reachable but returned an error.")
-except Exception as e:
-    st.error(f"❌ Could not reach API: {e}")
-
-# Example: trigger weekly report
-if st.button("Send Weekly Report (Demo)"):
-    try:
-        resp = requests.post(f"{BASE_URL}/send-reports", timeout=10)
-        if resp.ok:
-            data = resp.json()
-            st.success(f"Report sent! PDF saved at: {data['pdf']}")
-        else:
-            st.error(f"Error: {resp.text}")
-    except Exception as e:
-        st.error(f"Request failed: {e}")
-import os, threading, requests, streamlit as st, pathlib
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
@@ -76,7 +24,6 @@ async def health_check():
 
 @app.post("/send-reports")
 async def send_reports():
-    # Demo response (replace with real PDF generation later)
     return {"pdf": "reports/weekly_report.pdf", "status": "sent"}
 
 # Run FastAPI in background thread
@@ -87,11 +34,23 @@ thread = threading.Thread(target=run_api, daemon=True)
 thread.start()
 
 # --------------------------
-# Streamlit frontend
+# Streamlit frontend setup
 # --------------------------
+from utils.ui import load_branding, inject_css, dark_mode_toggle
+from tools.website_builder import builder_ui
+from tools.seo import seo_audit, keyword_tracker
+from tools.ads import creative_generator
+from tools.social import calendar_ui
+from tools.leads_crm import forms, crm_db
+from tools.analytics import dashboard
+
 st.set_page_config(page_title="Brand N Bloom", page_icon="🌸", layout="wide")
 
-# Branding + Logo
+# Branding + Theme
+b = load_branding()
+inject_css()
+dark_mode_toggle()
+
 logo_path = pathlib.Path("assets/logo.png")
 col1, col2 = st.columns([1,2])
 with col1:
@@ -99,17 +58,44 @@ with col1:
         st.image(str(logo_path), width=180)
 with col2:
     st.title("Brand N Bloom")
-    st.caption("Because brands deserve to bloom.")
+    st.caption(b.get("tagline", "Because brands deserve to bloom."))
 
 st.divider()
-st.write("Use the left sidebar to navigate all features.")
 
 # --------------------------
-# API connection
+# Sidebar Tools
+# --------------------------
+st.sidebar.title("Brand n Bloom Tools")
+choice = st.sidebar.radio("Select tool", [
+    "Website Builder", "SEO Audit", "Keyword Tracker",
+    "Ad Creative Generator", "Social Scheduler",
+    "CRM / Leads", "Analytics Dashboard", "Reputation"
+])
+
+if choice == "Website Builder":
+    builder_ui.show_builder()
+elif choice == "SEO Audit":
+    seo_audit.show_seo_audit()
+elif choice == "Keyword Tracker":
+    keyword_tracker.show_keyword_tracker()
+elif choice == "Ad Creative Generator":
+    creative_generator.show_creative_ui()
+elif choice == "Social Scheduler":
+    calendar_ui.show_calendar()
+elif choice == "CRM / Leads":
+    forms.show_forms_ui()
+elif choice == "Analytics Dashboard":
+    dashboard.show_dashboard()
+else:
+    st.info("Tool coming soon — select another tool.")
+
+st.divider()
+
+# --------------------------
+# API connection check
 # --------------------------
 BASE_URL = "http://localhost:8000"
 
-# Health check
 try:
     resp = requests.get(f"{BASE_URL}/health", timeout=5)
     if resp.ok:
@@ -119,7 +105,6 @@ try:
 except Exception as e:
     st.error(f"❌ Could not reach API: {e}")
 
-# Trigger weekly report
 if st.button("Send Weekly Report (Demo)"):
     try:
         resp = requests.post(f"{BASE_URL}/send-reports", timeout=10)
