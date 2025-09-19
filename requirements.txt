@@ -64,3 +64,4 @@ torch
 sentence-transformers
 diffusers            # optional, for local Stable Diffusion image gen
 faiss-cpu            # local similarity search (plagiarism/local search)
+scikit-learn
