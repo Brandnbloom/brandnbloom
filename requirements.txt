@@ -32,6 +32,7 @@ APScheduler>=3.10.4
 # PDF
 reportlab>=4.2.2
 fpdf>=1.7.2
+pdfkit>=1.0.0
 
 # AI / OpenAI
 openai>=1.9.2
@@ -44,7 +45,7 @@ google-auth-httplib2>=0.2.0
 google-auth-oauthlib>=1.2.0
 googleapis-common-protos>=1.70.0
 protobuf>=4.23,<5
-google-generativeai
+google-generativeai>=0.7.2
 
 # Instagram tools
 instaloader>=4.13.1
@@ -53,29 +54,33 @@ playwright>=1.47.0
 # Database
 SQLAlchemy>=2.0.31
 greenlet>=3.0.3,<3.2
+psycopg2-binary>=2.9.9
+sqlmodel>=0.0.22
 
 # Backend + APIs
 fastapi==0.101.0
 uvicorn[standard]==0.23.2
 pydantic==1.10.11
 language-tool-python==2.8.0 
-transformers
-torch
-sentence-transformers
-diffusers
-faiss-cpu
-scikit-learn
-sqlmodel
-apscheduler
-aiohttp
-Jinja2
-pdfkit
-psycopg2-binary
-python-jose[cryptography]
-passlib[bcrypt]
-stripe
+transformers>=4.43.0
+torch>=2.4.0
+sentence-transformers>=3.0.1
+diffusers>=0.30.0
+faiss-cpu>=1.8.0
+scikit-learn>=1.5.1
+apscheduler>=3.10.4
+aiohttp>=3.10.10
+Jinja2>=3.1.6
+python-multipart==0.0.6
+
+# Auth + Billing + Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]>=1.7.4
+stripe>=10.6.0
+
+# Background Workers
 celery==5.5.2
 redis==5.3.0
-python-jose==3.3.0
-sentry-sdk==1.27.2
-python-multipart==0.0.6
+
+# Monitoring / Error Tracking
+sentry-sdk>=1.27.2
