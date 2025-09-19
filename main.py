@@ -4,7 +4,7 @@ from app.billing import router as billing_router
 from app.database import Base, engine
 from app.seo import router as seo_router
 from app.social import router as social_router
-
+from app.ads import router as ads_router
 
 
 # Create tables
@@ -16,3 +16,4 @@ app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(billing_router, prefix="/billing", tags=["Billing"])
 app.include_router(seo_router, prefix="/tools", tags=["SEO Tools"])
 app.include_router(social_router, prefix="/tools", tags=["Social Media Tools"])
+app.include_router(ads_router, prefix="/tools", tags=["Ads & Marketing Tools"])
