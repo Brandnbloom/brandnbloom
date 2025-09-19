@@ -107,29 +107,40 @@ with col2:
 st.divider()
 
 # --------------------------
-# Sidebar Tools
+# Sidebar Tools (Custom Menu)
 # --------------------------
 st.sidebar.title("Brand n Bloom Tools")
-choice = st.sidebar.radio("Select tool", [
-    "Website Builder", "SEO Audit", "Keyword Tracker",
-    "Ad Creative Generator", "Social Scheduler",
-    "CRM / Leads", "Analytics Dashboard", "Reputation"
-])
 
-if choice == "Website Builder":
-    builder_ui.show_builder()
-elif choice == "SEO Audit":
-    seo_audit.show_seo_audit()
-elif choice == "Keyword Tracker":
-    keyword_tracker.show_keyword_tracker()
-elif choice == "Ad Creative Generator":
-    creative_generator.show_creative_ui()
-elif choice == "Social Scheduler":
-    calendar_ui.show_calendar()
-elif choice == "CRM / Leads":
-    forms.show_forms_ui()
-elif choice == "Analytics Dashboard":
+menu = ["Home", "Register", "Login", "Dashboard",
+        "SEO Tools", "Social Tools", "Ads Tools", "CRM Tools"]
+
+choice = st.sidebar.selectbox("Menu", menu)
+
+if choice == "Home":
+    st.subheader("🏠 Welcome to Brand n Bloom")
+    st.write("Your all-in-one SaaS platform for brand growth.")
+elif choice == "Register":
+    st.subheader("📝 Register")
+    st.write("User registration form goes here.")
+elif choice == "Login":
+    st.subheader("🔑 Login")
+    st.write("User login form goes here.")
+elif choice == "Dashboard":
+    st.subheader("📊 Dashboard")
     dashboard.show_dashboard()
+elif choice == "SEO Tools":
+    st.subheader("🔍 SEO Tools")
+    seo_audit.show_seo_audit()
+    keyword_tracker.show_keyword_tracker()
+elif choice == "Social Tools":
+    st.subheader("📅 Social Media Tools")
+    calendar_ui.show_calendar()
+elif choice == "Ads Tools":
+    st.subheader("🎨 Ads & Creative Tools")
+    creative_generator.show_creative_ui()
+elif choice == "CRM Tools":
+    st.subheader("🤝 CRM & Leads")
+    forms.show_forms_ui()
 else:
     st.info("Tool coming soon — select another tool.")
 
