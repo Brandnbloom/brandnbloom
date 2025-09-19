@@ -61,3 +61,6 @@ pyjwt==2.8.0
 language-tool-python==2.8.0 
 transformers
 torch
+sentence-transformers
+diffusers            # optional, for local Stable Diffusion image gen
+faiss-cpu            # local similarity search (plagiarism/local search)
