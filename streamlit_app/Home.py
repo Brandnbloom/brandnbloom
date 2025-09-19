@@ -112,10 +112,16 @@ st.divider()
 st.sidebar.title("Brand n Bloom Tools")
 
 menu = ["Home", "Register", "Login", "Dashboard",
-        "SEO Tools", "Social Tools", "Ads Tools", "CRM Tools"]
+        "SEO Tools", "Social Tools", "Ads Tools",
+        "CRM Tools", "Analytics Tools"]
+choice = st.sidebar.selectbox("Menu", menu)
+
+
 
 choice = st.sidebar.selectbox("Menu", menu)
 
+if choice == "Analytics Tools":
+    import AnalyticsTools
 if choice == "Home":
     st.subheader("🏠 Welcome to Brand n Bloom")
     st.write("Your all-in-one SaaS platform for brand growth.")
