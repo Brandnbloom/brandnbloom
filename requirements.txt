@@ -34,7 +34,7 @@ reportlab>=4.2.2
 fpdf>=1.7.2
 
 # AI / OpenAI
-openai>=1.0.0
+openai>=1.9.2
 
 # Google APIs
 google-api-core>=2.25.0
@@ -52,3 +52,9 @@ playwright>=1.47.0
 # Database
 SQLAlchemy>=2.0.31
 greenlet>=3.0.3,<3.2
+
+fastapi==0.101.0
+uvicorn[standard]==0.23.2
+pydantic==1.10.11
+pyjwt==2.8.0
+language-tool-python==2.8.0 
