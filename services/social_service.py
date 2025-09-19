@@ -34,3 +34,25 @@ def reply_comment(platform, conversation_id, message):
         e = Event(type="social_reply", payload=json.dumps({"platform":platform,"conversation_id":conversation_id,"message":message,"ts":datetime.utcnow().isoformat()}))
         s.add(e); s.commit()
     return {"status":"ok"}
+
+# Handles business logic for Social Media Tools
+user_posts = {}
+user_engagements = {}
+
+def schedule_post(user_id, platform, content, schedule_time):
+    if user_id not in user_posts:
+        user_posts[user_id] = []
+    post = {"platform": platform, "content": content, "schedule_time": schedule_time, "status": "Scheduled"}
+    user_posts[user_id].append(post)
+    return post
+
+def get_posts(user_id):
+    return user_posts.get(user_id, [])
+
+def get_engagements(user_id):
+    if user_id not in user_engagements:
+        user_engagements[user_id] = [
+            {"platform": "Instagram", "comment": "Love this post!", "status": "Unread"},
+        ]
+    return user_engagements[user_id]
+
