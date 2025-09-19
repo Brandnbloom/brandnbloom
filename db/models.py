@@ -1,5 +1,8 @@
 from db.database import get_cursor
 from utils.security import hash_password, check_password
+from sqlmodel import SQLModel, Field, Relationship
+from typing import Optional, List
+from datetime import datetime
 
 def create_user(email, name, password):
     """
@@ -51,3 +54,69 @@ def save_report(user_id, ig_handle, pdf_path):
             (user_id, ig_handle, pdf_path)
         )
         return cur.lastrowid
+
+class User(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    email: str
+    name: Optional[str] = None
+    role: str = "user"  # admin/agent/user
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class Lead(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: Optional[str] = None
+    email: Optional[str] = None
+    phone: Optional[str] = None
+    source: Optional[str] = None
+    pipeline_stage: str = "new"
+    notes: Optional[str] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class Event(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    type: str
+    payload: str
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class PageRecord(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    url: str
+    html: Optional[str]
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class Keyword(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    keyword: str
+    target_url: Optional[str]
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class KeywordRank(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    keyword_id: int
+    rank: Optional[int] = None
+    checked_at: datetime = Field(default_factory=datetime.utcnow)
+
+class Campaign(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str
+    platform: str
+    status: str = "paused"
+    budget: float = 0.0
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
+class Review(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    source: str
+    author: Optional[str]
+    rating: Optional[float]
+    text: Optional[str]
+    fetched_at: datetime = Field(default_factory=datetime.utcnow)
+
+class ProjectTask(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    title: str
+    description: Optional[str] = None
+    status: str = "todo"
+    assignee_id: Optional[int] = None
+    due_date: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
