@@ -57,7 +57,6 @@ greenlet>=3.0.3,<3.2
 fastapi==0.101.0
 uvicorn[standard]==0.23.2
 pydantic==1.10.11
-pyjwt==2.8.0
 language-tool-python==2.8.0 
 transformers
 torch
@@ -65,3 +64,8 @@ sentence-transformers
 diffusers            # optional, for local Stable Diffusion image gen
 faiss-cpu            # local similarity search (plagiarism/local search)
 scikit-learn
+sqlmodel
+apscheduler
+aiohttp
+Jinja2
+streamlit-components  # if using components, else use streamlit.components.v1
