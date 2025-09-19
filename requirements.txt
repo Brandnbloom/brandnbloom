@@ -44,6 +44,7 @@ google-auth-httplib2>=0.2.0
 google-auth-oauthlib>=1.2.0
 googleapis-common-protos>=1.70.0
 protobuf>=4.23,<5
+google-generativeai
 
 # Instagram tools
 instaloader>=4.13.1
@@ -58,3 +59,5 @@ uvicorn[standard]==0.23.2
 pydantic==1.10.11
 pyjwt==2.8.0
 language-tool-python==2.8.0 
+transformers
+torch
