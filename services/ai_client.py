@@ -1,31 +1,22 @@
 # services/ai_client.py
 import os
-from providers.openai_provider import OpenAIProvider
-from providers.gemini_provider import GeminiProvider
-from providers.huggingface_provider import HuggingFaceProvider
+AI_PROVIDER = os.getenv("AI_PROVIDER", "openai")
 
-# Provider map
-PROVIDERS = {
-    "openai": OpenAIProvider,
-    "gemini": GeminiProvider,
-    "huggingface": HuggingFaceProvider,
-}
-
-# Pick from .env
-ACTIVE_PROVIDER = os.getenv("AI_PROVIDER", "openai")
-
-def get_provider():
-    provider_cls = PROVIDERS.get(ACTIVE_PROVIDER.lower(), OpenAIProvider)
-    return provider_cls()
-
-provider = get_provider()
-
-# Unified functions
-def generate_text(prompt: str, **kwargs) -> str:
-    return provider.generate_text(prompt, **kwargs)
-
-def generate_image(prompt: str, **kwargs) -> str:
-    return provider.generate_image(prompt, **kwargs)
-
-def analyze_text(text: str, task: str, **kwargs) -> str:
-    return provider.analyze_text(text, task, **kwargs)
+def generate_text(prompt: str, max_tokens: int = 300, temperature: float = 0.2):
+    if AI_PROVIDER == "openai":
+        import openai
+        openai.api_key = os.getenv("OPENAI_API_KEY")
+        resp = openai.ChatCompletion.create(model="gpt-4o", messages=[{"role":"user","content":prompt}], max_tokens=max_tokens, temperature=temperature)
+        return resp.choices[0].message.content
+    elif AI_PROVIDER == "gemini":
+        import google.generativeai as genai
+        genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+        model = genai.GenerativeModel("gemini-pro")
+        return model.generate_content(prompt).text
+    elif AI_PROVIDER == "huggingface":
+        from transformers import pipeline
+        generator = pipeline("text-generation", model=os.getenv("HF_MODEL","gpt2"))
+        out = generator(prompt, max_length=max_tokens)
+        return out[0]["generated_text"]
+    else:
+        return "AI_PROVIDER not configured"
