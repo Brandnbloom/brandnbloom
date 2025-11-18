@@ -1,25 +1,10 @@
-# db.py
-from sqlmodel import SQLModel, create_engine, Session
-import os
-from dotenv import load_dotenv
+# db/__init__.py
 
-load_dotenv()
+from .db import init_db, get_session
+from .models import *
 
-# Load DB URL
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./bnb.db")
-
-# Create engine
-engine = create_engine(DATABASE_URL, echo=False)
-
-# Import models at module level (correct)
-from .models import *   # OK here, NOT inside functions
-
-
-def init_db():
-    """Initialize DB and create all tables."""
-    SQLModel.metadata.create_all(engine)
-
-
-def get_session():
-    """Get a new database session."""
-    return Session(engine)
+__all__ = [
+    "init_db",
+    "get_session",
+    *[name for name in globals() if not name.startswith("_")]
+]
