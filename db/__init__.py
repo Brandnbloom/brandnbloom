@@ -7,9 +7,13 @@ load_dotenv()
 DATABASE_URL = os.getenv("DATABASE_URL", os.getenv("DATABASE_URL", "sqlite:///./bnb.db"))
 engine = create_engine(DATABASE_URL, echo=False)
 
+from .models import *   # ✅ import at module level
+
 def init_db():
-    from models import *   # create all models
+    ...
+  # create all models
     SQLModel.metadata.create_all(engine)
 
 def get_session():
     return Session(engine)
+
