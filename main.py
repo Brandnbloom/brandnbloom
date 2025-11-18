@@ -5,6 +5,20 @@ from app.database import Base, engine
 from app.seo import router as seo_router
 from app.social import router as social_router
 from app.ads import router as ads_router
+from db.db import init_db
+from routers import auth
+
+app = FastAPI(title="Marketing Automation App")
+
+app.include_router(auth.router)
+
+@app.on_event("startup")
+def on_startup():
+    init_db()
+
+@app.get("/")
+def home():
+    return {"message": "API is working!"}
 
 
 # Create tables
