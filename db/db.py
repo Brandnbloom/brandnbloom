@@ -1,4 +1,4 @@
-# db/database.py
+# db/db.py
 
 import os
 from dotenv import load_dotenv
@@ -30,3 +30,22 @@ def get_db():
         yield db
     finally:
         db.close()
+
+from sqlmodel import SQLModel, create_engine, Session
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./app.db")
+
+engine = create_engine(DATABASE_URL, echo=False)
+
+from models.models import *  # import SQLModel tables AFTER engine
+
+def init_db():
+    SQLModel.metadata.create_all(engine)
+
+def get_session():
+    return Session(engine)
+
