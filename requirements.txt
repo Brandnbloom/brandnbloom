@@ -1,47 +1,71 @@
 pip>=25.2
 
-# Core
+# -------------------------
+# Core Libraries
+# -------------------------
 streamlit>=1.38.0
 pandas>=2.3.0
 numpy>=1.26.4
 requests>=2.32.4
 python-dotenv>=1.0.1
 packaging>=24.1
+tqdm>=4.67.0
 
-# Branding / Plots
+# -------------------------
+# Plotting & Visualization
+# -------------------------
 Pillow>=10.4.0
 matplotlib>=3.9.2
 seaborn>=0.13.2
 altair>=5.5.0
 plotly>=5.23.0
 beautifulsoup4>=4.13.0
-tqdm>=4.67.0
 
-# Security & Auth
+# -------------------------
+# Security, Auth & Users
+# -------------------------
 bcrypt>=4.2.0
-PyJWT>=2.9.0
-email-validator>=2.2.0
-python-jose[cryptography]==3.3.0
 passlib[bcrypt]>=1.7.4
+PyJWT>=2.9.0
+python-jose[cryptography]==3.3.0
+email-validator>=2.2.0
 stripe>=10.6.0
 
-# Optional (only if using Flask APIs)
-Flask>=3.0.0
-Werkzeug>=3.0.0
+# -------------------------
+# FastAPI Backend
+# -------------------------
+fastapi==0.101.0
+uvicorn[standard]==0.23.2
+pydantic>=1.10.13,<3.0.0
+python-multipart==0.0.6
 
-# Schedulers / Background
+# -------------------------
+# Database & ORM
+# -------------------------
+SQLAlchemy>=2.0.31
+sqlmodel>=0.0.22
+psycopg2-binary>=2.9.9
+greenlet>=3.0.3,<3.2
+
+# -------------------------
+# Scheduling & Background Tasks
+# -------------------------
 APScheduler>=3.10.4
 celery==5.5.2
 redis==5.3.0
 aiohttp>=3.10.10
 
+# -------------------------
 # PDF / Reporting
+# -------------------------
 reportlab>=4.2.2
 fpdf>=1.7.2
 pdfkit>=1.0.0
 Jinja2>=3.1.6
 
+# -------------------------
 # AI / ML / NLP
+# -------------------------
 openai>=1.9.2
 transformers>=4.43.0
 torch>=2.4.0
@@ -51,7 +75,9 @@ faiss-cpu>=1.8.0
 scikit-learn>=1.5.1
 google-generativeai>=0.7.2
 
+# -------------------------
 # Google APIs
+# -------------------------
 google-api-core>=2.25.0
 google-api-python-client>=2.178.0
 google-auth>=2.40.0
@@ -60,20 +86,18 @@ google-auth-oauthlib>=1.2.0
 googleapis-common-protos>=1.70.0
 protobuf>=4.23,<5
 
-# Instagram / Web
+# -------------------------
+# Instagram / Web Scraping
+# -------------------------
 instaloader>=4.13.1
 playwright>=1.47.0
 
-# Database / Backend
-SQLAlchemy>=2.0.31
-greenlet>=3.0.3,<3.2
-psycopg2-binary>=2.9.9
-sqlmodel>=0.0.22
-fastapi==0.101.0
-uvicorn[standard]==0.23.2
-pydantic>=1.10.13,<3.0.0
+# -------------------------
+# Text Checking
+# -------------------------
 language-tool-python==2.8.0
-python-multipart==0.0.6
 
+# -------------------------
 # Monitoring / Logging
+# -------------------------
 sentry-sdk>=1.27.2
