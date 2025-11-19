@@ -88,3 +88,7 @@ def export_pdf_from_html(html_str: str, out_path: str) -> str:
         raise RuntimeError("WeasyPrint not installed. Install weasyprint to enable PDF exports.")
     HTML(string=html_str).write_pdf(out_path)
     return out_path
+
+from ai_tools.insights_to_caption import insights_to_caption
+
+data["auto_caption"] = insights_to_caption(analysis_output)
