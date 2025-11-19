@@ -76,6 +76,7 @@ from tools.social import calendar_ui
 from tools.leads_crm import forms, crm_db
 from tools.analytics import dashboard
 
+# Main UI
 st.set_page_config(page_title="Brand N Bloom", page_icon="🌸", layout="wide")
 
 # Branding + Theme
@@ -101,9 +102,75 @@ st.sidebar.title("Brand n Bloom Tools")
 choice = st.sidebar.radio("Select tool", [
     "Website Builder", "SEO Audit", "Keyword Tracker",
     "Ad Creative Generator", "Social Scheduler",
-    "CRM / Leads", "Analytics Dashboard", "Reputation"
+    "CRM / Leads", "Analytics Dashboard", "Reputation",
+    "Aesthetic Dashboard 🌸"
 ])
 
+# --------------------------
+# 🎀 AESTHETIC DASHBOARD (New)
+# --------------------------
+def show_aesthetic_dashboard():
+    # Aesthetic stylesheet injection
+    st.markdown("""
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <style>
+        html, body, [class*="css"] {
+            font-family: 'Poppins', sans-serif;
+            background-color: #FFF9F5;
+        }
+
+        [data-testid="stSidebar"] {
+            background-color: #F7F1EB !important;
+            padding-top: 30px;
+        }
+
+        .aesthetic-card {
+            background: rgba(255, 255, 255, 0.6);
+            padding: 25px;
+            border-radius: 18px;
+            box-shadow: 0px 4px 18px rgba(0,0,0,0.06);
+            backdrop-filter: blur(8px);
+        }
+
+        .aesthetic-title {
+            font-size: 42px;
+            font-weight: 600;
+            background: linear-gradient(to right, #A25A3C, #C28F73);
+            -webkit-background-clip: text;
+            color: transparent;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .fade {
+            animation: fadeIn 1.2s ease-in-out;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<h1 class='aesthetic-title fade'>🌸 Aesthetic Dashboard</h1>", unsafe_allow_html=True)
+    st.write("A soft, elegant and calming interface designed for a peaceful user experience.")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.markdown("<div class='aesthetic-card fade'>", unsafe_allow_html=True)
+        st.subheader("✨ Highlights")
+        st.write("• Soft pastel UI\n• Custom aesthetic cards\n• Smooth animations\n• Clean layout")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    with col2:
+        st.markdown("<div class='aesthetic-card fade'>", unsafe_allow_html=True)
+        st.subheader("📊 Example Metric")
+        st.metric("Today's Score", "87%", "+12%")
+        st.markdown("</div>", unsafe_allow_html=True)
+
+# --------------------------
+# ROUTING
+# --------------------------
 if choice == "Website Builder":
     builder_ui.show_builder()
 elif choice == "SEO Audit":
@@ -118,10 +185,10 @@ elif choice == "CRM / Leads":
     forms.show_forms_ui()
 elif choice == "Analytics Dashboard":
     dashboard.show_dashboard()
+elif choice == "Aesthetic Dashboard 🌸":
+    show_aesthetic_dashboard()
 else:
     st.info("Tool coming soon — select another tool.")
-
-st.divider()
 
 # --------------------------
 # API connection check
