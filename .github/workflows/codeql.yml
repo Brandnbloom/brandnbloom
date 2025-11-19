@@ -1,58 +1,41 @@
-name: "CodeQL Advanced"
+name: "CodeQL"
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   pull_request:
-    branches: [ "main" ]
+    branches: ["main"]
   schedule:
-    - cron: '18 15 * * 6'
+    - cron: "0 0 * * 1" # weekly scan
 
 jobs:
   analyze:
-    name: Analyze (${{ matrix.language }})
-    runs-on: ${{ (matrix.language == 'swift' && 'macos-latest') || 'ubuntu-latest' }}
+    name: Analyze
+    runs-on: ubuntu-latest
     permissions:
-      security-events: write
-      packages: read
       actions: read
       contents: read
+      security-events: write
 
     strategy:
       fail-fast: false
       matrix:
-        include:
-        - language: javascript-typescript
-          build-mode: none
-        - language: python
-          build-mode: none
+        language: ["python"]
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    # Add any setup steps before running the `github/codeql-action/init` action.
-    # e.g. install compilers, runtimes, etc.
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          config-file: ./.github/codeql/config.yml
 
-    - name: Initialize CodeQL
-      uses: github/codeql-action/init@v3
-      with:
-        languages: ${{ matrix.language }}
-        build-mode: ${{ matrix.build-mode }}
-        # Optional: specify queries or config-file if needed
-        # queries: security-extended,security-and-quality
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
 
-    - if: matrix.build-mode == 'manual'
-      shell: bash
-      run: |
-        echo 'If you are using a "manual" build mode for one or more of the' \
-          'languages you are analyzing, replace this with the commands to build' \
-          'your code, for example:'
-        echo '  make bootstrap'
-        echo '  make release'
-        exit 1
-
-    - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v3
-      with:
-        category: "/language:${{matrix.language}}"
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{ matrix.language }}"
