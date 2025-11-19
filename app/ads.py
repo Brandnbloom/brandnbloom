@@ -1,68 +1,122 @@
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi import Header
+from fastapi import APIRouter, Depends, HTTPException, Header
+from pydantic import BaseModel, Field
+from typing import List, Dict, Optional
 from .utils.jwt_helper import decode_access_token
 
 router = APIRouter()
 
-# In-memory storage for simulation
-user_ads = {}
+# -------------------------------------------------------------------
+# Temporary in-memory store (replace later with DB)
+# -------------------------------------------------------------------
+user_ads: Dict[int, List[dict]] = {}
 
-def get_current_user(authorization: str = Header(...)):
+
+# -------------------------------------------------------------------
+# Auth Helper
+# -------------------------------------------------------------------
+def get_current_user(authorization: str = Header(...)) -> int:
+    """
+    Extract user ID from JWT Bearer token.
+    Expects: Authorization: Bearer <token>
+    """
+    if not authorization.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Invalid authorization header")
+
     token = authorization.split(" ")[1]
     payload = decode_access_token(token)
-    if not payload:
-        raise HTTPException(status_code=401, detail="Invalid token")
+
+    if not payload or "user_id" not in payload:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
     return payload["user_id"]
 
-# ---------------- Ad Management ----------------
+
+# -------------------------------------------------------------------
+# Pydantic Models
+# -------------------------------------------------------------------
+class AdCreate(BaseModel):
+    campaign_name: str = Field(..., max_length=60)
+    platform: str = Field(..., regex="^(instagram|facebook|google|youtube|linkedin)$")
+    budget: float = Field(..., gt=0)
+    content: str = Field(..., max_length=500)
+
+
+class CreativeRequest(BaseModel):
+    ad_type: str = Field(..., regex="^(copy|image)$")
+    prompt: str = Field(..., max_length=200)
+
+
+# -------------------------------------------------------------------
+# Ad Management
+# -------------------------------------------------------------------
 @router.post("/create-ad")
-def create_ad(campaign_name: str, platform: str, budget: float, content: str, user_id: int = Depends(get_current_user)):
+def create_ad(data: AdCreate, user_id: int = Depends(get_current_user)):
     """
-    Create a simulated ad campaign
+    Create a simulated ad campaign for the logged-in user.
     """
-    if user_id not in user_ads:
-        user_ads[user_id] = []
+    user_ads.setdefault(user_id, [])
+
     ad = {
-        "campaign_name": campaign_name,
-        "platform": platform,
-        "budget": budget,
-        "content": content,
+        "campaign_name": data.campaign_name,
+        "platform": data.platform,
+        "budget": data.budget,
+        "content": data.content,
         "status": "Active"
     }
+
     user_ads[user_id].append(ad)
+
     return {"status": "Ad created", "ad": ad}
+
 
 @router.get("/my-ads")
 def get_ads(user_id: int = Depends(get_current_user)):
     """
-    Retrieve all ad campaigns for the user
+    Retrieve all ads for the current user.
     """
     return user_ads.get(user_id, [])
 
-# ---------------- Creative Generator ----------------
+
+# -------------------------------------------------------------------
+# Creative Generator
+# -------------------------------------------------------------------
 @router.post("/generate-creative")
-def generate_creative(ad_type: str, prompt: str, user_id: int = Depends(get_current_user)):
+def generate_creative(data: CreativeRequest, user_id: int = Depends(get_current_user)):
     """
-    Generate ad copy or image (simulated)
+    Generate ad creative using AI (stub version).
     """
-    # In real production, integrate GPT/Gemini for copy or stable-diffusion for images
     creative = {
-        "ad_type": ad_type,
-        "prompt": prompt,
-        "suggested_copy": f"AI-generated copy based on: {prompt}",
-        "suggested_image_url": f"https://dummyimage.com/600x400/000/fff&text={prompt.replace(' ', '+')}"
+        "ad_type": data.ad_type,
+        "prompt": data.prompt,
+        "suggested_copy": f"✨ AI-generated copy for: {data.prompt}",
+        "suggested_image_url": (
+            f"https://dummyimage.com/600x400/000/fff&text={data.prompt.replace(' ', '+')}"
+            if data.ad_type == "image"
+            else None
+        ),
     }
     return creative
 
-# ---------------- Budget Optimizer ----------------
+
+# -------------------------------------------------------------------
+# Budget Optimizer
+# -------------------------------------------------------------------
 @router.post("/optimize-budget")
 def optimize_budget(ad_id: int, user_id: int = Depends(get_current_user)):
     """
-    Suggest new budget (simulated logic)
+    Suggest a new optimized budget using simple heuristic logic.
     """
     ads = user_ads.get(user_id, [])
+
     if ad_id < 0 or ad_id >= len(ads):
         raise HTTPException(status_code=404, detail="Ad not found")
+
     ad = ads[ad_id]
-    optimized_budget = ad["budget"] * 1.1  # example: increase by 10%
-    return {"original_budget": ad["budget"], "optimized_budget": optimized_budget}
+    optimized_budget = round(ad["budget"] * 1.10, 2)  # +10%
+
+    return {
+        "campaign_name": ad["campaign_name"],
+        "original_budget": ad["budget"],
+        "optimized_budget": optimized_budget,
+        "strategy": "scale-up (10% increase for better reach)"
+    }
