@@ -1,4 +1,4 @@
-# db/db.py
+# db/database.py
 
 import os
 from dotenv import load_dotenv
