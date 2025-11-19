@@ -1,11 +1,24 @@
 from sqlmodel import SQLModel, Field, Relationship
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 
 
 # -----------------------
 # USER MODEL
 # -----------------------
+
+class ProjectTask(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    title: str
+    description: Optional[str]
+    status: str = "todo"
+
+    assignee_id: Optional[int] = Field(default=None, foreign_key="user.id")
+    assignee: Optional["User"] = Relationship(back_populates="tasks")
+
+    due_date: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
 
 class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -16,6 +29,9 @@ class User(SQLModel, table=True):
     plan: str = "free"
     role: str = "user"
     created_at: datetime = Field(default_factory=datetime.utcnow)
+
+    # Relationship
+    tasks: List[ProjectTask] = Relationship(back_populates="assignee")
 
 
 # -----------------------
@@ -59,18 +75,24 @@ class PageRecord(SQLModel, table=True):
 # KEYWORD MANAGEMENT
 # -----------------------
 
+class KeywordRank(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    keyword_id: int = Field(foreign_key="keyword.id")
+    rank: Optional[int]
+    checked_at: datetime = Field(default_factory=datetime.utcnow)
+
+    # Relationship
+    keyword: Optional["Keyword"] = Relationship(back_populates="ranks")
+
+
 class Keyword(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     keyword: str
     target_url: Optional[str]
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
-
-class KeywordRank(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    keyword_id: int = Field(foreign_key="keyword.id")
-    rank: Optional[int]
-    checked_at: datetime = Field(default_factory=datetime.utcnow)
+    # Relationship
+    ranks: List[KeywordRank] = Relationship(back_populates="keyword")
 
 
 # -----------------------
@@ -97,17 +119,3 @@ class Review(SQLModel, table=True):
     rating: Optional[float]
     text: Optional[str]
     fetched_at: datetime = Field(default_factory=datetime.utcnow)
-
-
-# -----------------------
-# PROJECT TASKS
-# -----------------------
-
-class ProjectTask(SQLModel, table=True):
-    id: Optional[int] = Field(default=None, primary_key=True)
-    title: str
-    description: Optional[str]
-    status: str = "todo"
-    assignee_id: Optional[int] = Field(default=None, foreign_key="user.id")
-    due_date: Optional[datetime] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
