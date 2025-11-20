@@ -1,58 +1,80 @@
 # services/social_service.py
+
 from tasks.scheduler import scheduler
 from db import get_session
 from models import Event
 from datetime import datetime
 import json
 
-def schedule_post(platform, content, publish_at):
-    # parse publish_at into run_date; for demo we schedule immediate (stub)
-    def job_func(p, c):
-        # real implementation would call platform API
-        with get_session() as s:
-            e = Event(type="social_publish", payload=json.dumps({"platform":p,"content":c,"ts":datetime.utcnow().isoformat()}))
-            s.add(e); s.commit()
-    scheduler.add_job(job_func, 'date', args=[platform, content], run_date=publish_at)
-    return {"status": "scheduled", "platform": platform, "publish_at": publish_at}
+# ----------------------
+# Event Logging Helpers
+# ----------------------
 
-def publish_now(platform, content):
-    # call platform publish API (Meta/Twitter) — stub
+def log_social_event(event_type: str, payload: dict):
     with get_session() as s:
-        e = Event(type="social_publish", payload=json.dumps({"platform":platform,"content":content,"ts":datetime.utcnow().isoformat()}))
-        s.add(e); s.commit()
-    return {"status": "published", "platform": platform}
+        e = Event(type=event_type, payload=json.dumps(payload))
+        s.add(e)
+        s.commit()
+    return {"status": "ok", "event_type": event_type}
 
-def get_metrics(q):
-    # Stub: return local events aggregated; for real data integrate platform APIs or webhook ingestion
-    with get_session() as s:
-        rows = s.exec("SELECT * FROM event ORDER BY created_at DESC LIMIT 200").all()
-        return {"events_count": len(rows)}
+# ----------------------
+# Social Post Management
+# ----------------------
 
-def reply_comment(platform, conversation_id, message):
-    # Integrate platform API; stub records a reply event
-    with get_session() as s:
-        e = Event(type="social_reply", payload=json.dumps({"platform":platform,"conversation_id":conversation_id,"message":message,"ts":datetime.utcnow().isoformat()}))
-        s.add(e); s.commit()
-    return {"status":"ok"}
-
-# Handles business logic for Social Media Tools
+# In-memory storage for demo; replace with DB in production
 user_posts = {}
 user_engagements = {}
 
-def schedule_post(user_id, platform, content, schedule_time):
+def schedule_post(user_id: int, platform: str, content: str, schedule_time: datetime):
+    """Schedule a post (in-memory stub)."""
     if user_id not in user_posts:
         user_posts[user_id] = []
-    post = {"platform": platform, "content": content, "schedule_time": schedule_time, "status": "Scheduled"}
+    post = {
+        "platform": platform,
+        "content": content,
+        "schedule_time": schedule_time,
+        "status": "Scheduled"
+    }
     user_posts[user_id].append(post)
+    # Optionally schedule with APScheduler
+    scheduler.add_job(
+        lambda p=platform, c=content: log_social_event("social_publish", {"platform": p, "content": c, "ts": datetime.utcnow().isoformat()}),
+        'date',
+        run_date=schedule_time
+    )
     return post
 
-def get_posts(user_id):
+def publish_now(user_id: int, platform: str, content: str):
+    """Publish immediately (stub)."""
+    event_payload = {"platform": platform, "content": content, "ts": datetime.utcnow().isoformat()}
+    log_social_event("social_publish", event_payload)
+    if user_id in user_posts:
+        user_posts[user_id].append({**event_payload, "status": "Published"})
+    return {"status": "published", "platform": platform}
+
+def get_posts(user_id: int):
+    """Get scheduled or published posts for a user."""
     return user_posts.get(user_id, [])
 
-def get_engagements(user_id):
+def get_engagements(user_id: int):
+    """Return engagement stubs for a user."""
     if user_id not in user_engagements:
         user_engagements[user_id] = [
             {"platform": "Instagram", "comment": "Love this post!", "status": "Unread"},
         ]
     return user_engagements[user_id]
 
+def get_metrics():
+    """Aggregate recent social events."""
+    with get_session() as s:
+        rows = s.exec("SELECT * FROM event ORDER BY created_at DESC LIMIT 200").all()
+    return {"events_count": len(rows)}
+
+def reply_comment(platform: str, conversation_id: str, message: str):
+    """Record a reply event (stub for platform API)."""
+    return log_social_event("social_reply", {
+        "platform": platform,
+        "conversation_id": conversation_id,
+        "message": message,
+        "ts": datetime.utcnow().isoformat()
+    })
