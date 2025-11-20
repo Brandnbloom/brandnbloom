@@ -6,7 +6,10 @@ from sqlmodel import SQLModel
 
 
 def init_db():
-    """Create SQLModel tables."""
+    """
+    Initializes the database by creating all SQLModel tables.
+    This is typically called once at application startup.
+    """
     SQLModel.metadata.create_all(bind=engine)
 
 
@@ -16,4 +19,3 @@ __all__ = [
     "get_db",
     *[name for name in globals() if not name.startswith("_") and name not in {"SQLModel"}]
 ]
-
