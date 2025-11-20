@@ -1,5 +1,8 @@
 PRAGMA foreign_keys = ON;
 
+-- -------------------------
+-- Users Table
+-- -------------------------
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   email TEXT UNIQUE NOT NULL,
@@ -8,6 +11,9 @@ CREATE TABLE IF NOT EXISTS users (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- -------------------------
+-- Instagram Accounts
+-- -------------------------
 CREATE TABLE IF NOT EXISTS ig_accounts (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
@@ -16,6 +22,12 @@ CREATE TABLE IF NOT EXISTS ig_accounts (
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
+CREATE INDEX IF NOT EXISTS idx_ig_accounts_user_id ON ig_accounts(user_id);
+CREATE INDEX IF NOT EXISTS idx_ig_accounts_handle ON ig_accounts(handle);
+
+-- -------------------------
+-- KPI Logs
+-- -------------------------
 CREATE TABLE IF NOT EXISTS kpi_logs (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   ig_handle TEXT NOT NULL,
@@ -27,6 +39,12 @@ CREATE TABLE IF NOT EXISTS kpi_logs (
   timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE INDEX IF NOT EXISTS idx_kpi_logs_handle ON kpi_logs(ig_handle);
+CREATE INDEX IF NOT EXISTS idx_kpi_logs_timestamp ON kpi_logs(timestamp);
+
+-- -------------------------
+-- Reports Table
+-- -------------------------
 CREATE TABLE IF NOT EXISTS reports (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   user_id INTEGER NOT NULL,
@@ -35,3 +53,5 @@ CREATE TABLE IF NOT EXISTS reports (
   sent_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+CREATE INDEX IF NOT EXISTS idx_reports_user_id ON reports(user_id);
