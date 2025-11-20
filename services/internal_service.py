@@ -1,18 +1,56 @@
 # services/internal_service.py
+
 from services.ai_client import generate_text
 
-def recommend_content(payload):
-    # Use user segments, engagement history; here use AI to suggest
-    prompt = f"Recommend content/ad types for audience: {payload.get('audience_desc')}"
-    return {"recommendations": generate_text(prompt, max_tokens=300)}
 
-def start_cro_test(payload):
-    # Create A/B test record; return snippet/variant IDs
-    return {"status":"started", "test_id": "ab_"+str(hash(str(payload))%10000)}
+def recommend_content(payload: dict) -> dict:
+    """
+    Recommend content or ad types based on audience description or engagement history.
+    """
+    audience_desc = payload.get("audience_desc", "general audience")
 
-def ecommerce_sync(payload):
-    # Connect to Shopify/WooCommerce (requires API keys). Stub: return success.
-    return {"status":"synced", "platform": payload.get("platform")}
+    prompt = (
+        f"Suggest content themes, formats, and ad types suitable for this audience: "
+        f"{audience_desc}. Provide actionable recommendations."
+    )
 
-def register_affiliate(payload):
-    return {"status":"registered", "affiliate_id": 1001}
+    return {
+        "recommendations": generate_text(prompt, max_tokens=300)
+    }
+
+
+def start_cro_test(payload: dict) -> dict:
+    """
+    Start an A/B or multivariate CRO test.
+    Returns a lightweight test ID (stubbed for now).
+    """
+    test_id = f"ab_{abs(hash(str(payload))) % 10000}"
+
+    return {
+        "status": "started",
+        "test_id": test_id
+    }
+
+
+def ecommerce_sync(payload: dict) -> dict:
+    """
+    Sync product catalog, orders, or customer data with an eCommerce platform.
+    Stubbed for Shopify / WooCommerce integration.
+    """
+    platform = payload.get("platform", "unknown")
+
+    return {
+        "status": "synced",
+        "platform": platform
+    }
+
+
+def register_affiliate(payload: dict) -> dict:
+    """
+    Register a new affiliate. In production this will create a DB entry.
+    """
+    return {
+        "status": "registered",
+        "affiliate_id": 1001  # static stub ID
+    }
+
