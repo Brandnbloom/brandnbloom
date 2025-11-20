@@ -1,10 +1,12 @@
+# bloominsight/utils.py
+
 import re
 from typing import List, Dict
 
 def engagement_rate(likes: int, comments: int, followers: int) -> float:
     """
-    Compute Instagram engagement rate as a percentage.
-    Formula: (likes + comments) / followers * 100
+    Calculate engagement rate as a percentage.
+    ER = (Likes + Comments) / Followers * 100
     """
     if followers <= 0:
         return 0.0
@@ -13,102 +15,89 @@ def engagement_rate(likes: int, comments: int, followers: int) -> float:
 
 def brand_health_score(bio_ok: bool, logo_ok: bool, posting_freq_ok: bool, hashtag_variety_ok: bool) -> int:
     """
-    Compute simple brand health score out of 100.
-    Each valid factor gives 25 points.
+    Brand Health Score out of 100.
+    Each parameter contributes 25 points.
     """
-    factors = [bio_ok, logo_ok, posting_freq_ok, hashtag_variety_ok]
-    return int(sum(25 for f in factors if f))
+    parts = [bio_ok, logo_ok, posting_freq_ok, hashtag_variety_ok]
+    return int(sum(25 for p in parts if p))
 
 
-# ----------------------------------------------------------
-# NEW UTILITIES
-# ----------------------------------------------------------
-
-def average_engagement(posts: List[Dict]) -> float:
+def clean_hashtags(caption: str) -> List[str]:
     """
-    Compute average engagement rate across multiple posts.
-    Each post dict must contain: likes, comments, followers.
+    Extract hashtags from the caption text.
+    Returns a list of cleaned hashtags (lowercase, no duplicates).
     """
-    valid_rates = []
-    for p in posts:
-        if "likes" in p and "comments" in p and p.get("followers", 0) > 0:
-            rate = engagement_rate(p["likes"], p["comments"], p["followers"])
-            valid_rates.append(rate)
-    return round(sum(valid_rates) / len(valid_rates), 2) if valid_rates else 0.0
+    hashtags = re.findall(r"#\w+", caption)
+    cleaned = {tag.lower() for tag in hashtags}
+    return sorted(cleaned)
 
 
-def optimal_hashtag_score(hashtags: List[str]) -> int:
+def hashtag_diversity_score(hashtags: List[str]) -> float:
     """
-    Score hashtag usage out of 100.
-    Ideal: 5–15 relevant hashtags, diverse + non-repetitive.
+    The more unique hashtags, the better the diversity.
+    Score: unique_count / total_count * 100
     """
     if not hashtags:
-        return 0
-    
-    unique_count = len(set(hashtags))
-    
-    # diversity and count are rewarded
-    if 5 <= unique_count <= 15:
-        return 100
-    if unique_count < 5:
-        return 40
-    if unique_count > 20:
-        return 60
-    return 80
-
-
-def caption_quality(caption: str) -> int:
-    """
-    Score caption out of 100 based on:
-    - length
-    - sentiment (basic heuristic)
-    - clarity (punctuation / formatting)
-    """
-    if not caption:
-        return 0
-
-    length = len(caption)
-    score = 50  # base
-
-    # Length sweet spot: 50–220 chars
-    if 50 <= length <= 220:
-        score += 25
-    elif length > 220:
-        score += 10
-    else:
-        score += 5
-
-    # Sentiment keywords (positive)
-    if any(word in caption.lower() for word in ["love", "happy", "growth", "excited", "launch"]):
-        score += 15
-
-    # Clarity bonus
-    if "." in caption or "!" in caption:
-        score += 10
-
-    return min(100, score)
-
-
-def follower_growth_rate(old: int, new: int) -> float:
-    """
-    Calculate follower growth percentage.
-    """
-    if old <= 0:
         return 0.0
-    return round(((new - old) / old) * 100, 2)
+    unique_count = len(set(hashtags))
+    return round((unique_count / len(hashtags)) * 100, 2)
 
 
-def content_type_engagement(post_type: str, likes: int, comments: int) -> float:
+def posting_frequency_score(num_posts: int, days: int) -> float:
     """
-    Normalize engagement based on content type.
-    
-    Reels typically get 2x–4x more visibility.
-    Static posts get baseline.
+    Score consistency of posting frequency.
+    Ideal = 3–7 posts/week.
+    The closer the actual frequency, the higher the score (out of 100).
     """
-    baseline = likes + comments
-    
-    if post_type.lower() == "reel":
-        return round(baseline / 3, 2)  # normalize down
-    elif post_type.lower() == "carousel":
-        return round(baseline / 1.2, 2)
-    return float(baseline)
+    if days <= 0:
+        return 0.0
+
+    posts_per_week = (num_posts / days) * 7
+
+    if 3 <= posts_per_week <= 7:
+        return 100.0
+    else:
+        # Penalise deviation from ideal range
+        diff = min(abs(posts_per_week - 5), 5)  # ideal mid-point = 5 posts/week
+        return round(max(0, 100 - diff * 20), 2)
+
+
+def account_quality_summary(metrics: Dict[str, float]) -> str:
+    """
+    Generate quick summary text based on metrics.
+    metrics should include:
+        - engagement_rate
+        - brand_health_score
+        - hashtag_diversity
+        - posting_frequency
+    """
+    er = metrics.get("engagement_rate", 0)
+    bh = metrics.get("brand_health_score", 0)
+    hd = metrics.get("hashtag_diversity", 0)
+    pf = metrics.get("posting_frequency", 0)
+
+    summary = []
+
+    if er >= 5:
+        summary.append("Great engagement! Your audience interacts well.")
+    elif er >= 2:
+        summary.append("Engagement is decent but can improve with better CTAs.")
+    else:
+        summary.append("Engagement rate is low — try more interactive content.")
+
+    if bh == 100:
+        summary.append("Your brand profile is fully optimized!")
+    else:
+        summary.append("Brand profile needs improvements for best performance.")
+
+    if hd >= 70:
+        summary.append("Hashtag usage is diverse — good reach potential.")
+    else:
+        summary.append("Try adding more variety in hashtags.")
+
+    if pf == 100:
+        summary.append("Posting frequency is ideal!")
+    else:
+        summary.append("Posting consistency should be improved for steady growth.")
+
+    return " ".join(summary)
