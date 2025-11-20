@@ -1,23 +1,33 @@
 # services/openai_client.py
+
 import os
-import openai
+from openai import OpenAI
 from typing import Optional
 
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", None)
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 if not OPENAI_API_KEY:
-    raise RuntimeError("Set OPENAI_API_KEY in environment")
+    raise RuntimeError("Set OPENAI_API_KEY in environment variables.")
 
-openai.api_key = OPENAI_API_KEY
+# Initialize client
+client = OpenAI(api_key=OPENAI_API_KEY)
 
-def generate_text(prompt: str, model: str = "gpt-4o", max_tokens: int = 600, temperature: float = 0.2):
+
+def generate_text(
+    prompt: str,
+    model: str = "gpt-4o",
+    max_tokens: int = 600,
+    temperature: float = 0.2
+):
     """
-    Generic text generation wrapper. Adjust model to your plan.
+    Generic text generation wrapper using the latest OpenAI chat API.
+    Works for gpt-4o, o1, o3-mini, etc.
     """
-    # NOTE: if your account uses different model id, change it.
-    resp = openai.ChatCompletion.create(
+
+    response = client.chat.completions.create(
         model=model,
-        messages=[{"role":"user","content":prompt}],
+        messages=[{"role": "user", "content": prompt}],
         max_tokens=max_tokens,
-        temperature=temperature,
+        temperature=temperature
     )
-    return resp.choices[0].message.content
+
+    return response.choices[0].message.content
