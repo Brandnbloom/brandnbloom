@@ -1,1 +1,1 @@
-BACKEND_URL = "http://127.0.0.1:8000"  # Replace with your Render URL in production
+BACKEND_URL = "http://0.0.0.0:10000"  # Replace with your Render URL in production
