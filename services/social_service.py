@@ -78,3 +78,8 @@ def reply_comment(platform: str, conversation_id: str, message: str):
         "message": message,
         "ts": datetime.utcnow().isoformat()
     })
+
+def run_scheduled_posts():
+    print("📢 Checking for scheduled posts...")
+    # fetch posts due now → post → update status
+
