@@ -17,7 +17,6 @@ init_db()
 # --------------------------
 app = FastAPI(title="Brand n Bloom SaaS API", version="1.0")
 
-# Enable CORS
 origins = ["*"]  # ⚠️ Replace with frontend domain in production
 app.add_middleware(
     CORSMiddleware,
@@ -27,9 +26,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# --------------------------
-# Import Routers
-# --------------------------
+# Routers
 from routers import (
     seo_router,
     keyword_router,
@@ -43,19 +40,18 @@ from routers import (
     internal_router
 )
 
-# Register Routers
+# Register all routers
 app.include_router(seo_router.router, prefix="/api/seo", tags=["SEO Tools"])
 app.include_router(keyword_router.router, prefix="/api/keywords", tags=["Keyword Tools"])
 app.include_router(content_router.router, prefix="/api/content", tags=["Content Tools"])
 app.include_router(social_router.router, prefix="/api/social", tags=["Social Media Tools"])
 app.include_router(ads_router.router, prefix="/api/ads", tags=["Ads & Marketing Tools"])
-app.include_router(crm_router.router, prefix="/api/crm", tags=["CRM & Lead Generation"])
+app.include_router(crm_router.router, prefix="/api/crm", tags=["CRM & Leads"])
 app.include_router(analytics_router.router, prefix="/api/analytics", tags=["Analytics & Reporting"])
-app.include_router(reputation_router.router, prefix="/api/reputation", tags=["Reputation & PR Tools"])
+app.include_router(reputation_router.router, prefix="/api/reputation", tags=["Reputation Tools"])
 app.include_router(advanced_router.router, prefix="/api/advanced", tags=["Advanced AI Tools"])
 app.include_router(internal_router.router, prefix="/api/internal", tags=["Agency Management Tools"])
 
-# Root & health endpoints
 @app.get("/")
 def root():
     return {"message": "Welcome to Brand n Bloom SaaS API"}
@@ -64,7 +60,7 @@ def root():
 async def health_check():
     return {"service": "brand-n-bloom", "status": "ok"}
 
-# Run FastAPI in background thread
+# Background FastAPI thread
 def run_api():
     uvicorn.run(
         app,
@@ -78,7 +74,7 @@ thread = threading.Thread(target=run_api, daemon=True)
 thread.start()
 
 # --------------------------
-# Streamlit frontend setup
+# Streamlit UI Setup
 # --------------------------
 from utils.ui import load_branding, inject_css, dark_mode_toggle
 from tools.website_builder import builder_ui
@@ -91,10 +87,11 @@ from tools.analytics import dashboard
 st.set_page_config(page_title="Brand N Bloom", page_icon="🌸", layout="wide")
 
 # Branding + Theme
-b = load_branding()
+branding = load_branding()
 inject_css()
 dark_mode_toggle()
 
+# Logo + Title
 logo_path = pathlib.Path("assets/logo.png")
 col1, col2 = st.columns([1, 2])
 with col1:
@@ -102,58 +99,76 @@ with col1:
         st.image(str(logo_path), width=180)
 with col2:
     st.title("Brand N Bloom")
-    st.caption(b.get("tagline", "Because brands deserve to bloom."))
+    st.caption(branding.get("tagline", "Because brands deserve to bloom."))
 
 st.divider()
 
 # --------------------------
-# Sidebar Tools (Custom Menu)
+# Sidebar Menu
 # --------------------------
 st.sidebar.title("Brand n Bloom Tools")
 
-menu = ["Home", "Register", "Login", "Dashboard",
-        "SEO Tools", "Social Tools", "Ads Tools",
-        "CRM Tools", "Analytics Tools"]
+menu = [
+    "Home",
+    "Register",
+    "Login",
+    "Dashboard",
+    "SEO Tools",
+    "Social Tools",
+    "Ads Tools",
+    "CRM Tools",
+    "Analytics Tools"
+]
+
 choice = st.sidebar.selectbox("Menu", menu)
 
-
-
-choice = st.sidebar.selectbox("Menu", menu)
-
-if choice == "Analytics Tools":
-    import AnalyticsTools
+# --------------------------
+# Page Routing
+# --------------------------
 if choice == "Home":
     st.subheader("🏠 Welcome to Brand n Bloom")
     st.write("Your all-in-one SaaS platform for brand growth.")
+
 elif choice == "Register":
     st.subheader("📝 Register")
     st.write("User registration form goes here.")
+
 elif choice == "Login":
     st.subheader("🔑 Login")
     st.write("User login form goes here.")
+
 elif choice == "Dashboard":
     st.subheader("📊 Dashboard")
     dashboard.show_dashboard()
+
 elif choice == "SEO Tools":
     st.subheader("🔍 SEO Tools")
     seo_audit.show_seo_audit()
     keyword_tracker.show_keyword_tracker()
+
 elif choice == "Social Tools":
     st.subheader("📅 Social Media Tools")
     calendar_ui.show_calendar()
+
 elif choice == "Ads Tools":
     st.subheader("🎨 Ads & Creative Tools")
     creative_generator.show_creative_ui()
+
 elif choice == "CRM Tools":
     st.subheader("🤝 CRM & Leads")
     forms.show_forms_ui()
+
+elif choice == "Analytics Tools":
+    import AnalyticsTools  # your external module
+    st.subheader("📈 Analytics Tools")
+
 else:
     st.info("Tool coming soon — select another tool.")
 
 st.divider()
 
 # --------------------------
-# API connection check
+# API Health Check
 # --------------------------
 BASE_URL = f"http://localhost:{os.getenv('PORT', 8000)}"
 
