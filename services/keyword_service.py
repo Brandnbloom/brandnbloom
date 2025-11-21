@@ -76,3 +76,8 @@ def get_keyword_history(keyword_id: int):
              .limit(365)
              .all()
         )
+
+def schedule_daily_rank_check():
+    print("🔍 Running daily keyword rank check...")
+    # your keyword rank logic
+
