@@ -47,3 +47,8 @@ def rank_check_stub(url: str, keyword: str) -> dict:
         "keyword": keyword,
         "message": "Use SerpAPI or Google Search Console API for accurate ranking data."
     }
+
+def run_scheduled_seo_audit():
+    print("🧠 Running weekly SEO audit...")
+    # SEO audit logic
+
