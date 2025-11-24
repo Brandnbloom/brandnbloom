@@ -4,6 +4,15 @@ from typing import Dict, List
 import os, tempfile
 import math
 import numpy as np
+import json
+from brandnbloom.report_generator import render_html_report, export_pdf_from_html
+
+# -----------------------------
+# Load Branding
+# -----------------------------
+BRANDING_PATH = os.path.join(os.path.dirname(__file__), "branding.json")
+with open(BRANDING_PATH, "r", encoding="utf-8") as f:
+    BRANDING = json.load(f)
 
 # -----------------------------
 # Benchmarking Data & Helpers
@@ -198,13 +207,15 @@ def generate_full_report(profile: dict, competitors: list = None, industry: str 
         "score": score,
         "bucket": bucket,
         "components": result["components"],
-        "palette": profile.get("brand_palette", ["#A25A3C", "#F7F1EB", "#3C2F2F"]),
+        "palette": profile.get("brand_palette", list(BRANDING["palette"].values())),
+        "fonts": BRANDING.get("fonts", {}),
         "benchmark": {
             "industry_average": bench_ind["industry_average"],
             "avg_competitor_score": bench_comp.get("avg_competitor_score"),
             "ideal_score": bench_ideal["ideal_score"],
             "status": bench_ideal["status"]
-        }
+        },
+        "pricing": BRANDING.get("pricing", [])
     }
 
     html = render_html_report(payload)
