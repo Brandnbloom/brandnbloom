@@ -10,16 +10,16 @@ requests>=2.32.4
 python-dotenv>=1.0.1
 packaging>=24.1
 tqdm>=4.67.0
+Pillow>=10.4.0
+beautifulsoup4>=4.13.0
 
 # -------------------------
 # Plotting & Visualization
 # -------------------------
-Pillow>=10.4.0
 matplotlib>=3.9.2
 seaborn>=0.13.2
 altair>=5.5.0
 plotly>=5.23.0
-beautifulsoup4>=4.13.0
 
 # -------------------------
 # Security, Auth & Users
@@ -62,7 +62,7 @@ reportlab>=4.2.2
 fpdf>=1.7.2
 pdfkit>=1.0.0
 Jinja2>=3.1.6
-weasyprint>=62.3     # Added (your request)
+weasyprint>=62.3
 
 # -------------------------
 # AI / ML / NLP
@@ -75,8 +75,8 @@ diffusers>=0.30.0
 faiss-cpu>=1.8.0
 scikit-learn>=1.5.1
 google-generativeai>=0.7.2
-pytesseract>=0.3.10      # Added (your request)
-textblob>=0.18.0         # Added (your request)
+pytesseract>=0.3.10
+textblob>=0.18.0
 
 # -------------------------
 # Google APIs
@@ -104,9 +104,3 @@ language-tool-python==2.8.0
 # Monitoring / Logging
 # -------------------------
 sentry-sdk>=1.27.2
-
-# -------------------------
-# BloomScore Pro v2 Required
-# -------------------------
-pillow          # already included above but safe here
-jinja2          # already included above but safe here
