@@ -12,6 +12,7 @@ services:
       - .env
     depends_on:
       - db
+    restart: always
 
   dashboard:
     build:
@@ -19,11 +20,12 @@ services:
       dockerfile: Dockerfile.dashboard
     container_name: brandnbloom-dashboard
     ports:
-      - "8501:10000"   # streamlit inside container runs on 10000, expose as 8501 outside
+      - "8501:8501"   # Streamlit should run on 8501 inside container, not 10000
     env_file:
       - .env
     depends_on:
       - api
+    restart: always
 
   db:
     image: postgres:15
