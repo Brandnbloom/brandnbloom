@@ -1,5 +1,4 @@
 services:
-  # --- API service (FastAPI) ---
   - type: web
     name: brandnbloom-api
     env: docker
@@ -32,7 +31,6 @@ services:
       - key: PROXY_PASSWORD
         sync: false
 
-  # --- Dashboard service (Streamlit) ---
   - type: web
     name: brandnbloom-dashboard
     env: docker
