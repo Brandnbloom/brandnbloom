@@ -1,102 +1,129 @@
-# utils/pdf.py
+# utils/security.py
 
-from datetime import datetime
-from reportlab.lib.pagesizes import A4
-from reportlab.platypus import (
-    SimpleDocTemplate, Paragraph, Spacer, Image, Table, TableStyle, PageBreak
-)
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib import colors
-from reportlab.lib.units import cm
+import os
+import secrets
+import hashlib
+import time
+from typing import Optional, Dict
+from datetime import datetime, timedelta
+from jose import jwt, JWTError
+from passlib.context import CryptContext
+
+# ------------------------------------------------------------
+# Setup
+# ------------------------------------------------------------
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+SECRET_KEY = os.getenv("JWT_SECRET", "supersecretjwt")
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 day
 
 
-def make_report(
-    pdf_path: str,
-    title: str,
-    kpis: dict,
-    action_plan: list[str],
-    logo_path: str = None
-):
+# ------------------------------------------------------------
+# Password Hashing
+# ------------------------------------------------------------
+
+def hash_password(password: str) -> str:
+    """Hashes a plain password using bcrypt."""
+    return pwd_context.hash(password)
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verifies whether a password matches its hash."""
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+# ------------------------------------------------------------
+# JWT Handling
+# ------------------------------------------------------------
+
+def create_jwt_token(data: dict, expires_minutes: Optional[int] = None) -> str:
+    """Creates a JWT access token."""
+    to_encode = data.copy()
+    expire = datetime.utcnow() + timedelta(
+        minutes=expires_minutes or ACCESS_TOKEN_EXPIRE_MINUTES
+    )
+    to_encode.update({"exp": expire})
+    return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
+
+
+def decode_jwt_token(token: str) -> Optional[dict]:
+    """Verifies + decodes a JWT token."""
+    try:
+        return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    except JWTError:
+        return None
+
+
+# ------------------------------------------------------------
+# Token Blacklist (Optional)
+# ------------------------------------------------------------
+
+# {token: expiry_timestamp}
+TOKEN_BLACKLIST: Dict[str, float] = {}
+
+
+def blacklist_token(token: str, ttl_minutes: int = 1440):
+    """Blacklist a token after logout."""
+    TOKEN_BLACKLIST[token] = time.time() + ttl_minutes * 60
+
+
+def is_token_blacklisted(token: str) -> bool:
+    """Check if token is blacklisted."""
+    expiry = TOKEN_BLACKLIST.get(token)
+    if not expiry:
+        return False
+    if time.time() > expiry:
+        del TOKEN_BLACKLIST[token]
+        return False
+    return True
+
+
+# ------------------------------------------------------------
+# API Key Generator
+# ------------------------------------------------------------
+
+def generate_api_key() -> str:
+    """Generates a secure random API key."""
+    return secrets.token_hex(32)
+
+
+# ------------------------------------------------------------
+# CSRF Token Generator
+# ------------------------------------------------------------
+
+def generate_csrf_token() -> str:
+    """Creates a CSRF token using SHA256."""
+    raw = secrets.token_urlsafe(32)
+    return hashlib.sha256(raw.encode()).hexdigest()
+
+
+# ------------------------------------------------------------
+# Simple Rate Limit Helper
+# ------------------------------------------------------------
+
+RATE_LIMIT_STORE: Dict[str, list] = {}  # {ip: [timestamps]}
+
+def is_rate_limited(key: str, limit: int = 10, seconds: int = 60) -> bool:
     """
-    Generates a clean business-style PDF report using Platypus.
+    Basic rate limiting:
+      limit = number of requests
+      seconds = per time window
     """
-    doc = SimpleDocTemplate(
-        pdf_path,
-        pagesize=A4,
-        rightMargin=2 * cm,
-        leftMargin=2 * cm,
-        topMargin=2 * cm,
-        bottomMargin=2 * cm
-    )
+    now = time.time()
+    if key not in RATE_LIMIT_STORE:
+        RATE_LIMIT_STORE[key] = []
 
-    styles = getSampleStyleSheet()
-    story = []
+    # Remove old requests
+    RATE_LIMIT_STORE[key] = [
+        ts for ts in RATE_LIMIT_STORE[key] if now - ts < seconds
+    ]
 
-    # ---------------------------------------------------------
-    # Logo
-    # ---------------------------------------------------------
-    if logo_path:
-        try:
-            img = Image(logo_path, width=4 * cm, preserveAspectRatio=True, mask="auto")
-            img.hAlign = "RIGHT"
-            story.append(img)
-        except Exception:
-            pass
+    # Check limit
+    if len(RATE_LIMIT_STORE[key]) >= limit:
+        return True
 
-    # ---------------------------------------------------------
-    # Title
-    # ---------------------------------------------------------
-    title_style = ParagraphStyle(
-        "Title",
-        parent=styles["Heading1"],
-        fontSize=20,
-        spaceAfter=12,
-    )
-    story.append(Paragraph(title, title_style))
-
-    # Timestamp
-    ts = datetime.utcnow().strftime("%Y-%m-%d %H:%M UTC")
-    story.append(Paragraph(f"<i>Generated on: {ts}</i>", styles["Normal"]))
-    story.append(Spacer(1, 12))
-
-    # ---------------------------------------------------------
-    # KPI Table
-    # ---------------------------------------------------------
-    story.append(Paragraph("<b>Key Performance Indicators</b>", styles["Heading2"]))
-    story.append(Spacer(1, 6))
-
-    table_data = [["Metric", "Value"]]
-    for k, v in kpis.items():
-        table_data.append([k, str(v)])
-
-    kpi_table = Table(table_data, colWidths=[8 * cm, 6 * cm])
-    kpi_table.setStyle(
-        TableStyle([
-            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#EAEAEA")),
-            ("TEXTCOLOR", (0, 0), (-1, 0), colors.black),
-            ("GRID", (0, 0), (-1, -1), 0.3, colors.grey),
-            ("FONT", (0, 0), (-1, 0), "Helvetica-Bold"),
-            ("FONT", (0, 1), (-1, -1), "Helvetica"),
-            ("ALIGN", (1, 1), (-1, -1), "RIGHT"),
-            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-            ("BOTTOMPADDING", (0, 0), (-1, 0), 6),
-        ])
-    )
-    story.append(kpi_table)
-    story.append(Spacer(1, 20))
-
-    # ---------------------------------------------------------
-    # Action Plan (bulleted)
-    # ---------------------------------------------------------
-    story.append(Paragraph("<b>Action Plan</b>", styles["Heading2"]))
-    story.append(Spacer(1, 6))
-
-    for step in action_plan:
-        story.append(Paragraph(f"• {step}", styles["Normal"]))
-        story.append(Spacer(1, 6))
-
-    # ---------------------------------------------------------
-    # Build PDF
-    # ---------------------------------------------------------
-    doc.build(story)
-    return pdf_path
+    # Record new request
+    RATE_LIMIT_STORE[key].append(now)
+    return False
