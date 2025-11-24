@@ -1,9 +1,36 @@
+# --- Virtual Environment ---
+venv/
 .venv/
+
+# --- Python cache ---
 __pycache__/
 *.pyc
 *.pyo
-*.DS_Store
+*.pyd
+
+# --- OS junk files ---
+.DS_Store
+Thumbs.db
+
+# --- Environment Variables ---
 .env
+*.env
+
+# --- Database files ---
+*.sqlite3
+*.db
+
+# --- Uploaded files / Generated reports ---
 reports/
 uploads/
-*.sqlite3
+
+# --- Logs ---
+*.log
+
+# --- IDE/Editor ---
+.vscode/
+.idea/
+*.iml
+
+# --- Streamlit ---
+.streamlit/config.toml
