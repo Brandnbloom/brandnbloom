@@ -1,17 +1,15 @@
+~~~{"variant":"code/python","title":"streamlit_app_final.py","id":"68423"}
 # brandnbloom/streamlit_app.py
+
 """
 Brand N Bloom - Streamlit frontend + FastAPI backend runner
-
-This file acts as the Streamlit UI entrypoint and starts a FastAPI backend
-in a background thread. It injects SEO, analytics, and chat widgets, and
-provides a clean sidebar to access tools including BloomScore Pro v2.
+Includes: SEO, analytics, chat widgets, BloomScore Pro v2, and other tools.
 """
 
 import os
 import threading
 import logging
 import pathlib
-from typing import Optional
 
 import requests
 import streamlit as st
@@ -37,45 +35,40 @@ st.set_page_config(
 # -----------------------
 # Aesthetic CSS (global)
 # -----------------------
-st.markdown(
-    """
+st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-    html, body, [class*="css"] {
-        font-family: 'Poppins', sans-serif;
-        background-color: #FFF9F5;
-    }
-    [data-testid="stSidebar"] {
-        background-color: #F7F1EB !important;
-        padding-top: 28px;
-    }
-    .aesthetic-card {
-        background: rgba(255,255,255,0.6);
-        padding: 22px;
-        border-radius: 14px;
-        box-shadow: 0px 6px 20px rgba(0,0,0,0.06);
-        backdrop-filter: blur(6px);
-    }
-    .aesthetic-title {
-        font-size: 40px;
-        font-weight: 600;
-        background: linear-gradient(to right, #A25A3C, #C28F73);
-        -webkit-background-clip: text;
-        color: transparent;
-        margin: 0;
-    }
+html, body, [class*="css"] {
+    font-family: 'Poppins', sans-serif;
+    background-color: #FFF9F5;
+}
+[data-testid="stSidebar"] {
+    background-color: #F7F1EB !important;
+    padding-top: 28px;
+}
+.aesthetic-card {
+    background: rgba(255,255,255,0.6);
+    padding: 22px;
+    border-radius: 14px;
+    box-shadow: 0px 6px 20px rgba(0,0,0,0.06);
+    backdrop-filter: blur(6px);
+}
+.aesthetic-title {
+    font-size: 40px;
+    font-weight: 600;
+    background: linear-gradient(to right, #A25A3C, #C28F73);
+    -webkit-background-clip: text;
+    color: transparent;
+    margin: 0;
+}
 </style>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
 # -----------------------
-# Inject SEO / Analytics / Chat (components.seo.inject_all)
+# SEO / Analytics / Chat injection
 # -----------------------
-# NOTE: Replace IDs with your real keys in production
 try:
     from components.seo import inject_all
-
     inject_all(
         title="Brand N Bloom — AI Brand Intelligence",
         description="AI-powered audits, BloomScore analytics, social tools and creative assistance for creators & SMBs.",
@@ -95,14 +88,12 @@ except Exception as e:
 # -----------------------
 # Start FastAPI backend in background thread
 # -----------------------
-# Importing FastAPI/uvicorn lazily to avoid import overhead in Streamlit when not needed
 def _start_api():
     try:
         from fastapi import FastAPI
         from fastapi.middleware.cors import CORSMiddleware
         import uvicorn
 
-        # Initialize DB (if present)
         try:
             from db import init_db
             init_db()
@@ -110,7 +101,6 @@ def _start_api():
             logger.debug("No db.init_db() available or failed to run init_db.")
 
         app = FastAPI(title="Brand N Bloom - API Suite")
-
         app.add_middleware(
             CORSMiddleware,
             allow_origins=["*"],
@@ -118,7 +108,6 @@ def _start_api():
             allow_headers=["*"],
         )
 
-        # Register routers if available - import inside function to avoid circular imports
         try:
             from routers.seo_router import router as seo_router
             from routers.keyword_router import router as keyword_router
@@ -158,52 +147,35 @@ _api_thread = threading.Thread(target=_start_api, daemon=True)
 _api_thread.start()
 
 # -----------------------
-# Import Streamlit UI modules (after starting backend)
+# Import Streamlit UI modules (safe fallbacks)
 # -----------------------
-# Importing UI modules; keep these imports local so restarting Streamlit won't re-run backend init issues
 try:
     from utils.ui import load_branding, inject_css, dark_mode_toggle
 except Exception:
-    # Fallbacks if utils.ui is not available
     def load_branding():
         return {"tagline": "Because brands deserve to bloom."}
+    def inject_css(): return None
+    def dark_mode_toggle(): return None
 
-    def inject_css():
-        return None
-
-    def dark_mode_toggle():
-        return None
-
-# Tool modules (best-effort imports; pages will handle missing modules)
-try:
-    from tools.website_builder import builder_ui
-except Exception:
-    builder_ui = None
-
-try:
-    from tools.seo import seo_audit, keyword_tracker
-except Exception:
-    seo_audit = keyword_tracker = None
-
-try:
-    from tools.ads import creative_generator
-except Exception:
-    creative_generator = None
-
-try:
-    from tools.social import calendar_ui
-except Exception:
-    calendar_ui = None
-
-try:
-    from tools.leads_crm import forms
-except Exception:
-    forms = None
-
-try:
-    from tools.analytics import dashboard
-except Exception:
-    dashboard = None
+# -----------------------
+# Dynamic tool imports
+# -----------------------
+tools_modules = {}
+for tool_name, import_path in [
+    ("Website Builder", "tools.website_builder.builder_ui"),
+    ("SEO Audit", "tools.seo.seo_audit"),
+    ("Keyword Tracker", "tools.seo.keyword_tracker"),
+    ("Ad Creative Generator", "tools.ads.creative_generator"),
+    ("Social Scheduler", "tools.social.calendar_ui"),
+    ("CRM / Leads", "tools.leads_crm.forms"),
+    ("Analytics Dashboard", "tools.analytics.dashboard"),
+]:
+    try:
+        module = __import__(import_path, fromlist=[""])
+        tools_modules[tool_name] = module
+    except Exception as e:
+        logger.info(f"Tool '{tool_name}' not available: {e}")
+        tools_modules[tool_name] = None
 
 # -----------------------
 # Header / Branding
@@ -213,7 +185,6 @@ inject_css()
 dark_mode_toggle()
 
 logo_path = pathlib.Path("assets/logo.png")
-
 left_col, right_col = st.columns([1, 3])
 with left_col:
     if logo_path.exists():
@@ -221,7 +192,6 @@ with left_col:
 with right_col:
     st.markdown("<h1 class='aesthetic-title'>Brand N Bloom</h1>", unsafe_allow_html=True)
     st.caption(branding.get("tagline", "Because brands deserve to bloom."))
-
 st.divider()
 
 # -----------------------
@@ -244,7 +214,6 @@ choice = st.sidebar.radio("Choose tool", tools_list)
 # BloomScore Pro v2 page
 # -----------------------
 if choice == "BloomScore Pro v2":
-    # Late import to avoid heavy dependencies unless used
     try:
         from brandnbloom.bloomscore_pro_v2 import generate_full_report
     except Exception as e:
@@ -253,10 +222,10 @@ if choice == "BloomScore Pro v2":
         generate_full_report = None
 
     st.markdown("<h2 class='aesthetic-title'>BloomScore Pro v2 — Aesthetic Brand Audit</h2>", unsafe_allow_html=True)
-    st.write("Upload a screenshot or sample image and paste sample captions. We'll generate a BloomScore audit and an HTML+PDF report.")
+    st.write("Upload screenshot/sample image and paste captions. We'll generate BloomScore HTML+PDF report.")
 
-    uploaded = st.file_uploader("Upload screenshot or sample image", type=["png", "jpg", "jpeg"])
-    texts = st.text_area("Paste sample captions (one per line)", height=150)
+    uploaded = st.file_uploader("Upload screenshot or image", type=["png","jpg","jpeg"])
+    texts = st.text_area("Paste captions (one per line)", height=150)
 
     if uploaded and generate_full_report:
         with st.spinner("Generating BloomScore report…"):
@@ -267,7 +236,6 @@ if choice == "BloomScore Pro v2":
 
                 report = generate_full_report(profile)
 
-                # Render results
                 st.markdown("### 🌸 BloomScore Report")
                 st.metric("Final Score", report["payload"].get("score", "—"))
                 st.markdown("#### Components")
@@ -276,91 +244,45 @@ if choice == "BloomScore Pro v2":
                 st.markdown("### 🌷 HTML Preview")
                 if report.get("html"):
                     st.components.v1.html(report["html"], height=650)
-                if report.get("pdf_path"):
-                    st.success(f"📄 PDF saved at: {report['pdf_path']}")
+
+                pdf_path = report.get("pdf_path")
+                if pdf_path and os.path.exists(pdf_path):
+                    with open(pdf_path, "rb") as f:
+                        st.download_button(
+                            label="📄 Download PDF Report",
+                            data=f,
+                            file_name="BloomScore_Report.pdf",
+                            mime="application/pdf"
+                        )
             except Exception as e:
                 st.error("Failed to generate report. Check logs.")
                 logger.exception("Error generating BloomScore report: %s", e)
 
 # -----------------------
-# Other tool pages
+# Other tool pages dynamically
 # -----------------------
-elif choice == "Website Builder":
-    if builder_ui:
+else:
+    tool_module = tools_modules.get(choice)
+    if tool_module:
         try:
-            builder_ui.show_builder()
+            if hasattr(tool_module, "show_builder"): tool_module.show_builder()
+            elif hasattr(tool_module, "show_seo_audit"): tool_module.show_seo_audit()
+            elif hasattr(tool_module, "show_keyword_tracker"): tool_module.show_keyword_tracker()
+            elif hasattr(tool_module, "show_creative_ui"): tool_module.show_creative_ui()
+            elif hasattr(tool_module, "show_calendar"): tool_module.show_calendar()
+            elif hasattr(tool_module, "show_forms_ui"): tool_module.show_forms_ui()
+            elif hasattr(tool_module, "show_dashboard"): tool_module.show_dashboard()
         except Exception as e:
-            st.error("Website Builder currently unavailable.")
-            logger.debug("builder_ui error: %s", e)
+            st.error(f"{choice} currently unavailable.")
+            logger.debug(f"{choice} error: {e}")
     else:
-        st.info("Website Builder tool not installed.")
-
-elif choice == "SEO Audit":
-    if seo_audit:
-        try:
-            seo_audit.show_seo_audit()
-        except Exception as e:
-            st.error("SEO Audit currently unavailable.")
-            logger.debug("seo_audit error: %s", e)
-    else:
-        st.info("SEO Audit tool not installed.")
-
-elif choice == "Keyword Tracker":
-    if keyword_tracker:
-        try:
-            keyword_tracker.show_keyword_tracker()
-        except Exception as e:
-            st.error("Keyword Tracker currently unavailable.")
-            logger.debug("keyword_tracker error: %s", e)
-    else:
-        st.info("Keyword Tracker tool not installed.")
-
-elif choice == "Ad Creative Generator":
-    if creative_generator:
-        try:
-            creative_generator.show_creative_ui()
-        except Exception as e:
-            st.error("Ad Creative Generator currently unavailable.")
-            logger.debug("creative_generator error: %s", e)
-    else:
-        st.info("Ad Creative Generator not installed.")
-
-elif choice == "Social Scheduler":
-    if calendar_ui:
-        try:
-            calendar_ui.show_calendar()
-        except Exception as e:
-            st.error("Social Scheduler currently unavailable.")
-            logger.debug("calendar_ui error: %s", e)
-    else:
-        st.info("Social Scheduler tool not installed.")
-
-elif choice == "CRM / Leads":
-    if forms:
-        try:
-            forms.show_forms_ui()
-        except Exception as e:
-            st.error("CRM/Leads currently unavailable.")
-            logger.debug("forms error: %s", e)
-    else:
-        st.info("CRM / Leads tool not installed.")
-
-elif choice == "Analytics Dashboard":
-    if dashboard:
-        try:
-            dashboard.show_dashboard()
-        except Exception as e:
-            st.error("Analytics Dashboard currently unavailable.")
-            logger.debug("dashboard error: %s", e)
-    else:
-        st.info("Analytics Dashboard not installed.")
+        st.info(f"{choice} tool not installed.")
 
 # -----------------------
-# Footer / status
+# Footer / API status
 # -----------------------
 st.divider()
 BASE_URL = f"http://localhost:{int(os.getenv('PORT',8000))}"
-
 try:
     r = requests.get(f"{BASE_URL}/health", timeout=4)
     if r.ok:
