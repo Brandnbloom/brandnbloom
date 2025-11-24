@@ -10,6 +10,7 @@ try:
 except Exception:
     HTML = None
 
+from ai_tools.insights_to_caption import insights_to_caption
 
 HTML_TEMPLATE = """
 <!doctype html>
@@ -65,16 +66,28 @@ HTML_TEMPLATE = """
       <li>Vs ideal: {{ benchmark.ideal_score }} ({{ benchmark.status }})</li>
     </ul>
   </div>
+
+  {% if auto_caption %}
+  <div class="card">
+    <h3>Auto Caption Suggestion</h3>
+    <p>{{ auto_caption }}</p>
+  </div>
+  {% endif %}
 </body>
 </html>
 """
 
-
-def render_html_report(payload: Dict) -> str:
+def render_html_report(payload: Dict, generate_caption: bool = False, analysis_output: dict = None) -> str:
     """
     Returns HTML string for the report.
     payload should include: score, bucket, components (dict), palette (list), benchmark (dict)
+    Optionally generates an auto caption using analysis_output.
     """
+    if generate_caption and analysis_output:
+        payload["auto_caption"] = insights_to_caption(analysis_output)
+    else:
+        payload["auto_caption"] = None
+
     tpl = Template(HTML_TEMPLATE)
     return tpl.render(**payload)
 
@@ -88,7 +101,3 @@ def export_pdf_from_html(html_str: str, out_path: str) -> str:
         raise RuntimeError("WeasyPrint not installed. Install weasyprint to enable PDF exports.")
     HTML(string=html_str).write_pdf(out_path)
     return out_path
-
-from ai_tools.insights_to_caption import insights_to_caption
-
-data["auto_caption"] = insights_to_caption(analysis_output)
