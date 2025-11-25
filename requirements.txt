@@ -27,7 +27,8 @@ plotly>=5.23.0
 bcrypt>=4.2.0
 passlib[bcrypt]>=1.7.4
 PyJWT>=2.9.0
-python-jose[cryptography]==3.3.0
+cryptography
+
 email-validator>=2.2.0
 stripe>=10.6.0
 
