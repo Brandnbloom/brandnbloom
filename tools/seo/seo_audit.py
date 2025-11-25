@@ -8,6 +8,8 @@ import math
 import re
 import json
 import time
+import socket
+import ipaddress
 
 USER_AGENT = {"User-Agent": "BrandnBloomBot/1.2 (+https://brandnbloom.ai)"}
 REQUEST_TIMEOUT = 10
@@ -40,8 +42,42 @@ def safe_get(url, method="get", timeout=REQUEST_TIMEOUT, allow_redirects=True, h
 # -------------------------
 # Page fetch + parse
 # -------------------------
+def is_url_allowed(url):
+    """
+    Returns True if URL is not pointing to a private, loopback, localhost, or reserved IP.
+    Blocks SSRF to internal infrastructure.
+    """
+    try:
+        parts = urlparse(url)
+        hostname = parts.hostname
+        # Block empty hostname
+        if not hostname:
+            return False
+        # Block localhost and common local domains
+        blocked_hosts = {'localhost', '127.0.0.1', '::1', '0.0.0.0'}
+        if hostname.lower() in blocked_hosts:
+            return False
+        # Try to resolve to IP
+        ip = socket.gethostbyname(hostname)
+        ip_obj = ipaddress.ip_address(ip)
+        # Block private, loopback, link-local, reserved IPs
+        if (
+            ip_obj.is_private or
+            ip_obj.is_loopback or
+            ip_obj.is_link_local or
+            ip_obj.is_reserved or
+            ip_obj.is_multicast
+        ):
+            return False
+        return True
+    except Exception:
+        # If unable to resolve/parse, block
+        return False
+
 def fetch_and_parse(url):
     """Fetch a URL and return (response_info, soup) where response_info is safe_get output."""
+     if not is_url_allowed(url):
+        return {"ok": False, "error": "URL points to a private, local, or blocked IP/domain."}, None
     info = safe_get(url, method="get")
     if not info.get("ok"):
         return info, None
