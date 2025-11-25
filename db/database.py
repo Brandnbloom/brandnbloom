@@ -24,7 +24,7 @@ engine = create_engine(
 # IMPORT MODELS AFTER ENGINE IS DEFINED
 # Prevents circular imports
 # -------------------------------------------------------
-from models.models import *  # noqa
+from db.models import *  # noqa
 
 
 # -------------------------------------------------------
