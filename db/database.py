@@ -3,6 +3,29 @@
 import os
 from dotenv import load_dotenv
 from sqlmodel import SQLModel, create_engine, Session
+from sqlmodel import Session, select
+from .models import User
+from .database import engine  # if needed
+
+def get_user_by_email(email: str):
+    with Session(engine) as session:
+        statement = select(User).where(User.email == email)
+        return session.exec(statement).first()
+
+
+def create_user(email: str, name: str, hashed_password: str):
+    with Session(engine) as session:
+        user = User(
+            email=email,
+            name=name,
+            hashed_password=hashed_password,
+            plan="free",
+            role="user"
+        )
+        session.add(user)
+        session.commit()
+        session.refresh(user)
+        return user
 
 load_dotenv()
 
