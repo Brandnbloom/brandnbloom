@@ -61,6 +61,19 @@ def posting_frequency_score(num_posts: int, days: int) -> float:
         diff = min(abs(posts_per_week - 5), 5)  # ideal mid-point = 5 posts/week
         return round(max(0, 100 - diff * 20), 2)
 
+def palette_luminance(hex_color: str) -> float:
+    """
+    Calculate luminance (brightness) of a HEX color.
+    Returns value 0–1.
+    """
+    hex_color = hex_color.lstrip("#")
+
+    # Convert HEX → RGB
+    r, g, b = tuple(int(hex_color[i:i+2], 16) / 255 for i in (0, 0+2, 0+4))
+
+    # Luminance formula (WCAG)
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b
+
 
 def account_quality_summary(metrics: Dict[str, float]) -> str:
     """
