@@ -1,4 +1,3 @@
-~~~{"variant":"code/python","title":"streamlit_app_final.py","id":"68423"}
 # brandnbloom/streamlit_app.py
 
 """
