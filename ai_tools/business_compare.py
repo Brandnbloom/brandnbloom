@@ -7,7 +7,7 @@ followers, engagement rate, aesthetics, caption tone, consistency, BloomScore et
 
 from bloominsight.scraper import fetch_public_profile
 from bloominsight.analyzer import analyze_profile
-from brandnbloom.bloomscore_pro_v2 import compute_bloomscore_v2
+from project.bloomscore_pro_v2 import compute_bloomscore_v2
 
 
 def compare_handles(handles: list[str]):
