@@ -150,8 +150,7 @@ def safe_get(url: str, method: str = "get", timeout: int = REQUEST_TIMEOUT,
 
         # Hostname must be authorized
         if not is_hostname_allowed(hostname):
-            return {"ok": False, "error": f"Domain '{hostname}' is not allowed for audit"}
-
+  return {"ok": False, "error": f"Domain '{hostname}' is not allowed for audit. Only explicit allowlisted domains are permitted."}
         # Resolve and check each IP (extra safety)
         try:
             ips = _resolve_ips_for_hostname(hostname)
@@ -655,8 +654,9 @@ def show_seo_audit() -> None:
         st.success("Token validated.")
 
     url = st.text_input("Enter full page URL (include https://)", placeholder="https://example.com/page")
-    run_button = st.button("Run full audit")
-    if run_button:
+   if not ALLOWED_DOMAINS:
+        st.warning("⚠️ No domains are authorized for audit. Set the SEO_ALLOWED_DOMAINS environment variable (comma-separated) to enable safe SEO audits for specified domains only.")
+    run_button = st.button("Run full audit", disabled=not ALLOWED_DOMAINS)    if run_button:
         if not url or not urlparse(url).scheme.startswith("http"):
             st.error("Please enter a valid URL including http/https.")
             return
@@ -667,8 +667,7 @@ def show_seo_audit() -> None:
             if ALLOWED_DOMAINS:
                 st.error("Domain not permitted. Allowed domains: " + ", ".join(sorted(ALLOWED_DOMAINS)))
             else:
-                st.error("Domain not permitted (private/reserved IP or resolution failed). Only public domains are allowed.")
-            return
+    st.error("No allowlisted domains configured. Please set the SEO_ALLOWED_DOMAINS environment variable (comma-separated hostnames/domains) to permit audits for those sites.")            return
 
         with st.spinner("Running full SEO audit (this may take 10–30s)..."):
             start = time.time()
