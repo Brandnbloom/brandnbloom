@@ -9,21 +9,20 @@ import os
 import threading
 import logging
 import pathlib
-
 import requests
 import streamlit as st
 from dotenv import load_dotenv
 
-# -----------------------
+# =============================================================
 # Load environment & logging
-# -----------------------
+# =============================================================
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("brandnbloom")
 
-# -----------------------
+# =============================================================
 # Streamlit page config
-# -----------------------
+# =============================================================
 st.set_page_config(
     page_title="Brand N Bloom — Dashboard",
     page_icon="🌸",
@@ -31,9 +30,9 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# -----------------------
-# Aesthetic CSS (global)
-# -----------------------
+# =============================================================
+# Aesthetic CSS
+# =============================================================
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -63,9 +62,9 @@ html, body, [class*="css"] {
 </style>
 """, unsafe_allow_html=True)
 
-# -----------------------
-# SEO / Analytics / Chat injection
-# -----------------------
+# =============================================================
+# SEO / Analytics injection (safe)
+# =============================================================
 try:
     from components.seo import inject_all
     inject_all(
@@ -82,22 +81,23 @@ try:
         enable_tawk=False,
     )
 except Exception as e:
-    logger.warning("SEO injection failed or components.seo missing: %s", e)
+    logger.warning("SEO injection failed: %s", e)
 
-# -----------------------
-# Start FastAPI backend in background thread
-# -----------------------
+# =============================================================
+# Start FastAPI backend (thread)
+# =============================================================
 def _start_api():
     try:
         from fastapi import FastAPI
         from fastapi.middleware.cors import CORSMiddleware
         import uvicorn
 
+        # DB optional
         try:
             from db import init_db
             init_db()
         except Exception:
-            logger.debug("No db.init_db() available or failed to run init_db.")
+            logger.debug("init_db missing or failed.")
 
         app = FastAPI(title="Brand N Bloom - API Suite")
         app.add_middleware(
@@ -107,6 +107,7 @@ def _start_api():
             allow_headers=["*"],
         )
 
+        # Router imports
         try:
             from routers.seo_router import router as seo_router
             from routers.keyword_router import router as keyword_router
@@ -119,48 +120,47 @@ def _start_api():
             from routers.advanced_router import router as advanced_router
             from routers.internal_router import router as internal_router
 
-            app.include_router(seo_router, prefix="/api/seo", tags=["SEO"])
-            app.include_router(keyword_router, prefix="/api/keywords", tags=["Keywords"])
-            app.include_router(content_router, prefix="/api/content", tags=["Content"])
-            app.include_router(social_router, prefix="/api/social", tags=["Social"])
-            app.include_router(ads_router, prefix="/api/ads", tags=["Ads"])
-            app.include_router(crm_router, prefix="/api/crm", tags=["CRM"])
-            app.include_router(analytics_router, prefix="/api/analytics", tags=["Analytics"])
-            app.include_router(reputation_router, prefix="/api/reputation", tags=["Reputation"])
-            app.include_router(advanced_router, prefix="/api/advanced", tags=["Advanced"])
-            app.include_router(internal_router, prefix="/api/internal", tags=["Internal"])
+            app.include_router(seo_router, prefix="/api/seo")
+            app.include_router(keyword_router, prefix="/api/keywords")
+            app.include_router(content_router, prefix="/api/content")
+            app.include_router(social_router, prefix="/api/social")
+            app.include_router(ads_router, prefix="/api/ads")
+            app.include_router(crm_router, prefix="/api/crm")
+            app.include_router(analytics_router, prefix="/api/analytics")
+            app.include_router(reputation_router, prefix="/api/reputation")
+            app.include_router(advanced_router, prefix="/api/advanced")
+            app.include_router(internal_router, prefix="/api/internal")
+
         except Exception as e:
-            logger.info("One or more routers failed to import; continuing without them: %s", e)
+            logger.info("Router import error: %s", e)
 
         @app.get("/health")
         async def health_check():
             return {"service": "brand-n-bloom", "status": "ok"}
 
-        port = int(os.getenv("PORT", 8000))
-        uvicorn.run(app, host="0.0.0.0", port=port, log_level="error")
+        uvicorn.run(app, host="0.0.0.0", port=int(os.getenv("PORT", 8000)), log_level="error")
+
     except Exception as exc:
-        logger.exception("Failed to start API thread: %s", exc)
+        logger.exception("API failed: %s", exc)
 
 
-_api_thread = threading.Thread(target=_start_api, daemon=True)
-_api_thread.start()
+threading.Thread(target=_start_api, daemon=True).start()
 
-# -----------------------
-# Import Streamlit UI modules (safe fallbacks)
-# -----------------------
+# =============================================================
+# UI helpers (fallback safe)
+# =============================================================
 try:
     from utils.ui import load_branding, inject_css, dark_mode_toggle
 except Exception:
-    def load_branding():
-        return {"tagline": "Because brands deserve to bloom."}
-    def inject_css(): return None
-    def dark_mode_toggle(): return None
+    def load_branding(): return {"tagline": "Because brands deserve to bloom."}
+    def inject_css(): pass
+    def dark_mode_toggle(): pass
 
-# -----------------------
+# =============================================================
 # Dynamic tool imports
-# -----------------------
+# =============================================================
 tools_modules = {}
-for tool_name, import_path in [
+for name, path in [
     ("Website Builder", "tools.website_builder.builder_ui"),
     ("SEO Audit", "tools.seo.seo_audit"),
     ("Keyword Tracker", "tools.seo.keyword_tracker"),
@@ -170,34 +170,36 @@ for tool_name, import_path in [
     ("Analytics Dashboard", "tools.analytics.dashboard"),
 ]:
     try:
-        module = __import__(import_path, fromlist=[""])
-        tools_modules[tool_name] = module
+        tools_modules[name] = __import__(path, fromlist=[""])
     except Exception as e:
-        logger.info(f"Tool '{tool_name}' not available: {e}")
-        tools_modules[tool_name] = None
+        logger.info(f"Tool {name} unavailable: {e}")
+        tools_modules[name] = None
 
-# -----------------------
+# =============================================================
 # Header / Branding
-# -----------------------
+# =============================================================
 branding = load_branding()
 inject_css()
 dark_mode_toggle()
 
-logo_path = pathlib.Path("assets/logo.png")
-left_col, right_col = st.columns([1, 3])
-with left_col:
-    if logo_path.exists():
-        st.image(str(logo_path), width=150)
-with right_col:
+logo = pathlib.Path("assets/logo.png")
+c1, c2 = st.columns([1, 3])
+
+with c1:
+    if logo.exists():
+        st.image(str(logo), width=150)
+
+with c2:
     st.markdown("<h1 class='aesthetic-title'>Brand N Bloom</h1>", unsafe_allow_html=True)
-    st.caption(branding.get("tagline", "Because brands deserve to bloom."))
+    st.caption(branding["tagline"])
+
 st.divider()
 
-# -----------------------
+# =============================================================
 # Sidebar navigation
-# -----------------------
+# =============================================================
 st.sidebar.title("✨ Tools")
-tools_list = [
+choice = st.sidebar.radio("Choose tool", [
     "BloomScore Pro v2",
     "Website Builder",
     "SEO Audit",
@@ -206,87 +208,113 @@ tools_list = [
     "Social Scheduler",
     "CRM / Leads",
     "Analytics Dashboard",
-]
-choice = st.sidebar.radio("Choose tool", tools_list)
+])
 
-# -----------------------
-# BloomScore Pro v2 page
-# -----------------------
+# =============================================================
+# Path Injection Safe Directory
+# =============================================================
+SAFE_REPORT_DIR = pathlib.Path("reports").resolve()
+SAFE_REPORT_DIR.mkdir(exist_ok=True)
+
+def is_safe_report_path(path: str) -> bool:
+    """Ensure the PDF path stays inside the reports/ folder."""
+    try:
+        resolved = pathlib.Path(path).resolve()
+        return SAFE_REPORT_DIR in resolved.parents
+    except Exception:
+        return False
+
+# =============================================================
+# BloomScore Pro v2 Page
+# =============================================================
 if choice == "BloomScore Pro v2":
+
     try:
         from brandnbloom.bloomscore_pro_v2 import generate_full_report
     except Exception as e:
-        st.error("BloomScore module not available. Please check installation.")
-        logger.debug("bloomscore_pro_v2 import error: %s", e)
+        st.error("BloomScore module missing.")
+        logger.error(e)
         generate_full_report = None
 
     st.markdown("<h2 class='aesthetic-title'>BloomScore Pro v2 — Aesthetic Brand Audit</h2>", unsafe_allow_html=True)
-    st.write("Upload screenshot/sample image and paste captions. We'll generate BloomScore HTML+PDF report.")
 
-    uploaded = st.file_uploader("Upload screenshot or image", type=["png","jpg","jpeg"])
+    uploaded = st.file_uploader("Upload image", ["png", "jpg", "jpeg"])
     texts = st.text_area("Paste captions (one per line)", height=150)
 
     if uploaded and generate_full_report:
-        with st.spinner("Generating BloomScore report…"):
+        with st.spinner("Generating report…"):
             try:
                 img_bytes = uploaded.read()
-                sample_texts = [l.strip() for l in texts.splitlines() if l.strip()]
-                profile = {"image_bytes": img_bytes, "sample_texts": sample_texts, "metrics": {}}
+                caption_list = [l.strip() for l in texts.splitlines() if l.strip()]
+
+                profile = {
+                    "image_bytes": img_bytes,
+                    "sample_texts": caption_list,
+                    "metrics": {}
+                }
 
                 report = generate_full_report(profile)
 
-                st.markdown("### 🌸 BloomScore Report")
                 st.metric("Final Score", report["payload"].get("score", "—"))
-                st.markdown("#### Components")
                 st.json(report["payload"].get("components", {}))
 
-                st.markdown("### 🌷 HTML Preview")
+                # HTML
                 if report.get("html"):
                     st.components.v1.html(report["html"], height=650)
 
+                # Safe PDF download
                 pdf_path = report.get("pdf_path")
-                if pdf_path and os.path.exists(pdf_path):
+                if pdf_path and is_safe_report_path(pdf_path) and os.path.exists(pdf_path):
+
                     with open(pdf_path, "rb") as f:
                         st.download_button(
-                            label="📄 Download PDF Report",
-                            data=f,
-                            file_name="BloomScore_Report.pdf",
+                            "📄 Download PDF Report",
+                            f.read(),
+                            "BloomScore_Report.pdf",
                             mime="application/pdf"
                         )
+
             except Exception as e:
-                st.error("Failed to generate report. Check logs.")
-                logger.exception("Error generating BloomScore report: %s", e)
+                st.error("Report generation failed.")
+                logger.exception(e)
 
-# -----------------------
-# Other tool pages dynamically
-# -----------------------
+# =============================================================
+# Other tools
+# =============================================================
 else:
-    tool_module = tools_modules.get(choice)
-    if tool_module:
+    module = tools_modules.get(choice)
+    if module:
         try:
-            if hasattr(tool_module, "show_builder"): tool_module.show_builder()
-            elif hasattr(tool_module, "show_seo_audit"): tool_module.show_seo_audit()
-            elif hasattr(tool_module, "show_keyword_tracker"): tool_module.show_keyword_tracker()
-            elif hasattr(tool_module, "show_creative_ui"): tool_module.show_creative_ui()
-            elif hasattr(tool_module, "show_calendar"): tool_module.show_calendar()
-            elif hasattr(tool_module, "show_forms_ui"): tool_module.show_forms_ui()
-            elif hasattr(tool_module, "show_dashboard"): tool_module.show_dashboard()
+            for method in [
+                "show_builder",
+                "show_seo_audit",
+                "show_keyword_tracker",
+                "show_creative_ui",
+                "show_calendar",
+                "show_forms_ui",
+                "show_dashboard"
+            ]:
+                if hasattr(module, method):
+                    getattr(module, method)()
         except Exception as e:
-            st.error(f"{choice} currently unavailable.")
-            logger.debug(f"{choice} error: {e}")
+            st.error(f"{choice} failed.")
+            logger.error(e)
     else:
-        st.info(f"{choice} tool not installed.")
+        st.info(f"{choice} not installed.")
 
-# -----------------------
-# Footer / API status
-# -----------------------
+# =============================================================
+# Footer / Safe API Health Check (No SSRF)
+# =============================================================
 st.divider()
-BASE_URL = f"http://localhost:{int(os.getenv('PORT',8000))}"
+
+BASE_URL = "http://127.0.0.1:" + str(int(os.getenv("PORT", 8000)))
+
 try:
-    r = requests.get(f"{BASE_URL}/health", timeout=4)
+    # SAFE: Only allow localhost, not user-controlled input
+    r = requests.get(f"{BASE_URL}/health", timeout=3)
     if r.ok:
-        st.success("Connected to API backend!")
+        st.success("Connected to API backend")
     else:
-        st.warning("API reachable but returned an error.")
-except Exception as e:
-    st.error(f"API offline: {e}")
+        st.warning("API reachable but returned error.")
+except Exception:
+    st.error("API offline")
