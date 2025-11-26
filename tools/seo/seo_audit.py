@@ -12,7 +12,7 @@ import socket
 import ipaddress
 from typing import Tuple, Optional, Dict, Any, List
 
-# Use your project's jwt helper (decode returns payload dict or None)
+
 try:
     from utils.jwt_helper import decode_access_token
 except Exception:
@@ -103,13 +103,18 @@ def safe_get(url: str, method: str = "get", timeout: int = REQUEST_TIMEOUT, allo
              headers: Dict[str, str] = USER_AGENT) -> Dict[str, Any]:
     """
     Perform a GET or HEAD safely; returns dict {ok, status, text, headers, error}.
-    Includes an extra SSRF protection: resolves hostname first and blocks private/reserved IPs.
+    Includes an extra SSRF protection: resolves hostname first, blocks private/reserved IPs,
+    AND only allows URLs from permitted external domains.
     """
     try:
         parsed = urlparse(url)
         hostname = parsed.hostname
         if not hostname:
-            return {"ok": False, "error": "Invalid URL"}
+              return {"ok": False, "error": "Invalid URL"}
+            # SSRF: Block if hostname is not explicitly allowed.
+        if not is_hostname_allowed(hostname):
+            return {"ok": False, "error": f"Blocked: domain '{hostname}' is not authorized"}
+          
 
         # Resolve and check IPs
         try:
@@ -711,7 +716,10 @@ def show_seo_audit() -> None:
     if not st.session_state.get("seo_token"):
         st.info("Enter and validate JWT to unlock audit features.")
         return
-
+  hostname = urlparse(url).hostname
+        if not hostname or not is_hostname_allowed(hostname):
+            st.error("Domain is not authorized for audit. Please select from allowed domains: " + ", ".join(ALLOWED_DOMAINS))
+            return
     # Now the user is authenticated; show the audit input UI
     url = st.text_input("Enter full page URL (include https://)", placeholder="https://example.com/page")
     run_button = st.button("Run full audit")
