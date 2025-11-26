@@ -263,16 +263,25 @@ if choice == "BloomScore Pro v2":
                     st.components.v1.html(report["html"], height=650)
 
                 # Safe PDF download
-                pdf_path = report.get("pdf_path")
-                if pdf_path and is_safe_report_path(pdf_path) and os.path.exists(pdf_path):
+               pdf_path = report.get("pdf_path")
 
-                    with open(pdf_path, "rb") as f:
-                        st.download_button(
-                            "📄 Download PDF Report",
-                            f.read(),
-                            "BloomScore_Report.pdf",
-                            mime="application/pdf"
-                        )
+if pdf_path:
+    # Extract only filename (prevents traversal)
+    filename = os.path.basename(pdf_path)
+
+    # Rebuild absolute safe path
+    safe_path = SAFE_REPORT_DIR / filename
+
+    # Extra safety: ensure final path is inside reports/
+    if safe_path.exists() and is_safe_report_path(str(safe_path)):
+        with safe_path.open("rb") as f:
+            st.download_button(
+                label="📄 Download PDF Report",
+                data=f.read(),
+                file_name=filename,
+                mime="application/pdf"
+            )
+
 
             except Exception as e:
                 st.error("Report generation failed.")
