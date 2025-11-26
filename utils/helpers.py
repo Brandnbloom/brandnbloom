@@ -1,6 +1,6 @@
 # utils/helpers.py
 
-import re
+import regex as re      # <-- IMPORTANT: using 'regex' instead of 're'
 import unicodedata
 import random
 import string
@@ -32,19 +32,16 @@ def slugify(s: str) -> str:
 
 
 # ---------------------------------------------------------
-# 2. Remove emojis from any text
+# 2. Remove emojis (SAFE, CodeQL-clean)
 # ---------------------------------------------------------
 def remove_emojis(s: str) -> str:
+    """
+    Removes emojis safely using Unicode character properties.
+    Avoids overly large ranges and fixes CodeQL py/overly-large-range.
+    """
     emoji_pattern = re.compile(
-        "["
-        "\U0001F600-\U0001F64F"  # Emoticons
-        "\U0001F300-\U0001F5FF"  # Symbols & pictographs
-        "\U0001F680-\U0001F6FF"  # Transport & map symbols
-        "\U0001F1E0-\U0001F1FF"  # Flags
-        "\U00002700-\U000027BF"  # Dingbats
-        "\U000024C2-\U0001F251"
-        "]+",
-        flags=re.UNICODE,
+        r"[\p{Emoji}\p{Extended_Pictographic}]",
+        flags=re.UNICODE
     )
     return emoji_pattern.sub("", s)
 
@@ -124,7 +121,7 @@ def clean_text(s: str) -> str:
 
 
 # ---------------------------------------------------------
-# 9. Snake_case ↔ camelCase
+# 9. snake_case ↔ camelCase
 # ---------------------------------------------------------
 def to_camel(s: str) -> str:
     parts = s.split("_")
