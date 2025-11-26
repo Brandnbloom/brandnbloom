@@ -1,30 +1,47 @@
 # tools/seo/seo_audit.py
-import streamlit as st
+"""
+Safe SEO auditor for Brand N Bloom — Option B (Smart Public Domain Only)
+
+Key protections:
+ - Blocks localhost / private / link-local / reserved / multicast IPs
+ - Resolves hostnames and validates every resolved IP
+ - Optional explicit allowlist via SEO_ALLOWED_DOMAINS env var
+ - Safe requests with timeouts and user-agent
+ - Streamlit UI with optional JWT gating (uses utils.jwt_helper.decode_access_token if present)
+"""
+
+from typing import Tuple, Optional, Dict, Any, List, Set
+from urllib.parse import urlparse, urljoin
+from collections import Counter, defaultdict
+import socket
+import ipaddress
 import requests
 from bs4 import BeautifulSoup
-from urllib.parse import urljoin, urlparse
-from collections import Counter, defaultdict
-import math
 import re
 import json
 import time
-import socket
-import ipaddress
-from typing import Tuple, Optional, Dict, Any, List
+import streamlit as st
+import os
 
-
+# Optional JWT helper integration
 try:
-    from utils.jwt_helper import decode_access_token
+    from utils.jwt_helper import decode_access_token  # your project's jwt helper
 except Exception:
-    # fallback stub if utils.jwt_helper missing; in production ensure utils.jwt_helper exists
     def decode_access_token(token: str):
-        return None
+        return None  # fallback stub; treat as unauthenticated in UI
 
 USER_AGENT = {"User-Agent": "BrandnBloomBot/1.2 (+https://brandnbloom.ai)"}
-REQUEST_TIMEOUT = 10
+REQUEST_TIMEOUT = int(os.getenv("SEO_REQUEST_TIMEOUT", "10"))
 TOP_KEYWORDS = 15
 
-# Basic English stopwords (small set; extend if needed)
+# Optional explicit domains allowlist (comma-separated env var)
+# If set, audits will be limited to these domains (useful for highly restrictive deployments).
+_ALLOWED_DOMAINS_ENV = os.getenv("SEO_ALLOWED_DOMAINS", "").strip()
+ALLOWED_DOMAINS: Set[str] = set()
+if _ALLOWED_DOMAINS_ENV:
+    ALLOWED_DOMAINS = {d.strip().lower() for d in _ALLOWED_DOMAINS_ENV.split(",") if d.strip()}
+
+# Basic stopwords (small set)
 STOPWORDS = {
     "the", "and", "a", "an", "in", "on", "for", "with", "to", "of", "is", "it",
     "this", "that", "by", "are", "as", "be", "or", "from", "at", "was", "were",
@@ -34,104 +51,125 @@ STOPWORDS = {
 
 
 # -------------------------
-# JWT helpers for Streamlit protection (Option 2)
+# Hostname / IP safety helpers (Option B)
 # -------------------------
-def verify_jwt(token: str) -> Optional[Dict[str, Any]]:
-    """
-    Verify and decode a JWT access token using your project's decode_access_token helper.
-    Returns the decoded payload (usually a dict with user_id etc.) or None if invalid/expired.
-    """
-    if not token or not token.strip():
-        return None
-    try:
-        payload = decode_access_token(token.strip())
-        return payload
-    except Exception:
-        return None
-
-
-# -------------------------
-# Helper network functions
-# -------------------------
-def is_url_allowed(url: str) -> bool:
-    """
-    Returns True if URL is not pointing to a private, loopback, localhost, or reserved IP.
-    Blocks SSRF to internal infrastructure.
-    """
-    try:
-        parts = urlparse(url)
-        hostname = parts.hostname
-        # Block empty hostname
-        if not hostname:
-            return False
-        # Block obvious local hostnames
-        blocked_hosts = {"localhost", "127.0.0.1", "::1", "0.0.0.0"}
-        if hostname.lower() in blocked_hosts:
-            return False
-
-        # Resolve hostname to IP(s) and check each
+def _resolve_ips_for_hostname(hostname: str) -> List[str]:
+    """Return list of resolved IP strings for a hostname. Raises on resolution failure."""
+    results = socket.getaddrinfo(hostname, None)
+    ips = []
+    for r in results:
         try:
-            # getaddrinfo returns tuples; extract IPs
-            results = socket.getaddrinfo(hostname, None)
-            ips = {r[-1][0] for r in results}
+            ip = r[-1][0]
+            ips.append(ip)
         except Exception:
-            # If DNS resolution fails, block to be safe
+            continue
+    return sorted(set(ips))
+
+
+def _ip_is_public(ip_str: str) -> bool:
+    """Return True if the IP is public (not private / loopback / link-local / reserved / multicast)."""
+    try:
+        ip_obj = ipaddress.ip_address(ip_str)
+    except Exception:
+        return False
+    if ip_obj.is_private or ip_obj.is_loopback or ip_obj.is_link_local or ip_obj.is_reserved or ip_obj.is_multicast:
+        return False
+    return True
+
+
+def is_hostname_allowed(hostname: str) -> bool:
+    """
+    Decide whether a hostname is allowed for auditing.
+
+    Rules:
+      - If ALLOWED_DOMAINS env var is set, the hostname must be an exact match or a subdomain of an allowed domain.
+      - Otherwise, resolve hostname and ensure EVERY resolved IP is public (not private/reserved).
+    """
+    if not hostname:
+        return False
+
+    hostname = hostname.lower().strip()
+
+    # If explicit allowlist present, only permit those domains (and their subdomains)
+    if ALLOWED_DOMAINS:
+        for allowed in ALLOWED_DOMAINS:
+            if hostname == allowed or hostname.endswith("." + allowed):
+                return True
+        return False
+
+    # Otherwise, resolve and verify all IPs are public
+    try:
+        ips = _resolve_ips_for_hostname(hostname)
+        if not ips:
             return False
-
-        for ip_str in ips:
-            try:
-                ip_obj = ipaddress.ip_address(ip_str)
-            except Exception:
+        for ip in ips:
+            if not _ip_is_public(ip):
                 return False
-            # Block private/reserved/multicast/loopback/link-local addresses
-            if (
-                ip_obj.is_private
-                or ip_obj.is_loopback
-                or ip_obj.is_link_local
-                or ip_obj.is_reserved
-                or ip_obj.is_multicast
-            ):
-                return False
-
         return True
     except Exception:
-        # Block on parsing/resolution errors
+        # If resolution fails, block by default
         return False
 
 
-def safe_get(url: str, method: str = "get", timeout: int = REQUEST_TIMEOUT, allow_redirects: bool = True,
-             headers: Dict[str, str] = USER_AGENT) -> Dict[str, Any]:
+def is_url_allowed(url: str) -> bool:
     """
-    Perform a GET or HEAD safely; returns dict {ok, status, text, headers, error}.
-    Includes an extra SSRF protection: resolves hostname first, blocks private/reserved IPs,
-    AND only allows URLs from permitted external domains.
+    Quick check for a URL string:
+      - Must have http or https scheme
+      - Hostname must be allowed via is_hostname_allowed
     """
     try:
         parsed = urlparse(url)
+        if parsed.scheme not in ("http", "https"):
+            return False
         hostname = parsed.hostname
         if not hostname:
-              return {"ok": False, "error": "Invalid URL"}
-            # SSRF: Block if hostname is not explicitly allowed.
-        if not is_hostname_allowed(hostname):
-            return {"ok": False, "error": f"Blocked: domain '{hostname}' is not authorized"}
-          
+            return False
+        return is_hostname_allowed(hostname)
+    except Exception:
+        return False
 
-        # Resolve and check IPs
+
+# -------------------------
+# Safe requests wrapper
+# -------------------------
+def safe_get(url: str, method: str = "get", timeout: int = REQUEST_TIMEOUT,
+             allow_redirects: bool = True, headers: Optional[Dict[str, str]] = None) -> Dict[str, Any]:
+    """
+    Perform GET or HEAD safely with SSRF protections.
+    Returns a dict: { ok: bool, status: int|None, text: str|None, headers: dict|None, error: str|None }
+    """
+    headers = headers or USER_AGENT
+    try:
+        parsed = urlparse(url)
+        if parsed.scheme not in ("http", "https"):
+            return {"ok": False, "error": "Unsupported URL scheme"}
+
+        hostname = parsed.hostname
+        if not hostname:
+            return {"ok": False, "error": "Invalid URL"}
+
+        # Hostname must be authorized
+        if not is_hostname_allowed(hostname):
+            return {"ok": False, "error": f"Domain '{hostname}' is not allowed for audit"}
+
+        # Resolve and check each IP (extra safety)
         try:
-            results = socket.getaddrinfo(hostname, None)
-            for result in results:
-                ip = result[-1][0]
-                # Reuse is_url_allowed logic by building a http://ip pseudo-url
-                if not is_url_allowed(f"http://{ip}"):
-                    return {"ok": False, "error": f"Blocked: resolved IP {ip} is not allowed"}
+            ips = _resolve_ips_for_hostname(hostname)
+            for ip in ips:
+                if not _ip_is_public(ip):
+                    return {"ok": False, "error": f"Resolved IP {ip} for {hostname} is not allowed"}
         except Exception:
             return {"ok": False, "error": f"Could not resolve hostname {hostname}"}
 
+        # Make the request
         if method.lower() == "head":
-            r = requests.head(url, timeout=timeout, allow_redirects=allow_redirects, headers=headers)
+            resp = requests.head(url, timeout=timeout, allow_redirects=allow_redirects, headers=headers)
+            text = None
         else:
-            r = requests.get(url, timeout=timeout, allow_redirects=allow_redirects, headers=headers)
-        return {"ok": True, "status": r.status_code, "text": r.text if method.lower() != "head" else None, "headers": r.headers}
+            resp = requests.get(url, timeout=timeout, allow_redirects=allow_redirects, headers=headers)
+            text = resp.text
+
+        return {"ok": True, "status": resp.status_code, "text": text, "headers": resp.headers}
     except requests.exceptions.Timeout:
         return {"ok": False, "error": "timeout"}
     except requests.exceptions.RequestException as e:
@@ -146,7 +184,7 @@ def safe_get(url: str, method: str = "get", timeout: int = REQUEST_TIMEOUT, allo
 def fetch_and_parse(url: str) -> Tuple[Dict[str, Any], Optional[BeautifulSoup]]:
     """Fetch a URL and return (response_info, soup) where response_info is safe_get output."""
     if not is_url_allowed(url):
-        return {"ok": False, "error": "URL points to a private, local, or blocked IP/domain."}, None
+        return {"ok": False, "error": "URL not allowed (private/reserved or disallowed domain)"}, None
 
     info = safe_get(url, method="get")
     if not info.get("ok"):
@@ -160,7 +198,7 @@ def fetch_and_parse(url: str) -> Tuple[Dict[str, Any], Optional[BeautifulSoup]]:
 
 
 # -------------------------
-# On-page extraction
+# On-page extraction & audits
 # -------------------------
 def extract_basic_meta(soup: BeautifulSoup, base_url: str) -> Dict[str, Any]:
     title = soup.title.get_text(strip=True) if soup.title else ""
@@ -182,6 +220,7 @@ def extract_basic_meta(soup: BeautifulSoup, base_url: str) -> Dict[str, Any]:
     word_count = len(words)
     # images
     images = []
+    base_domain = urlparse(base_url).netloc
     for img in soup.find_all("img"):
         src = img.get("src") or img.get("data-src") or ""
         src = urljoin(base_url, src) if src else ""
@@ -189,15 +228,17 @@ def extract_basic_meta(soup: BeautifulSoup, base_url: str) -> Dict[str, Any]:
         images.append({"src": src, "alt": alt})
     # links classification
     links = []
-    domain = urlparse(base_url).netloc
     for a in soup.find_all("a", href=True):
-        href = urljoin(base_url, a["href"].strip())
+        try:
+            href = urljoin(base_url, a["href"].strip())
+        except Exception:
+            continue
         parsed = urlparse(href)
         if not parsed.scheme.startswith("http"):
             continue
-        link_type = "internal" if parsed.netloc == domain else "external"
+        link_type = "internal" if parsed.netloc == base_domain else "external"
         links.append({"href": href, "type": link_type})
-    # resources (scripts, css)
+    # resources
     scripts = [urljoin(base_url, s.get("src")) for s in soup.find_all("script", src=True)]
     stylesheets = [urljoin(base_url, l.get("href")) for l in soup.find_all("link", rel=lambda v: v and "stylesheet" in v)]
     return {
@@ -218,9 +259,6 @@ def extract_basic_meta(soup: BeautifulSoup, base_url: str) -> Dict[str, Any]:
     }
 
 
-# -------------------------
-# Keyword analysis
-# -------------------------
 def keyword_analysis(text: str, top_n: int = TOP_KEYWORDS) -> Dict[str, Any]:
     tokens = re.findall(r"\w+", text.lower())
     tokens = [t for t in tokens if t not in STOPWORDS and len(t) > 2]
@@ -230,16 +268,10 @@ def keyword_analysis(text: str, top_n: int = TOP_KEYWORDS) -> Dict[str, Any]:
     density = []
     for k, c in top:
         density.append({"keyword": k, "count": c, "density_pct": round((c / total_words) * 100 if total_words else 0, 3)})
-    # represent top as dicts for easier rendering
-    top_with_density = density
-    return {"total_words": total_words, "top_keywords": [{"keyword": k, "count": c} for k, c in top], "top_with_density": top_with_density}
+    return {"total_words": total_words, "top_keywords": [{"keyword": k, "count": c} for k, c in top], "top_with_density": density}
 
 
-# -------------------------
-# Image audit
-# -------------------------
 def audit_images(images: List[Dict[str, str]]) -> Dict[str, Any]:
-    """images: list of {'src','alt'}"""
     results = {"count": len(images), "missing_alt": 0, "missing_alt_percent": 0.0, "broken": [], "largest_by_bytes": None}
     sizes = []
     for img in images:
@@ -249,8 +281,8 @@ def audit_images(images: List[Dict[str, str]]) -> Dict[str, Any]:
         src = img.get("src")
         if not src:
             continue
-        # head to get content-length
         info = safe_get(src, method="head")
+        size = None
         if info.get("ok") and info.get("headers"):
             cl = info["headers"].get("Content-Length")
             try:
@@ -258,7 +290,6 @@ def audit_images(images: List[Dict[str, str]]) -> Dict[str, Any]:
             except Exception:
                 size = None
         else:
-            # fallback to GET with small timeout
             info2 = safe_get(src, method="get")
             if info2.get("ok") and info2.get("headers"):
                 cl = info2["headers"].get("Content-Length")
@@ -269,12 +300,7 @@ def audit_images(images: List[Dict[str, str]]) -> Dict[str, Any]:
             else:
                 size = None
         sizes.append((src, size or 0))
-        # check broken (status >=400)
-        status_ok = True
-        if info.get("ok"):
-            status_ok = info["status"] < 400
-        else:
-            status_ok = False
+        status_ok = info.get("ok") and info.get("status", 0) < 400
         if not status_ok:
             results["broken"].append({"src": src, "status": info.get("status") or info.get("error")})
     results["missing_alt_percent"] = round((results["missing_alt"] / results["count"] * 100) if results["count"] else 0, 2)
@@ -284,9 +310,6 @@ def audit_images(images: List[Dict[str, str]]) -> Dict[str, Any]:
     return results
 
 
-# -------------------------
-# Links audit + broken resources
-# -------------------------
 def classify_links(links: List[Dict[str, str]]) -> Dict[str, Any]:
     counts = Counter(l["type"] for l in links)
     by_type = defaultdict(list)
@@ -308,18 +331,13 @@ def check_broken_resources(resources: List[str], limit: int = 200) -> List[Dict[
         checked += 1
         info = safe_get(url, method="head")
         if not info.get("ok") or info.get("status", 0) >= 400 or info.get("status") == 405:
-            # try GET fallback
             info2 = safe_get(url, method="get")
             if not info2.get("ok") or info2.get("status", 0) >= 400:
                 broken.append({"url": url, "status": info2.get("status") or info2.get("error")})
     return broken
 
 
-# -------------------------
-# Performance insights
-# -------------------------
 def performance_insights(page_info: Dict[str, Any], soup: BeautifulSoup) -> Dict[str, Any]:
-    # page_info from fetch_and_parse (headers)
     size_bytes = None
     if page_info.get("headers"):
         cl = page_info["headers"].get("Content-Length")
@@ -327,24 +345,14 @@ def performance_insights(page_info: Dict[str, Any], soup: BeautifulSoup) -> Dict
             size_bytes = int(cl) if cl else None
         except Exception:
             size_bytes = None
-    # count resources
     scripts = len(soup.find_all("script")) if page_info.get("text") else 0
     images = len(soup.find_all("img"))
     css = len(soup.find_all("link", rel=lambda v: v and "stylesheet" in v))
-    return {
-        "page_bytes": size_bytes,
-        "num_scripts": scripts,
-        "num_images": images,
-        "num_css": css
-    }
+    return {"page_bytes": size_bytes, "num_scripts": scripts, "num_images": images, "num_css": css}
 
 
-# -------------------------
-# Mobile friendliness (simple)
-# -------------------------
 def mobile_checks(soup: BeautifulSoup) -> Dict[str, Any]:
     viewport = bool(soup.find("meta", {"name": "viewport"}))
-    # naive font-size scan: look for inline styles with font-size < 12px
     small_fonts = 0
     for tag in soup.find_all(style=True):
         m = re.search(r"font-size\s*:\s*([0-9\.]+)px", tag["style"])
@@ -354,7 +362,7 @@ def mobile_checks(soup: BeautifulSoup) -> Dict[str, Any]:
                     small_fonts += 1
             except Exception:
                 pass
-    tap_targets = len(soup.find_all("a"))  # crude
+    tap_targets = len(soup.find_all("a"))
     recommendations = []
     if not viewport:
         recommendations.append("Add viewport meta tag for mobile responsiveness.")
@@ -363,17 +371,12 @@ def mobile_checks(soup: BeautifulSoup) -> Dict[str, Any]:
     return {"viewport": viewport, "small_font_count": small_fonts, "tap_targets_estimate": tap_targets, "recommendations": recommendations}
 
 
-# -------------------------
-# Security checks
-# -------------------------
 def security_checks(url: str, soup: BeautifulSoup) -> Dict[str, Any]:
     https_ok = urlparse(url).scheme == "https"
     mixed_content = False
     mixed_examples = []
     if https_ok:
-        # check for elements referencing http:// resources
         for tag in soup.find_all(["img", "script", "link"]):
-            # check attributes that might be http
             for attr in ("src", "href"):
                 val = tag.get(attr) or ""
                 if val.startswith("http://"):
@@ -382,9 +385,6 @@ def security_checks(url: str, soup: BeautifulSoup) -> Dict[str, Any]:
     return {"https": https_ok, "mixed_content": mixed_content, "mixed_examples": mixed_examples[:10]}
 
 
-# -------------------------
-# Sitemap & robots
-# -------------------------
 def fetch_robots_and_sitemaps(base_url: str) -> Dict[str, Any]:
     parsed = urlparse(base_url)
     root = f"{parsed.scheme}://{parsed.netloc}"
@@ -396,105 +396,66 @@ def fetch_robots_and_sitemaps(base_url: str) -> Dict[str, Any]:
         for line in text.splitlines():
             if line.lower().startswith("sitemap:"):
                 sitemap_urls.append(line.split(":", 1)[1].strip())
-    # if none, attempt common sitemap locations
     if not sitemap_urls:
         for candidate in ["/sitemap.xml", "/sitemap_index.xml"]:
             cand_url = urljoin(root, candidate)
             r = safe_get(cand_url, method="get")
             if r.get("ok") and r.get("text", "").strip().startswith("<?xml"):
                 sitemap_urls.append(cand_url)
-    # fetch and parse small sitemap (just get urls)
     sitemap_entries: List[str] = []
     for s in sitemap_urls:
         r = safe_get(s, method="get")
         if r.get("ok") and r.get("text"):
-            # naive extract <loc>
             locs = re.findall(r"<loc>(.*?)<\/loc>", r["text"], flags=re.I | re.S)
             sitemap_entries.extend(locs)
     return {"robots_text": robots.get("text") if robots.get("ok") else None, "sitemaps": sitemap_urls, "sitemap_entries": sitemap_entries[:500]}
 
 
-# -------------------------
-# On-page SEO scoring
-# -------------------------
 def compute_seo_score(meta: Dict[str, Any], images_audit: Dict[str, Any], links_summary: Dict[str, Any], structure: Dict[str, Any]) -> int:
-    """
-    Weighted scoring (total 100)
-    - Title (15): presence + ideal length 30-60 chars
-    - Meta description (15): presence + ideal length 50-160
-    - H1 presence (10)
-    - H2/H3 structure (10)
-    - Images alt (10)
-    - Canonical tag (10)
-    - Robots (5)
-    - Links & internals (5)
-    - Word count & content (10)
-    - Mobile & security (10)
-    """
     score = 0
-    # Title
     title = meta.get("title", "")
     if title:
         score += 10
         if 30 <= len(title) <= 60:
             score += 5
-    # Meta description
     md = meta.get("meta_description", "")
     if md:
         score += 8
         if 50 <= len(md) <= 160:
             score += 7
-    # H1
     if meta.get("h1"):
         score += 10
-    # H2/H3
     if meta.get("h2") or meta.get("h3"):
         score += 8
-    # Images alt
     if images_audit["count"] > 0:
         alt_ok_ratio = 1 - (images_audit["missing_alt"] / images_audit["count"])
         score += round(10 * alt_ok_ratio)
     else:
-        score += 6  # neutral if no images
-    # Canonical
+        score += 6
     if meta.get("canonical"):
         score += 10
-    # Robots
     if meta.get("robots"):
         score += 5
-    # Links: reward internal linking presence
     internal_count = len(links_summary["by_type"].get("internal", []))
     if internal_count > 0:
         score += 5
-    # Word count: prefer >300 words
     wc = meta.get("word_count", 0)
     if wc >= 300:
         score += 10
     else:
-        # partial credit
         score += round(10 * (wc / 300)) if wc > 0 else 0
-    # Mobile & security: small bonus
     mobile_security_bonus = 0
     if meta.get("viewport"):
         mobile_security_bonus += 5
     if meta.get("_security", {}).get("https"):
         mobile_security_bonus += 5
     score += mobile_security_bonus
-    # clamp to 0-100
     score = max(0, min(100, int(score)))
     return score
 
 
-# -------------------------
-# AI recommendations (optional)
-# -------------------------
 def ai_recommendations(summary: Dict[str, Any]) -> Optional[str]:
-    """
-    Try to call an AI text generator if available (services.openai_client or services.ai_client).
-    This is optional — if not configured, function returns None.
-    """
     try:
-        # try new unified ai_client first
         from services.ai_client import generate_text
         prompt = (
             "You are an SEO advisor. Given the website summary below, "
@@ -519,11 +480,7 @@ def ai_recommendations(summary: Dict[str, Any]) -> Optional[str]:
             return None
 
 
-# -------------------------
-# Streamlit UI: orchestrator
-# -------------------------
 def run_full_audit(url: str) -> Optional[Dict[str, Any]]:
-    # top-level runner: fetch page + parse
     page_info, soup = fetch_and_parse(url)
     if not page_info.get("ok"):
         st.error(f"Could not fetch page: {page_info.get('error')}")
@@ -531,34 +488,21 @@ def run_full_audit(url: str) -> Optional[Dict[str, Any]]:
 
     base_url = url
     meta = extract_basic_meta(soup, base_url)
-    # add security quick checks
     sec = security_checks(url, soup)
     meta["_security"] = sec
 
-    # images audit
     images_a = audit_images(meta["images"])
-
-    # links classification
     links_summary = classify_links(meta["links"])
-
-    # performance
     perf = performance_insights(page_info, soup)
-
-    # mobile
     mobile = mobile_checks(soup)
 
-    # broken resources (images + scripts + css + links sample)
     resource_pool = [i["src"] for i in meta["images"] if i.get("src")] + meta["scripts"] + meta["stylesheets"] + list(links_summary["by_type"].get("external", [])[:100])
     broken_resources = check_broken_resources(resource_pool, limit=200)
 
-    # sitemap + robots
     robots_smap = fetch_robots_and_sitemaps(base_url)
-
-    # keyword analysis on combined page text
     combined_text = " ".join(meta.get("paragraphs", []) + meta.get("h1", []) + meta.get("h2", []) + meta.get("h3", []))
     keywords = keyword_analysis(combined_text)
 
-    # structure
     structure = {
         "h1": meta.get("h1"),
         "h2": meta.get("h2"),
@@ -567,10 +511,8 @@ def run_full_audit(url: str) -> Optional[Dict[str, Any]]:
         "word_count": meta.get("word_count", 0)
     }
 
-    # seo score
     seo_score = compute_seo_score(meta, images_a, links_summary, structure)
 
-    # ai recommendations
     ai_reco = ai_recommendations({
         "title": meta.get("title"),
         "meta_description": meta.get("meta_description"),
@@ -581,7 +523,6 @@ def run_full_audit(url: str) -> Optional[Dict[str, Any]]:
         "sitemaps": robots_smap.get("sitemaps", [])
     })
 
-    # Build final report dict
     report = {
         "url": url,
         "seo_score": seo_score,
@@ -601,9 +542,6 @@ def run_full_audit(url: str) -> Optional[Dict[str, Any]]:
     return report
 
 
-# -------------------------
-# Streamlit UI: display helpers
-# -------------------------
 def show_report_ui(report: Dict[str, Any]) -> None:
     st.header("SEO Summary")
     col1, col2 = st.columns([1, 3])
@@ -637,7 +575,6 @@ def show_report_ui(report: Dict[str, Any]) -> None:
     st.subheader("Links")
     counts = report['links_summary']['counts']
     st.write(f"Internal: {counts.get('internal',0)}  •  External: {counts.get('external',0)}")
-    # chart: counts
     try:
         import pandas as pd
         df = pd.DataFrame.from_dict(dict(counts), orient="index", columns=["count"])
@@ -690,43 +627,49 @@ def show_report_ui(report: Dict[str, Any]) -> None:
         st.markdown(report["ai_recommendations"])
 
 
-# -------------------------
-# Public Streamlit wrapper (protected by JWT)
-# -------------------------
+def verify_jwt(token: str) -> Optional[Dict[str, Any]]:
+    """Wrapper that safely decodes JWT using project's helper (if present)."""
+    if not token:
+        return None
+    try:
+        return decode_access_token(token)
+    except Exception:
+        return None
+
+
 def show_seo_audit() -> None:
+    """
+    Streamlit UI wrapper for the SEO auditor.
+    This UI optionally requires a JWT (if you want to gate usage).
+    """
     st.title("SEO Audit — Deep Site Health & Recommendations")
+    st.markdown("This audit uses a restricted-mode network policy: only public domains are allowed. Local or private networks are blocked.")
 
-    st.markdown("This audit page is protected. Provide a valid JWT access token to continue.")
-    token = st.text_input("Access token (JWT)", type="password", help="Paste your Bearer JWT here")
-    validate_btn = st.button("Validate token & continue")
-
-    # allow quick validation by pressing the button or when token exists in session
-    if validate_btn or (token and st.session_state.get("seo_token") == token):
+    # Optional token gate
+    token = st.text_input("Access token (JWT) — optional", type="password")
+    if token:
         payload = verify_jwt(token)
         if not payload:
-            st.error("Invalid or expired token. Please provide a valid JWT.")
+            st.error("Invalid or expired token.")
             return
-        # save token in session for convenience
-        st.session_state["seo_token"] = token
-        st.success("Token valid. You may run the audit.")
-        # optionally show payload for debugging (remove in production)
-        with st.expander("Token payload (debug)"):
-            st.json(payload)
+        st.success("Token validated.")
 
-    if not st.session_state.get("seo_token"):
-        st.info("Enter and validate JWT to unlock audit features.")
-        return
-  hostname = urlparse(url).hostname
-        if not hostname or not is_hostname_allowed(hostname):
-            st.error("Domain is not authorized for audit. Please select from allowed domains: " + ", ".join(ALLOWED_DOMAINS))
-            return
-    # Now the user is authenticated; show the audit input UI
     url = st.text_input("Enter full page URL (include https://)", placeholder="https://example.com/page")
     run_button = st.button("Run full audit")
     if run_button:
         if not url or not urlparse(url).scheme.startswith("http"):
             st.error("Please enter a valid URL including http/https.")
             return
+
+        # Final hostname check (and explicit allowed-domain check message)
+        hostname = urlparse(url).hostname or ""
+        if not is_hostname_allowed(hostname):
+            if ALLOWED_DOMAINS:
+                st.error("Domain not permitted. Allowed domains: " + ", ".join(sorted(ALLOWED_DOMAINS)))
+            else:
+                st.error("Domain not permitted (private/reserved IP or resolution failed). Only public domains are allowed.")
+            return
+
         with st.spinner("Running full SEO audit (this may take 10–30s)..."):
             start = time.time()
             report = run_full_audit(url)
