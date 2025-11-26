@@ -28,7 +28,20 @@ STOPWORDS = {
 # -------------------------
 def safe_get(url, method="get", timeout=REQUEST_TIMEOUT, allow_redirects=True, headers=USER_AGENT):
     """Perform a GET or HEAD safely; return dict {ok, status_code, text, headers, error}"""
+      # Extra SSRF protection: verify actual destination IP is not private/reserved immediately before request
     try:
+         parsed = urlparse(url)
+        hostname = parsed.hostname
+        if not hostname:
+            return {"ok": False, "error": "Invalid URL"}
+        try:
+            results = socket.getaddrinfo(hostname, None)
+            for result in results:
+                ip = result[-1][0]
+                if not is_url_allowed(f"http://{ip}"):
+                    return {"ok": False, "error": f"Blocked: resolved IP {ip} is not allowed"}
+        except Exception:
+            return {"ok": False, "error": f"Could not resolve hostname {hostname}"}
         if method.lower() == "head":
             r = requests.head(url, timeout=timeout, allow_redirects=allow_redirects, headers=headers)
         else:
