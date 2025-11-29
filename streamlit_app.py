@@ -262,26 +262,23 @@ if choice == "BloomScore Pro v2":
                 if report.get("html"):
                     st.components.v1.html(report["html"], height=650)
 
-                # Safe PDF download
-               pdf_path = report.get("pdf_path")
+                # ================================
+                # SAFE PDF DOWNLOAD BLOCK
+                # ================================
+                pdf_path = report.get("pdf_path")
 
-if pdf_path:
-    # Extract only filename (prevents traversal)
-    filename = os.path.basename(pdf_path)
+                if pdf_path:
+                    filename = os.path.basename(pdf_path)
+                    safe_path = SAFE_REPORT_DIR / filename
 
-    # Rebuild absolute safe path
-    safe_path = SAFE_REPORT_DIR / filename
-
-    # Extra safety: ensure final path is inside reports/
-    if safe_path.exists() and is_safe_report_path(str(safe_path)):
-        with safe_path.open("rb") as f:
-            st.download_button(
-                label="📄 Download PDF Report",
-                data=f.read(),
-                file_name=filename,
-                mime="application/pdf"
-            )
-
+                    if safe_path.exists() and is_safe_report_path(str(safe_path)):
+                        with safe_path.open("rb") as f:
+                            st.download_button(
+                                label="📄 Download PDF Report",
+                                data=f.read(),
+                                file_name=filename,
+                                mime="application/pdf"
+                            )
 
             except Exception as e:
                 st.error("Report generation failed.")
@@ -312,14 +309,13 @@ else:
         st.info(f"{choice} not installed.")
 
 # =============================================================
-# Footer / Safe API Health Check (No SSRF)
+# Footer / Safe API Health Check (NO SSRF)
 # =============================================================
 st.divider()
 
 BASE_URL = "http://127.0.0.1:" + str(int(os.getenv("PORT", 8000)))
 
 try:
-    # SAFE: Only allow localhost, not user-controlled input
     r = requests.get(f"{BASE_URL}/health", timeout=3)
     if r.ok:
         st.success("Connected to API backend")
