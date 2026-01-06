@@ -222,3 +222,31 @@ class Review(SQLModel, table=True):
     rating: Optional[float]
     text: Optional[str]
     fetched_at: datetime = Field(default_factory=datetime.utcnow)
+
+# =========================================================
+#   REPORT STORAGE (File-based fallback, production-safe)
+# =========================================================
+
+from pathlib import Path
+from typing import Dict, Any
+
+REPORTS_DIR = Path("reports")
+REPORTS_DIR.mkdir(exist_ok=True)
+
+
+def save_report(report_data: Dict[str, Any]) -> str:
+    """
+    Save report metadata safely to disk.
+    Used by BloomInsight / Dashboard / Weekly reports.
+    Returns the saved file path.
+    """
+
+    ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    filename = f"report_{ts}.json"
+    file_path = REPORTS_DIR / filename
+
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(report_data, f, indent=2)
+
+    return str(file_path)
+
