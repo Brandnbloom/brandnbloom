@@ -1,8 +1,6 @@
-# brandnbloom/streamlit_app.py
-
 """
 Brand N Bloom - Streamlit frontend + FastAPI backend runner
-Includes: SEO, analytics, chat widgets, BloomScore Pro v2, and other tools.
+Includes: SEO, analytics, BloomScore Pro v2, and other tools.
 """
 
 import os
@@ -37,36 +35,74 @@ st.set_page_config(
 )
 
 # =============================================================
-# Theme injector (LIGHT / DARK)
+# THEME INJECTOR (REAL DARK MODE)
 # =============================================================
 def inject_theme():
     if st.session_state.dark_mode:
         st.markdown("""
         <style>
-        html, body, [class*="css"] {
-            background-color: #0F1117 !important;
+        html, body, [data-testid="stApp"] {
+            background-color: #0E1117 !important;
             color: #FAFAFA !important;
             font-family: 'Poppins', sans-serif;
         }
+
         [data-testid="stSidebar"] {
             background-color: #161B22 !important;
         }
+
         .aesthetic-card {
-            background: rgba(22,27,34,0.9);
-            color: #FAFAFA;
+            background-color: #161B22 !important;
+            color: #FAFAFA !important;
+            border-radius: 14px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+            padding: 22px;
+        }
+
+        input, textarea, select {
+            background-color: #0E1117 !important;
+            color: #FAFAFA !important;
+            border: 1px solid #30363D !important;
+        }
+
+        div[data-baseweb="select"] > div {
+            background-color: #0E1117 !important;
+            color: #FAFAFA !important;
+        }
+
+        .stButton > button {
+            background-color: #A25A3C !important;
+            color: white !important;
+            border-radius: 10px;
+            border: none;
+            padding: 8px 16px;
+        }
+
+        [data-testid="stMetric"] {
+            background-color: #161B22;
+            padding: 12px;
+            border-radius: 12px;
         }
         </style>
         """, unsafe_allow_html=True)
     else:
         st.markdown("""
         <style>
-        html, body, [class*="css"] {
-            background-color: #FFF9F5;
-            color: #2C2C2C;
+        html, body, [data-testid="stApp"] {
+            background-color: #FFF9F5 !important;
+            color: #2C2C2C !important;
             font-family: 'Poppins', sans-serif;
         }
+
         [data-testid="stSidebar"] {
             background-color: #F7F1EB !important;
+        }
+
+        .aesthetic-card {
+            background: rgba(255,255,255,0.6);
+            padding: 22px;
+            border-radius: 14px;
+            box-shadow: 0px 6px 20px rgba(0,0,0,0.06);
         }
         </style>
         """, unsafe_allow_html=True)
@@ -74,17 +110,11 @@ def inject_theme():
 inject_theme()
 
 # =============================================================
-# Base Aesthetic CSS
+# Fonts & Titles
 # =============================================================
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
-.aesthetic-card {
-    padding: 22px;
-    border-radius: 14px;
-    box-shadow: 0px 6px 20px rgba(0,0,0,0.06);
-    backdrop-filter: blur(6px);
-}
 .aesthetic-title {
     font-size: 40px;
     font-weight: 600;
@@ -97,27 +127,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # =============================================================
-# SEO / Analytics injection (safe)
-# =============================================================
-try:
-    from components.seo import inject_all
-    inject_all(
-        title="Brand N Bloom — AI Brand Intelligence",
-        description="AI-powered audits, BloomScore analytics, social tools and creative assistance for creators & SMBs.",
-        url=os.getenv("SITE_URL", "https://www.brandnbloom.com"),
-        image_url=os.getenv("SITE_IMAGE", "https://www.brandnbloom.com/assets/banner.png"),
-        keywords="branding audit, instagram analytics, ai marketing, bloomscore, seo, restaurant marketing",
-        favicon_url=os.getenv("FAVICON_URL", "https://www.brandnbloom.com/assets/favicon.png"),
-        google_analytics_id=os.getenv("GA_ID", "G-ABCD1234"),
-        facebook_pixel_id=os.getenv("FB_PIXEL_ID", "123456789012345"),
-        intercom_app_id=os.getenv("INTERCOM_APP_ID", "abc123"),
-        enable_intercom=True,
-        enable_tawk=False,
-    )
-except Exception as e:
-    logger.warning("SEO injection failed: %s", e)
-
-# =============================================================
 # Start FastAPI backend (thread)
 # =============================================================
 def _start_api():
@@ -126,7 +135,8 @@ def _start_api():
         from fastapi.middleware.cors import CORSMiddleware
         import uvicorn
 
-        app = FastAPI(title="Brand N Bloom - API Suite")
+        app = FastAPI(title="Brand N Bloom API")
+
         app.add_middleware(
             CORSMiddleware,
             allow_origins=["*"],
@@ -135,8 +145,8 @@ def _start_api():
         )
 
         @app.get("/health")
-        async def health_check():
-            return {"service": "brand-n-bloom", "status": "ok"}
+        async def health():
+            return {"status": "ok"}
 
         uvicorn.run(
             app,
@@ -144,16 +154,15 @@ def _start_api():
             port=int(os.getenv("PORT", 8000)),
             log_level="error"
         )
-
-    except Exception as exc:
-        logger.exception("API failed: %s", exc)
+    except Exception as e:
+        logger.exception("API failed: %s", e)
 
 threading.Thread(target=_start_api, daemon=True).start()
 
 # =============================================================
-# Sidebar
+# SIDEBAR
 # =============================================================
-st.sidebar.title("✨ Tools")
+st.sidebar.title("✨ Brand N Bloom")
 
 st.sidebar.markdown("### 🎨 Appearance")
 toggle = st.sidebar.toggle("Dark Mode", value=st.session_state.dark_mode)
@@ -173,7 +182,7 @@ choice = st.sidebar.radio("Choose tool", [
 ])
 
 # =============================================================
-# Header
+# HEADER
 # =============================================================
 logo = pathlib.Path("assets/logo.png")
 c1, c2 = st.columns([1, 3])
@@ -241,16 +250,18 @@ if choice == "BloomScore Pro v2":
                             st.download_button(
                                 "📄 Download PDF Report",
                                 f.read(),
-                                filename,
+                                file_name=filename,
                                 mime="application/pdf"
                             )
 
             except Exception as e:
                 st.error("Report generation failed.")
                 logger.exception(e)
+else:
+    st.info(f"{choice} coming soon 🚧")
 
 # =============================================================
-# Footer API health
+# FOOTER API HEALTH
 # =============================================================
 st.divider()
 try:
