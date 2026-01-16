@@ -5,10 +5,8 @@ Brand N Bloom – Streamlit Frontend
 Light & Dark themes handled via .streamlit/config.toml
 """
 
-import os
 import pathlib
 import logging
-import requests
 import streamlit as st
 from dotenv import load_dotenv
 
@@ -16,6 +14,7 @@ from dotenv import load_dotenv
 # Setup
 # =============================================================
 load_dotenv()
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("brandnbloom")
 
@@ -27,9 +26,10 @@ st.set_page_config(
 )
 
 # =============================================================
-# Global CSS (Theme-aware, NO colors hardcoded)
+# Global CSS (Theme-aware, NO hardcoded colors)
 # =============================================================
-st.markdown("""
+st.markdown(
+    """
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
 
 <style>
@@ -42,6 +42,7 @@ html, body, [class*="css"] {
     padding: 24px;
     border-radius: 16px;
     box-shadow: 0px 8px 28px rgba(0,0,0,0.15);
+    margin-bottom: 16px;
 }
 
 .aesthetic-title {
@@ -50,7 +51,7 @@ html, body, [class*="css"] {
     background: linear-gradient(
         to right,
         var(--primary-color),
-        #E0BFA5
+        var(--text-color)
     );
     -webkit-background-clip: text;
     color: transparent;
@@ -62,7 +63,9 @@ html, body, [class*="css"] {
     opacity: 0.85;
 }
 </style>
-""", unsafe_allow_html=True)
+""",
+    unsafe_allow_html=True,
+)
 
 # =============================================================
 # Sidebar Navigation
@@ -88,6 +91,7 @@ choice = st.sidebar.radio(
 # Header
 # =============================================================
 logo = pathlib.Path("assets/logo.png")
+
 col1, col2 = st.columns([1, 4])
 
 with col1:
@@ -95,7 +99,10 @@ with col1:
         st.image(str(logo), width=120)
 
 with col2:
-    st.markdown("<h1 class='aesthetic-title'>Brand N Bloom</h1>", unsafe_allow_html=True)
+    st.markdown(
+        "<h1 class='aesthetic-title'>Brand N Bloom</h1>",
+        unsafe_allow_html=True,
+    )
     st.markdown(
         "<div class='hero-subtitle'>AI-powered brand intelligence for creators & businesses</div>",
         unsafe_allow_html=True,
@@ -110,61 +117,99 @@ if choice == "Home":
     st.markdown("## Grow your brand with clarity 🌱")
 
     c1, c2, c3 = st.columns(3)
+
     with c1:
-        st.markdown("<div class='aesthetic-card'>🔍 AI Brand Audits</div>", unsafe_allow_html=True)
+        st.markdown(
+            "<div class='aesthetic-card'>🔍 <b>AI Brand Audits</b><br/>Understand your brand strength</div>",
+            unsafe_allow_html=True,
+        )
+
     with c2:
-        st.markdown("<div class='aesthetic-card'>📊 Smart Analytics</div>", unsafe_allow_html=True)
+        st.markdown(
+            "<div class='aesthetic-card'>📊 <b>Smart Analytics</b><br/>Track growth & engagement</div>",
+            unsafe_allow_html=True,
+        )
+
     with c3:
-        st.markdown("<div class='aesthetic-card'>✨ Creative Automation</div>", unsafe_allow_html=True)
+        st.markdown(
+            "<div class='aesthetic-card'>✨ <b>Creative Automation</b><br/>Content & ideas powered by AI</div>",
+            unsafe_allow_html=True,
+        )
 
     st.button("Get Started →")
+
+# -------------------------------------------------------------
 
 elif choice == "Features":
     st.markdown("## Features")
 
     features = {
-        "BloomScore Pro": "AI brand audit & scoring",
+        "BloomScore Pro": "AI-powered brand audit & scoring",
         "SEO Toolkit": "SEO audits & keyword tracking",
         "Content Studio": "Captions, ads & creatives",
         "Analytics": "Growth & engagement dashboards",
     }
 
     for name, desc in features.items():
-        if st.button(name):
-            st.session_state["go_to"] = name
-        st.caption(desc)
+        with st.container():
+            st.markdown(
+                f"<div class='aesthetic-card'><b>{name}</b><br/>{desc}</div>",
+                unsafe_allow_html=True,
+            )
+
+# -------------------------------------------------------------
 
 elif choice == "Pricing":
     st.markdown("## Pricing")
 
     c1, c2 = st.columns(2)
+
     with c1:
-        st.markdown("<div class='aesthetic-card'><h3>Starter</h3><p>₹0 / month</p></div>", unsafe_allow_html=True)
+        st.markdown(
+            "<div class='aesthetic-card'><h3>Starter</h3><p>₹0 / month</p><p>Basic tools</p></div>",
+            unsafe_allow_html=True,
+        )
+
     with c2:
-        st.markdown("<div class='aesthetic-card'><h3>Pro</h3><p>₹1999 / month</p></div>", unsafe_allow_html=True)
+        st.markdown(
+            "<div class='aesthetic-card'><h3>Pro</h3><p>₹1999 / month</p><p>All AI tools</p></div>",
+            unsafe_allow_html=True,
+        )
         st.link_button("Pay with PayPal", "https://www.paypal.com")
+
+# -------------------------------------------------------------
 
 elif choice == "Blog":
     st.markdown("## Blog")
-    st.info("Blog system coming next (Markdown / CMS based)")
+    st.info("Blog system coming soon (Markdown / CMS based)")
+
+# -------------------------------------------------------------
 
 elif choice == "Dashboard":
     st.markdown("## Dashboard")
-    st.warning("No data yet. Connect tools to activate dashboard.")
+    st.warning("No data yet. Connect tools to activate your dashboard.")
+
+# -------------------------------------------------------------
 
 elif choice == "BloomScore Pro v2":
     st.markdown("## BloomScore Pro v2")
-    st.info("Upload brand data to generate AI audit")
+    st.info("Upload brand details to generate an AI-powered audit")
+
+# -------------------------------------------------------------
 
 elif choice == "Settings":
     st.markdown("## Settings")
-    st.info("Theme, account & integrations")
+    st.info("Theme, account & integrations will appear here")
+
+# -------------------------------------------------------------
 
 elif choice == "Login":
     st.markdown("## Login")
     st.text_input("Email")
     st.text_input("Password", type="password")
     st.button("Login")
+
+# -------------------------------------------------------------
 
 elif choice == "Signup":
     st.markdown("## Create Account")
@@ -177,10 +222,4 @@ elif choice == "Signup":
 # Footer
 # =============================================================
 st.divider()
-
-try:
-    r = requests.get("http://127.0.0.1:8000/health", timeout=2)
-    if r.ok:
-        st.caption("🟢 API Connected")
-except Exception:
-    st.caption("⚠️ API Offline")
+st.caption("© 2026 Brand N Bloom · Built with ❤️ using Streamlit")
