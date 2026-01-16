@@ -6,6 +6,15 @@ secondaryBackgroundColor = "#F7F1EB"   # Light beige cards
 textColor = "#3C2F2F"                  # Deep brown text
 font = "sans serif"
 
+[theme]
+base = "dark"
+
+primaryColor = "#C28F73"
+backgroundColor = "#0F1117"
+secondaryBackgroundColor = "#161B22"
+textColor = "#FAFAFA"
+
+font = "sans serif"
 [server]
 headless = true
 enableCORS = true
