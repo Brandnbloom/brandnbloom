@@ -1,27 +1,24 @@
 # brandnbloom/streamlit_app.py
 
 """
-Brand N Bloom - Streamlit frontend + FastAPI backend runner
+Brand N Bloom – Streamlit Frontend
+Light & Dark themes handled via .streamlit/config.toml
 """
 
 import os
-import threading
-import logging
 import pathlib
+import logging
 import requests
 import streamlit as st
 from dotenv import load_dotenv
 
 # =============================================================
-# Load environment & logging
+# Setup
 # =============================================================
 load_dotenv()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("brandnbloom")
 
-# =============================================================
-# Streamlit page config
-# =============================================================
 st.set_page_config(
     page_title="Brand N Bloom",
     page_icon="🌸",
@@ -30,57 +27,42 @@ st.set_page_config(
 )
 
 # =============================================================
-# Global Aesthetic CSS (DARK MODE SAFE)
+# Global CSS (Theme-aware, NO colors hardcoded)
 # =============================================================
 st.markdown("""
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
+
 <style>
 html, body, [class*="css"] {
     font-family: 'Poppins', sans-serif;
 }
 
 .aesthetic-card {
-    background: rgba(22,27,34,0.9);
-    padding: 22px;
+    background: var(--secondary-background-color);
+    padding: 24px;
     border-radius: 16px;
-    box-shadow: 0px 10px 30px rgba(0,0,0,0.4);
+    box-shadow: 0px 8px 28px rgba(0,0,0,0.15);
 }
 
 .aesthetic-title {
     font-size: 42px;
     font-weight: 600;
-    background: linear-gradient(to right, #C28F73, #E0BFA5);
+    background: linear-gradient(
+        to right,
+        var(--primary-color),
+        #E0BFA5
+    );
     -webkit-background-clip: text;
     color: transparent;
     margin-bottom: 6px;
 }
+
+.hero-subtitle {
+    font-size: 18px;
+    opacity: 0.85;
+}
 </style>
 """, unsafe_allow_html=True)
-
-# =============================================================
-# Start FastAPI backend (thread)
-# =============================================================
-def _start_api():
-    try:
-        from fastapi import FastAPI
-        import uvicorn
-
-        app = FastAPI(title="Brand N Bloom API")
-
-        @app.get("/health")
-        async def health():
-            return {"status": "ok"}
-
-        uvicorn.run(
-            app,
-            host="0.0.0.0",
-            port=int(os.getenv("PORT", 8000)),
-            log_level="error",
-        )
-    except Exception as e:
-        logger.exception("API failed: %s", e)
-
-threading.Thread(target=_start_api, daemon=True).start()
 
 # =============================================================
 # Sidebar Navigation
@@ -106,56 +88,99 @@ choice = st.sidebar.radio(
 # Header
 # =============================================================
 logo = pathlib.Path("assets/logo.png")
-c1, c2 = st.columns([1, 4])
+col1, col2 = st.columns([1, 4])
 
-with c1:
+with col1:
     if logo.exists():
         st.image(str(logo), width=120)
 
-with c2:
+with col2:
     st.markdown("<h1 class='aesthetic-title'>Brand N Bloom</h1>", unsafe_allow_html=True)
-    st.caption("AI-powered brand intelligence for creators & businesses")
+    st.markdown(
+        "<div class='hero-subtitle'>AI-powered brand intelligence for creators & businesses</div>",
+        unsafe_allow_html=True,
+    )
 
 st.divider()
 
 # =============================================================
-# Page Router (TEMP PLACEHOLDER)
+# Pages
 # =============================================================
 if choice == "Home":
-    st.markdown("### Welcome to Brand N Bloom 🌸")
-    st.write("Your all-in-one AI brand growth platform.")
+    st.markdown("## Grow your brand with clarity 🌱")
+
+    c1, c2, c3 = st.columns(3)
+    with c1:
+        st.markdown("<div class='aesthetic-card'>🔍 AI Brand Audits</div>", unsafe_allow_html=True)
+    with c2:
+        st.markdown("<div class='aesthetic-card'>📊 Smart Analytics</div>", unsafe_allow_html=True)
+    with c3:
+        st.markdown("<div class='aesthetic-card'>✨ Creative Automation</div>", unsafe_allow_html=True)
+
+    st.button("Get Started →")
 
 elif choice == "Features":
-    st.info("Features page coming next")
+    st.markdown("## Features")
+
+    features = {
+        "BloomScore Pro": "AI brand audit & scoring",
+        "SEO Toolkit": "SEO audits & keyword tracking",
+        "Content Studio": "Captions, ads & creatives",
+        "Analytics": "Growth & engagement dashboards",
+    }
+
+    for name, desc in features.items():
+        if st.button(name):
+            st.session_state["go_to"] = name
+        st.caption(desc)
 
 elif choice == "Pricing":
-    st.info("Pricing + PayPal coming next")
+    st.markdown("## Pricing")
+
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown("<div class='aesthetic-card'><h3>Starter</h3><p>₹0 / month</p></div>", unsafe_allow_html=True)
+    with c2:
+        st.markdown("<div class='aesthetic-card'><h3>Pro</h3><p>₹1999 / month</p></div>", unsafe_allow_html=True)
+        st.link_button("Pay with PayPal", "https://www.paypal.com")
 
 elif choice == "Blog":
-    st.info("Blog system coming next")
+    st.markdown("## Blog")
+    st.info("Blog system coming next (Markdown / CMS based)")
 
 elif choice == "Dashboard":
-    st.info("Dashboard data coming next")
+    st.markdown("## Dashboard")
+    st.warning("No data yet. Connect tools to activate dashboard.")
 
 elif choice == "BloomScore Pro v2":
-    st.info("BloomScore tool here")
+    st.markdown("## BloomScore Pro v2")
+    st.info("Upload brand data to generate AI audit")
 
 elif choice == "Settings":
-    st.info("Settings page")
+    st.markdown("## Settings")
+    st.info("Theme, account & integrations")
 
 elif choice == "Login":
-    st.info("Login page")
+    st.markdown("## Login")
+    st.text_input("Email")
+    st.text_input("Password", type="password")
+    st.button("Login")
 
 elif choice == "Signup":
-    st.info("Signup page")
+    st.markdown("## Create Account")
+    st.text_input("Name")
+    st.text_input("Email")
+    st.text_input("Password", type="password")
+    st.button("Signup")
 
 # =============================================================
 # Footer
 # =============================================================
 st.divider()
+
 try:
     r = requests.get("http://127.0.0.1:8000/health", timeout=2)
     if r.ok:
-        st.success("API connected")
+        st.caption("🟢 API Connected")
 except Exception:
-    st.warning("API offline")
+    st.caption("⚠️ API Offline")
