@@ -1,225 +1,195 @@
 # brandnbloom/streamlit_app.py
 
-"""
-Brand N Bloom – Streamlit Frontend
-Light & Dark themes handled via .streamlit/config.toml
-"""
-
-import pathlib
-import logging
 import streamlit as st
-from dotenv import load_dotenv
+import pathlib
 
 # =============================================================
-# Setup
+# PAGE CONFIG
 # =============================================================
-load_dotenv()
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger("brandnbloom")
-
 st.set_page_config(
     page_title="Brand N Bloom",
     page_icon="🌸",
     layout="wide",
-    initial_sidebar_state="expanded",
 )
 
 # =============================================================
-# Global CSS (Theme-aware, NO hardcoded colors)
+# GLOBAL THEME-SAFE CSS
 # =============================================================
-st.markdown(
-    """
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap" rel="stylesheet">
-
+st.markdown("""
 <style>
-html, body, [class*="css"] {
-    font-family: 'Poppins', sans-serif;
+.container {
+    max-width: 1200px;
+    margin: auto;
 }
 
-.aesthetic-card {
-    background: var(--secondary-background-color);
-    padding: 24px;
-    border-radius: 16px;
-    box-shadow: 0px 8px 28px rgba(0,0,0,0.15);
-    margin-bottom: 16px;
-}
-
-.aesthetic-title {
-    font-size: 42px;
-    font-weight: 600;
-    background: linear-gradient(
-        to right,
-        var(--primary-color),
-        var(--text-color)
-    );
-    -webkit-background-clip: text;
-    color: transparent;
-    margin-bottom: 6px;
+.hero-title {
+    font-size: 44px;
+    font-weight: 700;
 }
 
 .hero-subtitle {
     font-size: 18px;
     opacity: 0.85;
 }
+
+.card {
+    background: var(--secondary-background-color);
+    padding: 22px;
+    border-radius: 16px;
+    margin-bottom: 20px;
+}
+
+.tool-card {
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 18px;
+    border-radius: 14px;
+    cursor: pointer;
+}
 </style>
-""",
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
 
 # =============================================================
-# Sidebar Navigation
+# TOP NAVIGATION
 # =============================================================
-st.sidebar.title("🌸 Brand N Bloom")
-
-choice = st.sidebar.radio(
-    "Navigate",
-    [
-        "Home",
-        "Features",
-        "Pricing",
-        "Blog",
-        "Dashboard",
-        "BloomScore Pro v2",
-        "Settings",
-        "Login",
-        "Signup",
-    ],
-)
+menu = st.tabs([
+    "🏠 Home",
+    "🧰 Tools",
+    "📊 Dashboard",
+    "📝 Blog",
+    "💰 Pricing",
+    "ℹ️ About",
+    "📩 Contact",
+    "⚙️ Settings",
+])
 
 # =============================================================
-# Header
+# TOOL REGISTRY (OLD + NEW)
 # =============================================================
-logo = pathlib.Path("assets/logo.png")
+TOOLS = {
+    # EXISTING TOOLS
+    "Competitor Analysis": "Compare your brand with competitors",
+    "Social Media Analyzer": "Analyze growth, reach & engagement",
 
-col1, col2 = st.columns([1, 4])
+    # NEW TOOLS
+    "BloomScore": "AI-powered brand health score",
+    "Consumer Behaviour": "Understand customer intent & patterns",
+    "Email Marketing": "Optimize campaigns & conversions",
+    "Influencer Finder": "Discover relevant creators for your brand",
+    "Business Compare": "Compare brands across KPIs",
+    "Menu Pricing": "Optimize pricing for profitability",
+    "Loyalty": "Retention & repeat customer insights",
+}
 
-with col1:
-    if logo.exists():
-        st.image(str(logo), width=120)
+# SESSION STATE
+if "active_tool" not in st.session_state:
+    st.session_state.active_tool = None
 
-with col2:
+# =============================================================
+# HOME
+# =============================================================
+with menu[0]:
+    st.markdown("<div class='container'>", unsafe_allow_html=True)
+
+    st.markdown("<div class='hero-title'>Brand N Bloom 🌸</div>", unsafe_allow_html=True)
     st.markdown(
-        "<h1 class='aesthetic-title'>Brand N Bloom</h1>",
+        "<div class='hero-subtitle'>Marketing intelligence powered by data & AI</div>",
         unsafe_allow_html=True,
     )
-    st.markdown(
-        "<div class='hero-subtitle'>AI-powered brand intelligence for creators & businesses</div>",
-        unsafe_allow_html=True,
-    )
 
-st.divider()
-
-# =============================================================
-# Pages
-# =============================================================
-if choice == "Home":
-    st.markdown("## Grow your brand with clarity 🌱")
+    st.divider()
 
     c1, c2, c3 = st.columns(3)
+    c1.markdown("<div class='card'>📊 Data-driven insights</div>", unsafe_allow_html=True)
+    c2.markdown("<div class='card'>🤖 AI-powered tools</div>", unsafe_allow_html=True)
+    c3.markdown("<div class='card'>🚀 Growth-focused analytics</div>", unsafe_allow_html=True)
 
-    with c1:
-        st.markdown(
-            "<div class='aesthetic-card'>🔍 <b>AI Brand Audits</b><br/>Understand your brand strength</div>",
-            unsafe_allow_html=True,
-        )
+    st.markdown("</div>", unsafe_allow_html=True)
 
-    with c2:
-        st.markdown(
-            "<div class='aesthetic-card'>📊 <b>Smart Analytics</b><br/>Track growth & engagement</div>",
-            unsafe_allow_html=True,
-        )
+# =============================================================
+# TOOLS
+# =============================================================
+with menu[1]:
+    st.markdown("<div class='container'>", unsafe_allow_html=True)
+    st.header("🧰 Tools")
 
-    with c3:
-        st.markdown(
-            "<div class='aesthetic-card'>✨ <b>Creative Automation</b><br/>Content & ideas powered by AI</div>",
-            unsafe_allow_html=True,
-        )
+    for tool, desc in TOOLS.items():
+        if st.button(tool, use_container_width=True):
+            st.session_state.active_tool = tool
+        st.caption(desc)
 
-    st.button("Get Started →")
+    if st.session_state.active_tool:
+        st.divider()
+        st.subheader(st.session_state.active_tool)
+        st.info(f"{st.session_state.active_tool} tool UI will load here.")
 
-# -------------------------------------------------------------
+    st.markdown("</div>", unsafe_allow_html=True)
 
-elif choice == "Features":
-    st.markdown("## Features")
+# =============================================================
+# DASHBOARD
+# =============================================================
+with menu[2]:
+    st.markdown("<div class='container'>", unsafe_allow_html=True)
+    st.header("📊 Dashboard")
 
-    features = {
-        "BloomScore Pro": "AI-powered brand audit & scoring",
-        "SEO Toolkit": "SEO audits & keyword tracking",
-        "Content Studio": "Captions, ads & creatives",
-        "Analytics": "Growth & engagement dashboards",
-    }
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Active Tools", len(TOOLS))
+    c2.metric("Reports Generated", "—")
+    c3.metric("Growth Score", "—")
 
-    for name, desc in features.items():
-        with st.container():
-            st.markdown(
-                f"<div class='aesthetic-card'><b>{name}</b><br/>{desc}</div>",
-                unsafe_allow_html=True,
-            )
+    st.info("Connect tools to activate live dashboards.")
+    st.markdown("</div>", unsafe_allow_html=True)
 
-# -------------------------------------------------------------
+# =============================================================
+# BLOG
+# =============================================================
+with menu[3]:
+    st.markdown("<div class='container'>", unsafe_allow_html=True)
+    st.header("📝 Blog")
+    st.info("Blogs will be loaded from Markdown / CMS.")
+    st.markdown("</div>", unsafe_allow_html=True)
 
-elif choice == "Pricing":
-    st.markdown("## Pricing")
+# =============================================================
+# PRICING
+# =============================================================
+with menu[4]:
+    st.markdown("<div class='container'>", unsafe_allow_html=True)
+    st.header("💰 Pricing")
 
     c1, c2 = st.columns(2)
+    c1.markdown("<div class='card'><h3>Starter</h3><p>Free</p></div>", unsafe_allow_html=True)
+    c2.markdown("<div class='card'><h3>Pro</h3><p>₹1999 / month</p></div>", unsafe_allow_html=True)
+    st.link_button("Pay with PayPal", "https://www.paypal.com")
 
-    with c1:
-        st.markdown(
-            "<div class='aesthetic-card'><h3>Starter</h3><p>₹0 / month</p><p>Basic tools</p></div>",
-            unsafe_allow_html=True,
-        )
-
-    with c2:
-        st.markdown(
-            "<div class='aesthetic-card'><h3>Pro</h3><p>₹1999 / month</p><p>All AI tools</p></div>",
-            unsafe_allow_html=True,
-        )
-        st.link_button("Pay with PayPal", "https://www.paypal.com")
-
-# -------------------------------------------------------------
-
-elif choice == "Blog":
-    st.markdown("## Blog")
-    st.info("Blog system coming soon (Markdown / CMS based)")
-
-# -------------------------------------------------------------
-
-elif choice == "Dashboard":
-    st.markdown("## Dashboard")
-    st.warning("No data yet. Connect tools to activate your dashboard.")
-
-# -------------------------------------------------------------
-
-elif choice == "BloomScore Pro v2":
-    st.markdown("## BloomScore Pro v2")
-    st.info("Upload brand details to generate an AI-powered audit")
-
-# -------------------------------------------------------------
-
-elif choice == "Settings":
-    st.markdown("## Settings")
-    st.info("Theme, account & integrations will appear here")
-
-# -------------------------------------------------------------
-
-elif choice == "Login":
-    st.markdown("## Login")
-    st.text_input("Email")
-    st.text_input("Password", type="password")
-    st.button("Login")
-
-# -------------------------------------------------------------
-
-elif choice == "Signup":
-    st.markdown("## Create Account")
-    st.text_input("Name")
-    st.text_input("Email")
-    st.text_input("Password", type="password")
-    st.button("Signup")
+    st.markdown("</div>", unsafe_allow_html=True)
 
 # =============================================================
-# Footer
+# ABOUT
 # =============================================================
-st.divider()
-st.caption("© 2026 Brand N Bloom · Built with ❤️ using Streamlit")
+with menu[5]:
+    st.markdown("<div class='container'>", unsafe_allow_html=True)
+    st.header("ℹ️ About Brand N Bloom")
+    st.write(
+        "Brand N Bloom is a marketing analytics & intelligence platform "
+        "built to help brands grow using data, AI, and clarity."
+    )
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# =============================================================
+# CONTACT
+# =============================================================
+with menu[6]:
+    st.markdown("<div class='container'>", unsafe_allow_html=True)
+    st.header("📩 Contact")
+    st.text_input("Your Email")
+    st.text_area("Message")
+    st.button("Send")
+    st.markdown("</div>", unsafe_allow_html=True)
+
+# =============================================================
+# SETTINGS
+# =============================================================
+with menu[7]:
+    st.markdown("<div class='container'>", unsafe_allow_html=True)
+    st.header("⚙️ Settings")
+    st.info("Use Streamlit Settings → Theme to switch Light / Dark mode.")
+    st.markdown("</div>", unsafe_allow_html=True)
