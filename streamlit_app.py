@@ -1,4 +1,6 @@
-import streamlit as st from utils.ui import inject_css, dark_mode_toggle, card
+import streamlit as st 
+from utils.ui import inject_css, 
+dark_mode_toggle, card
 st.set_page_config( page_title="Brand n Bloom", layout="wide", initial_sidebar_state="collapsed" )
 st.markdown("""
 """, unsafe_allow_html=True)
