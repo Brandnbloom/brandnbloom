@@ -1,21 +1,21 @@
-# brandnbloom/ai_tools/prompts.py
+# ai_tools/prompts.py
 
-CAPTION_PROMPT = """
-You are a brand-savvy social media copywriter.
-Write a short, catchy Instagram caption for:
-{context}
+from typing import List
 
-Tone: friendly, GenZ, growth-minded.
-Include a clear CTA.
-Max 120 words.
-"""
+def generate_prompts(topic: str, n: int = 5) -> List[str]:
+    """
+    Generates AI content prompts based on a given topic.
+    For now, uses template-based mock prompts.
+    """
+    base_templates = [
+        f"Write a catchy social media caption about {topic}.",
+        f"Create a fun tweet about {topic}.",
+        f"Draft a short Instagram story script on {topic}.",
+        f"Suggest a creative blog intro about {topic}.",
+        f"Give 3 ideas for promotional emails on {topic}.",
+        f"Write a motivational quote related to {topic}.",
+        f"Generate hashtags for {topic} to boost engagement."
+    ]
 
-HASHTAG_PROMPT = """
-Suggest 12 relevant, non-spammy hashtags for:
-{context}
-
-Audience: small business owners & creators.
-Mix: high-volume + mid-tier + long-tail.
-Avoid generic spam hashtags.
-Return as a clean list, no numbering.
-"""
+    # Return the first n prompts
+    return base_templates[:n]
