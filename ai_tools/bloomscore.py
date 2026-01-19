@@ -13,7 +13,7 @@ Dependencies:
 """
 
 from bloominsight.analyzer import analyze_profile
-from bloominsight.utils import engagement_rate
+from bloominsight.utils.engagement import engagement_rate
 
 
 def _categorize(score: int) -> str:
