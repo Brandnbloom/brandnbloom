@@ -1,15 +1,10 @@
 # streamlit_app.py
 import streamlit as st
+from utils.ui import inject_css, dark_mode_toggle, card
 
-from utils.ui import (
-    inject_css,
-    dark_mode_toggle,
-    card,
-)
-
-# -------------------------------------------------
-# Page config (MUST be first Streamlit command)
-# -------------------------------------------------
+# ---------------------------------------------------------
+# Page Config
+# ---------------------------------------------------------
 st.set_page_config(
     page_title="Brand n Bloom",
     page_icon="🌸",
@@ -17,143 +12,166 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-# -------------------------------------------------
-# Global UI setup
-# -------------------------------------------------
+# ---------------------------------------------------------
+# Inject Theme + Dark Mode
+# ---------------------------------------------------------
 inject_css()
-dark_mode_toggle()
 
-# -------------------------------------------------
-# Header / Banner
-# -------------------------------------------------
-st.markdown(
-    """
-    <div style="text-align:center; padding: 1.5rem 0;">
-        <h1>🌸 Brand n Bloom</h1>
-        <p style="font-size:1.1rem; opacity:0.8;">
-            AI-powered growth & marketing intelligence for modern brands
-        </p>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+# ---------------------------------------------------------
+# App State
+# ---------------------------------------------------------
+if "page" not in st.session_state:
+    st.session_state.page = "Home"
 
-st.divider()
+# ---------------------------------------------------------
+# Top Navigation Bar
+# ---------------------------------------------------------
+with st.container():
+    nav_cols = st.columns([2, 1, 1, 1, 1, 1, 1, 1])
 
-# -------------------------------------------------
-# Top Navigation (NO sidebar)
-# -------------------------------------------------
-tabs = st.tabs([
-    "🏠 Home",
-    "🧰 Tools",
-    "📊 Dashboard",
-    "📰 Blog",
-    "💰 Pricing",
-    "📨 Contact",
-    "ℹ️ About",
-])
+    with nav_cols[0]:
+        st.markdown("### 🌸 Brand n Bloom")
 
-# -------------------------------------------------
+    with nav_cols[1]:
+        if st.button("Home"):
+            st.session_state.page = "Home"
+
+    with nav_cols[2]:
+        if st.button("Features"):
+            st.session_state.page = "Features"
+
+    with nav_cols[3]:
+        if st.button("Pricing"):
+            st.session_state.page = "Pricing"
+
+    with nav_cols[4]:
+        if st.button("Blog"):
+            st.session_state.page = "Blog"
+
+    with nav_cols[5]:
+        if st.button("Tools"):
+            st.session_state.page = "Tools"
+
+    with nav_cols[6]:
+        if st.button("Dashboard"):
+            st.session_state.page = "Dashboard"
+
+    with nav_cols[7]:
+        dark_mode_toggle()
+
+st.markdown("---")
+
+# ---------------------------------------------------------
+# MAX WIDTH CONTAINER
+# ---------------------------------------------------------
+def page_container():
+    return st.container()
+
+# ---------------------------------------------------------
 # HOME
-# -------------------------------------------------
-with tabs[0]:
-    st.markdown("## Grow smarter. Scale faster. 🌱")
-
-    cols = st.columns(3)
-    with cols[0]:
-        card("🔬 **Data-backed insights** for confident decisions")
-    with cols[1]:
-        card("📈 **Marketing analytics** that actually make sense")
-    with cols[2]:
-        card("🤖 **AI tools** built for founders & marketers")
-
-    st.markdown(
-        """
-        Brand n Bloom helps you understand **what to do next**,  
-        not just what happened.
-        """
-    )
-
-# -------------------------------------------------
-# TOOLS
-# -------------------------------------------------
-with tabs[1]:
-    st.markdown("## 🧰 Our Tools")
-
-    TOOLS = {
-        "BloomScore": "Instant brand health score for social profiles",
-        "Consumer Behavior": "Understand how customers think, feel & buy",
-        "Email Marketing": "AI-written high-conversion email campaigns",
-        "Influencer Finder": "Find creators aligned with your brand",
-        "Business Compare": "Benchmark your brand against competitors",
-        "Menu Pricing": "Optimize menu prices using demand psychology",
-        "Loyalty": "Design loyalty programs that actually retain customers",
-    }
-
-    cols = st.columns(3)
-    for i, (tool, desc) in enumerate(TOOLS.items()):
-        with cols[i % 3]:
-            card(f"### {tool}\n\n{desc}")
-
-    st.info("🔧 Tool logic will be connected one by one.")
-
-# -------------------------------------------------
-# DASHBOARD
-# -------------------------------------------------
-with tabs[2]:
-    st.markdown("## 📊 Dashboard")
-    st.warning("No data yet. Connect tools to activate analytics.")
-
-# -------------------------------------------------
-# BLOG
-# -------------------------------------------------
-with tabs[3]:
-    st.markdown("## 📰 Blog")
-    st.info("Blog system coming soon (Markdown / CMS based).")
-
-# -------------------------------------------------
-# PRICING
-# -------------------------------------------------
-with tabs[4]:
-    st.markdown("## 💰 Pricing")
-
-    c1, c2 = st.columns(2)
-    with c1:
-        card("### Starter\n\n₹0 / month\n\nBasic access")
-    with c2:
-        card("### Pro\n\n₹1999 / month\n\nFull tool access")
+# ---------------------------------------------------------
+if st.session_state.page == "Home":
+    with page_container():
+        st.image("assets/banner.png", use_container_width=True)
 
         st.markdown(
-            "[Pay with PayPal](https://www.paypal.com)",
-            unsafe_allow_html=True,
+            """
+            ## AI-powered growth tools for modern brands  
+            **Clarity. Strategy. Scale.**  
+            Turn data into marketing decisions that actually work.
+            """
         )
 
-# -------------------------------------------------
-# CONTACT
-# -------------------------------------------------
-with tabs[5]:
-    st.markdown("## 📨 Contact")
-    st.text_input("Your email")
-    st.text_area("Message")
-    st.button("Send")
+        st.markdown("### What you can do with Brand n Bloom")
 
-# -------------------------------------------------
-# ABOUT
-# -------------------------------------------------
-with tabs[6]:
-    st.markdown("## ℹ️ About Brand n Bloom")
-    st.markdown(
-        """
-        Brand n Bloom is a **marketing + data science platform**  
-        built to help brands grow with clarity, not guesswork.
-        """
-    )
+        cols = st.columns(3)
+        with cols[0]:
+            card("🔬 **BloomScore**<br/>Instant brand health score")
+        with cols[1]:
+            card("🧠 **Consumer Behavior**<br/>Understand how customers think & buy")
+        with cols[2]:
+            card("📧 **Email Marketing**<br/>High-conversion AI campaigns")
 
-# -------------------------------------------------
-# Footer
-# -------------------------------------------------
-st.divider()
+# ---------------------------------------------------------
+# FEATURES
+# ---------------------------------------------------------
+elif st.session_state.page == "Features":
+    with page_container():
+        st.markdown("## ✨ Features")
+
+        FEATURES = [
+            "AI-driven marketing intelligence",
+            "Data-backed decision making",
+            "Plug-and-play growth tools",
+            "Designed for founders & marketers",
+        ]
+
+        for f in FEATURES:
+            card(f"✅ {f}")
+
+# ---------------------------------------------------------
+# PRICING
+# ---------------------------------------------------------
+elif st.session_state.page == "Pricing":
+    with page_container():
+        st.markdown("## 💰 Pricing")
+
+        cols = st.columns(2)
+
+        with cols[0]:
+            card("### Starter<br/>₹0 / month<br/>Basic insights")
+
+        with cols[1]:
+            card("### Pro<br/>₹1999 / month<br/>Full access")
+            st.link_button("Pay with PayPal", "https://www.paypal.com")
+
+# ---------------------------------------------------------
+# BLOG
+# ---------------------------------------------------------
+elif st.session_state.page == "Blog":
+    with page_container():
+        st.markdown("## 📰 Blog")
+        card("Coming soon: marketing, analytics & growth insights.")
+
+# ---------------------------------------------------------
+# DASHBOARD
+# ---------------------------------------------------------
+elif st.session_state.page == "Dashboard":
+    with page_container():
+        st.markdown("## 📊 Dashboard")
+        card("Connect tools to start seeing insights here.")
+
+# ---------------------------------------------------------
+# TOOLS
+# ---------------------------------------------------------
+elif st.session_state.page == "Tools":
+    with page_container():
+        st.markdown("## 🧰 Marketing & Analytics Tools")
+
+        TOOLS = {
+            "BloomScore": "Instant brand health score for social profiles",
+            "Consumer Behavior": "Understand how customers think, feel & buy",
+            "Email Marketing": "AI-written high-conversion email campaigns",
+            "Influencer Finder": "Find creators aligned with your brand",
+            "Business Compare": "Benchmark your brand against competitors",
+            "Menu Pricing": "Optimize prices using demand psychology",
+            "Loyalty": "Design loyalty programs that retain customers",
+        }
+
+        cols = st.columns(3)
+        for i, (tool, desc) in enumerate(TOOLS.items()):
+            with cols[i % 3]:
+                card(f"### {tool}<br/>{desc}")
+
+# ---------------------------------------------------------
+# FOOTER
+# ---------------------------------------------------------
+st.markdown("---")
 st.markdown(
-    "<center>© 2026 Brand n Bloom • Built with ❤️</center>",
+    """
+    <div style="text-align:center; opacity:0.7;">
+    © 2026 Brand n Bloom • Built with ❤️
+    </div>
+    """,
     unsafe_allow_html=True,
 )
