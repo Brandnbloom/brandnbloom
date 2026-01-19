@@ -1,40 +1,21 @@
 # ai_tools/menu_pricing.py
-# Simple menu pricing optimizer:
-# Given cost, desired margin %, and competitor price → suggest pricing tiers.
 
-def suggest_prices(
-    cost: float,
-    desired_margin_pct: float = 40.0,
-    competitor_price: float | None = None
-) -> dict:
+from typing import List, Dict
+
+def suggest_menu_prices(items: Dict[str, float]) -> Dict[str, float]:
     """
-    Suggests value, base and premium price tiers.
-
-    Parameters:
-        cost (float): Cost of producing the item.
-        desired_margin_pct (float): Target profit margin %. Default: 40%.
-        competitor_price (float|None): Optional competitor price for comparison.
-
+    Suggest optimized prices for menu items based on base price and demand psychology.
+    Currently uses simple markup and rounding logic as placeholder.
+    
+    Args:
+        items: Dictionary of item_name -> base_cost
+        
     Returns:
-        dict: Suggested prices and optional market positioning.
+        Dictionary of item_name -> suggested_price
     """
-    if cost <= 0:
-        raise ValueError("cost must be positive")
-
-    # Calculate base recommended price
-    base_price = round(cost / (1 - desired_margin_pct / 100), 2)
-
-    suggestions = {
-        "cost": cost,
-        "base_price": base_price,
-        "value_price": round(base_price * 0.90, 2),
-        "premium_price": round(base_price * 1.25, 2),
-    }
-
-    if competitor_price is not None:
-        suggestions["competitor_price"] = competitor_price
-        suggestions["positioning"] = (
-            "undercut" if base_price > competitor_price else "premium"
-        )
-
-    return suggestions
+    optimized = {}
+    for item, cost in items.items():
+        # Simple optimization: add 40% markup, round to nearest 5
+        price = round(cost * 1.4 / 5) * 5
+        optimized[item] = max(price, cost + 1)  # Ensure price > cost
+    return optimized
