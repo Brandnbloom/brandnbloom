@@ -1,115 +1,47 @@
-"""
-bloomscore.py
-Computes the BloomScore™ for a social media profile using:
-- Engagement Rate (40%)
-- Posting Consistency (20%)
-- Hashtag Variety (15%)
-- Brand Health (15%)
-- Growth Trend (10%)
-
-NO external dependencies.
-"""
-
-# ---------------------------------------------------
-# Helpers
-# ---------------------------------------------------
-
-def _categorize(score: int) -> str:
-    if score >= 80:
-        return "Excellent"
-    if score >= 60:
-        return "Good"
-    if score >= 40:
-        return "Fair"
-    return "Needs Work"
-
-
-def _posting_consistency(posts_per_week: float) -> int:
-    if posts_per_week >= 4:
-        return 20
-    if posts_per_week >= 2:
-        return 15
-    if posts_per_week >= 1:
-        return 10
-    return 5
-
-
-def _hashtag_variety(count: int) -> int:
-    if count >= 6:
-        return 15
-    if count >= 3:
-        return 10
-    return 5
-
-
-def _brand_health_score(score: float) -> int:
-    if score >= 70:
-        return 15
-    if score >= 40:
-        return 10
-    return 5
-
-
-def _growth_trend(followers_history: list) -> int:
-    if not followers_history or len(followers_history) < 2:
-        return 4
-
-    start = followers_history[0]
-    end = followers_history[-1]
-
-    if start <= 0:
-        return 4
-
-    growth_pct = ((end - start) / start) * 100
-
-    if growth_pct > 5:
-        return 10
-    if growth_pct >= 1:
-        return 7
-    if growth_pct >= 0:
-        return 4
-    return 2
-
-
-# ---------------------------------------------------
-# Main API
-# ---------------------------------------------------
+# ai_tools/bloomscore.py
 
 def compute_bloomscore(profile: dict) -> dict:
     """
-    Expected profile format:
-    {
-        "engagement_rate": float (0–100),
-        "posts_per_week": float,
-        "hashtag_count": int,
-        "brand_health_score": float (0–100),
-        "followers_history": list[int]
-    }
+    Expected normalized inputs:
+    followers_score: 0–100
+    engagement_rate: 0–100
+    posting_consistency: 0–100
     """
 
-    er = profile.get("engagement_rate", 0)
-    posts_per_week = profile.get("posts_per_week", 0)
-    hashtag_count = profile.get("hashtag_count", 0)
-    brand_health = profile.get("brand_health_score", 0)
-    followers_history = profile.get("followers_history", [])
+    followers = profile.get("followers_score", 0)
+    engagement = profile.get("engagement_rate", 0)
+    consistency = profile.get("posting_consistency", 0)
 
-    er_score = er * 0.4
-    posting_score = _posting_consistency(posts_per_week)
-    hashtag_score = _hashtag_variety(hashtag_count)
-    brand_score = _brand_health_score(brand_health)
-    growth_score = _growth_trend(followers_history)
+    score = (
+        followers * 0.3 +
+        engagement * 0.4 +
+        consistency * 0.3
+    )
 
-    total = er_score + posting_score + hashtag_score + brand_score + growth_score
-    score = min(100, int(total))
+    score = min(round(score), 100)
+
+    if score >= 80:
+        bucket = "Excellent"
+    elif score >= 60:
+        bucket = "Good"
+    elif score >= 40:
+        bucket = "Average"
+    else:
+        bucket = "Needs Improvement"
 
     return {
         "score": score,
-        "bucket": _categorize(score),
+        "bucket": bucket,
         "components": {
-            "engagement_rate": er,
-            "posting_consistency": posting_score,
-            "hashtag_variety": hashtag_score,
-            "brand_health": brand_score,
-            "growth_trend": growth_score,
+            "followers_score": followers,
+            "engagement_rate": engagement,
+            "posting_consistency": consistency,
+        },
+        "analysis": {
+            "recommendations": [
+                "Post consistently 3–4 times per week",
+                "Use short-form video (Reels)",
+                "Collaborate with micro-influencers",
+            ]
         }
     }
