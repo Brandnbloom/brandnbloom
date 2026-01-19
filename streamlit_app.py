@@ -1,183 +1,118 @@
-# streamlit_app.py
-"""
-Brand N Bloom – Marketing & Data Intelligence Platform
-Architected for stability, scalability, and clean UX
-"""
-
-import streamlit as st
-import time
-
-# =========================================================
-# PAGE CONFIG
-# =========================================================
-st.set_page_config(
-    page_title="Brand N Bloom",
-    page_icon="🌸",
-    layout="wide",
-)
-
-# =========================================================
-# GLOBAL CSS (SAFE FOR LIGHT + DARK)
-# =========================================================
+===============================
+streamlit_app.py
+Brand n Bloom – Final Working Version (No Sidebar)
+===============================
+import streamlit as st from utils.ui import inject_css, dark_mode_toggle, card
+-------------------------------------------------
+Page Config (NO SIDEBAR)
+-------------------------------------------------
+st.set_page_config( page_title="Brand n Bloom", layout="wide", initial_sidebar_state="collapsed" )
+-------------------------------------------------
+Hide Streamlit Sidebar Completely
+-------------------------------------------------
 st.markdown("""
+""", unsafe_allow_html=True)
+-------------------------------------------------
+Global UI
+-------------------------------------------------
+inject_css()
+dark_mode_toggle()
+-------------------------------------------------
+Header
+-------------------------------------------------
+st.markdown("""
+🌸 Brand n Bloom
+AI-powered growth tools for modern brands
+""", unsafe_allow_html=True)
+-------------------------------------------------
+Tools Registry
+-------------------------------------------------
+TOOLS = { "BloomScore": "Instant brand health score for social profiles", "Consumer Behavior": "Understand how customers think, feel & buy", "Email Marketing": "AI-written high-conversion email campaigns", "Influencer Finder": "Find creators aligned with your brand", "Business Compare": "Benchmark your brand against competitors", "Menu Pricing": "Optimize menu prices using demand psychology", "Loyalty": "Design loyalty programs that actually retain customers", }
+-------------------------------------------------
+Tool Selector
+-------------------------------------------------
+st.markdown("## 🧰 Tools")
+cols = st.columns(3) for i, (tool, desc) in enumerate(TOOLS.items()): with cols[i % 3]: card(f"
+{tool}
+{desc}
+")
+-------------------------------------------------
+Footer
+-------------------------------------------------
+st.markdown("""
+
+© 2026 Brand n Bloom • Built with ❤️
+""", unsafe_allow_html=True)
+==================================================
+utils/ui.py (FINAL – REQUIRED FIXES)
+==================================================
+""" IMPORTANT:
+Remove any extra inject_css() calls at bottom of file
+This version works with Streamlit limitations """
+import streamlit as st import json import pathlib import time
+BRANDING_PATH = pathlib.Path("branding.json") BRANDING_CACHE = {"timestamp": 0, "data": {}} BRANDING_CACHE_TTL = 5
+def load_branding(force_reload=False): global BRANDING_CACHE now = time.time() expired = now - BRANDING_CACHE["timestamp"] > BRANDING_CACHE_TTL
+if force_reload or expired:
+    if BRANDING_PATH.exists():
+        try:
+            BRANDING_CACHE["data"] = json.loads(BRANDING_PATH.read_text())
+        except Exception:
+            BRANDING_CACHE["data"] = {}
+    else:
+        BRANDING_CACHE["data"] = {}
+    BRANDING_CACHE["timestamp"] = now
+
+return BRANDING_CACHE["data"]
+
+def dark_mode_enabled(): return st.session_state.get("dark_mode", False)
+def theme_vars(): b = load_branding() pal = b.get("palette", {})
+light = {
+    "bg": pal.get("bg_light", "#F6F5FB"),
+    "text": pal.get("text_light", "#1F2937"),
+    "primary": pal.get("primary", "#8B5CF6"),
+    "accent": pal.get("accent", "#22C55E"),
+}
+
+dark = {
+    "bg": pal.get("bg_dark", "#0B1020"),
+    "text": pal.get("text_dark", "#E5E7EB"),
+    "primary": pal.get("primary", "#8B5CF6"),
+    "accent": pal.get("accent", "#22C55E"),
+}
+
+return dark if dark_mode_enabled() else light
+
+def inject_css(): t = theme_vars()
+st.markdown(f"""
 <style>
-html, body, [class*="css"] {
-    font-family: 'Poppins', sans-serif;
-}
+:root {{
+  --bnb-bg: {t['bg']};
+  --bnb-text: {t['text']};
+  --bnb-primary: {t['primary']};
+  --bnb-accent: {t['accent']};
+}}
 
-.main-container {
-    padding: 2rem 4rem;
-}
+body {{
+  background: var(--bnb-bg);
+  color: var(--bnb-text);
+}}
 
-.hero-title {
-    font-size: 3rem;
-    font-weight: 600;
-}
+h1, h2, h3, h4, h5, h6 {{
+  color: var(--bnb-text);
+}}
 
-.hero-subtitle {
-    font-size: 1.1rem;
-    opacity: 0.85;
-}
-
-.tool-card {
-    padding: 1.4rem;
-    border-radius: 14px;
-    background: var(--secondary-background-color);
-    border: 1px solid rgba(128,128,128,0.15);
-    transition: transform 0.15s ease;
-}
-
-.tool-card:hover {
-    transform: translateY(-4px);
-}
-
-.center {
-    text-align: center;
-}
+.bnb-card {{
+  background: rgba(255,255,255,0.03);
+  border-radius: 16px;
+  padding: 1rem 1.2rem;
+  border: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 1rem;
+}}
 </style>
 """, unsafe_allow_html=True)
 
-# =========================================================
-# TOP NAVIGATION
-# =========================================================
-menu = st.columns([1,1,1,1,1,1,1,1])
+def card(content: str): st.markdown(f"
+{content}
+", unsafe_allow_html=True)
+def dark_mode_toggle(): st.checkbox("🌗 Dark mode", key="dark_mode")
 
-pages = [
-    "Home", "Features", "Pricing", "Blog",
-    "Dashboard", "Tools", "About", "Contact",
-    "Login", "Signup"
-]
-
-if "page" not in st.session_state:
-    st.session_state.page = "Home"
-
-for i, page in enumerate(pages[:8]):
-    if menu[i].button(page):
-        st.session_state.page = page
-
-# =========================================================
-# BANNER
-# =========================================================
-st.markdown("<div class='main-container'>", unsafe_allow_html=True)
-
-st.markdown("""
-<div class="center">
-    <h1 class="hero-title">Brand N Bloom 🌸</h1>
-    <p class="hero-subtitle">
-        Marketing intelligence, consumer insights & data-driven growth tools
-    </p>
-</div>
-""", unsafe_allow_html=True)
-
-st.divider()
-
-# =========================================================
-# TOOLS REGISTRY (SINGLE SOURCE OF TRUTH)
-# =========================================================
-TOOLS = {
-    "BloomScore": "AI-powered brand health & growth score",
-    "Consumer Behaviour": "Understand audience psychology & intent",
-    "Email Marketing": "Campaign analysis & optimization insights",
-    "Influencer Finder": "Discover the right creators for your brand",
-    "Business Compare": "Compare brands, markets & competitors",
-    "Menu Pricing": "Data-backed pricing strategy & optimization",
-    "Loyalty Engine": "Retention, repeat purchase & loyalty analytics",
-}
-
-# =========================================================
-# PAGE ROUTING
-# =========================================================
-page = st.session_state.page
-
-# ---------------- HOME ----------------
-if page == "Home":
-    c1, c2, c3 = st.columns(3)
-    for col, text in zip([c1,c2,c3], [
-        "📊 Data-Driven Decisions",
-        "🎯 Smarter Marketing",
-        "🚀 Scalable Growth"
-    ]):
-        with col:
-            st.markdown(f"<div class='tool-card center'>{text}</div>", unsafe_allow_html=True)
-
-# ---------------- FEATURES ----------------
-elif page == "Features":
-    st.subheader("Platform Features")
-    for tool, desc in TOOLS.items():
-        if st.button(tool):
-            st.session_state.page = "Tools"
-            st.session_state.selected_tool = tool
-        st.caption(desc)
-
-# ---------------- PRICING ----------------
-elif page == "Pricing":
-    c1, c2 = st.columns(2)
-    with c1:
-        st.markdown("<div class='tool-card'><h3>Starter</h3><p>₹0 / month</p></div>", unsafe_allow_html=True)
-    with c2:
-        st.markdown("<div class='tool-card'><h3>Pro</h3><p>₹1999 / month</p></div>", unsafe_allow_html=True)
-        st.link_button("Pay with PayPal", "https://www.paypal.com")
-
-# ---------------- BLOG ----------------
-elif page == "Blog":
-    st.info("Blogs will be loaded from markdown / CMS")
-
-# ---------------- DASHBOARD ----------------
-elif page == "Dashboard":
-    st.warning("Dashboard activates once tools start generating data")
-
-# ---------------- TOOLS ----------------
-elif page == "Tools":
-    st.subheader("Marketing & Analytics Tools")
-
-    for tool, desc in TOOLS.items():
-        with st.container():
-            st.markdown(f"<div class='tool-card'><h4>{tool}</h4><p>{desc}</p></div>", unsafe_allow_html=True)
-
-# ---------------- ABOUT ----------------
-elif page == "About":
-    st.write(
-        "Brand N Bloom is built to empower founders, marketers and analysts "
-        "with clarity, confidence and data-backed decisions."
-    )
-
-# ---------------- CONTACT ----------------
-elif page == "Contact":
-    st.text_input("Your Email")
-    st.text_area("Message")
-    st.button("Send")
-
-# ---------------- LOGIN ----------------
-elif page == "Login":
-    st.text_input("Email")
-    st.text_input("Password", type="password")
-    st.button("Login")
-
-# ---------------- SIGNUP ----------------
-elif page == "Signup":
-    st.text_input("Name")
-    st.text_input("Email")
-    st.text_input("Password", type="password")
-    st.button("Create Account")
-
-st.markdown("</div>", unsafe_allow_html=True)
