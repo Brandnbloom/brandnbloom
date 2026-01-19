@@ -1,7 +1,6 @@
 ===============================
 streamlit_app.py
-Brand n Bloom – Final Working Version (No Sidebar)
-===============================
+==========================
 import streamlit as st from utils.ui import inject_css, dark_mode_toggle, card
 -------------------------------------------------
 Page Config (NO SIDEBAR)
