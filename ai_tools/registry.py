@@ -2,40 +2,92 @@
 
 from typing import Dict, Callable
 
-from ai_tools.bloomscore import run as bloomscore_run
-# (others will be added gradually)
+# -----------------------------
+# IMPORT TOOL ENGINES
+# -----------------------------
+from ai_tools.bloomscore import compute_bloomscore
+from ai_tools.profile_mock import fetch_profile
 
-TOOL_REGISTRY: Dict[str, Callable] = {
-    "BloomScore": bloomscore_run,
-    # future tools go here
+
+# -----------------------------
+# TOOL REGISTRY
+# -----------------------------
+TOOLS: Dict[str, Dict] = {
+    "BloomScore": {
+        "description": "Instant brand health score for social profiles",
+        "runner": lambda args: compute_bloomscore(
+            fetch_profile(args.get("handle", "brandnbloom"))
+        ),
+    },
+
+    "Audit Tools": {
+        "description": "Full audit of brand presence & gaps",
+        "runner": lambda args: {"status": "Coming soon"},
+    },
+
+    "Business Compare": {
+        "description": "Compare your brand against competitors",
+        "runner": lambda args: {"status": "Coming soon"},
+    },
+
+    "Color Extractor": {
+        "description": "Extract and analyze brand color psychology",
+        "runner": lambda args: {"status": "Coming soon"},
+    },
+
+    "Consumer Behavior": {
+        "description": "Understand how customers think & buy",
+        "runner": lambda args: {"status": "Coming soon"},
+    },
+
+    "Hashtag Recommender": {
+        "description": "AI hashtags for reach & relevance",
+        "runner": lambda args: {"status": "Coming soon"},
+    },
+
+    "Influencer Finder": {
+        "description": "Find creators aligned with your brand",
+        "runner": lambda args: {"status": "Coming soon"},
+    },
+
+    "Insights to Caption": {
+        "description": "Convert insights into captions",
+        "runner": lambda args: {"status": "Coming soon"},
+    },
+
+    "Loyalty": {
+        "description": "Design loyalty programs that retain users",
+        "runner": lambda args: {"status": "Coming soon"},
+    },
+
+    "Menu Pricing": {
+        "description": "Optimize pricing using demand psychology",
+        "runner": lambda args: {"status": "Coming soon"},
+    },
+
+    "OCR Sentiment": {
+        "description": "Analyze sentiment from images & menus",
+        "runner": lambda args: {"status": "Coming soon"},
+    },
+
+    "Prompts": {
+        "description": "AI prompt tools for marketers",
+        "runner": lambda args: {"status": "Coming soon"},
+    },
 }
 
 
+# -----------------------------
+# PUBLIC API
+# -----------------------------
 def get_available_tools() -> Dict[str, str]:
-    """
-    Tool name → description
-    """
-    return {
-        "BloomScore": "Instant social brand health score",
-        "Business Compare": "Benchmark brand vs competitors",
-        "Color Extractor": "Extract brand colors & palette psychology",
-        "Consumer Behavior": "Understand buyer psychology",
-        "Hashtag Recommender": "High-reach hashtag suggestions",
-        "Influencer Finder": "Find creators aligned with your niche",
-        "Insights to Caption": "Convert insights into captions",
-        "Loyalty": "Design retention programs",
-        "Menu Pricing": "Optimize pricing with psychology",
-        "OCR Sentiment": "Sentiment from images & text",
-    }
+    """Return tool name → description"""
+    return {k: v["description"] for k, v in TOOLS.items()}
 
 
-def run_tool(tool_name: str, input_data: Dict) -> Dict:
-    """
-    Unified execution layer.
-    No Streamlit logic allowed here.
-    """
+def run_tool(name: str, args: dict) -> dict:
+    """Safely execute a tool"""
+    if name not in TOOLS:
+        raise ValueError("Tool not registered")
 
-    if tool_name not in TOOL_REGISTRY:
-        raise ValueError(f"Tool '{tool_name}' not implemented yet")
-
-    return TOOL_REGISTRY[tool_name](input_data)
+    return TOOLS[name]["runner"](args)
