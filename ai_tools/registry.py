@@ -1,93 +1,52 @@
 # ai_tools/registry.py
 
-from typing import Dict, Callable
-
-# -----------------------------
-# IMPORT TOOL ENGINES
-# -----------------------------
-from ai_tools.bloomscore import compute_bloomscore
-from ai_tools.profile_mock import fetch_profile
-
-
-# -----------------------------
-# TOOL REGISTRY
-# -----------------------------
-TOOLS: Dict[str, Dict] = {
+TOOLS = {
     "BloomScore": {
-        "description": "Instant brand health score for social profiles",
-        "runner": lambda args: compute_bloomscore(
-            fetch_profile(args.get("handle", "brandnbloom"))
-        ),
+        "desc": "Instant brand health score for social profiles",
+        "module": "bloomscore",
     },
-
-    "Audit Tools": {
-        "description": "Full audit of brand presence & gaps",
-        "runner": lambda args: {"status": "Coming soon"},
+    "Audit Tool": {
+        "desc": "Complete brand & content audit",
+        "module": "audit",
     },
-
     "Business Compare": {
-        "description": "Compare your brand against competitors",
-        "runner": lambda args: {"status": "Coming soon"},
+        "desc": "Benchmark your brand against competitors",
+        "module": "business_compare",
     },
-
     "Color Extractor": {
-        "description": "Extract and analyze brand color psychology",
-        "runner": lambda args: {"status": "Coming soon"},
+        "desc": "Extract and analyze brand color palettes",
+        "module": "color_extractor",
     },
-
     "Consumer Behavior": {
-        "description": "Understand how customers think & buy",
-        "runner": lambda args: {"status": "Coming soon"},
+        "desc": "Understand how customers think and buy",
+        "module": "consumer_behavior",
     },
-
     "Hashtag Recommender": {
-        "description": "AI hashtags for reach & relevance",
-        "runner": lambda args: {"status": "Coming soon"},
+        "desc": "AI-powered hashtag suggestions",
+        "module": "hashtag_recommender",
     },
-
     "Influencer Finder": {
-        "description": "Find creators aligned with your brand",
-        "runner": lambda args: {"status": "Coming soon"},
+        "desc": "Find influencers aligned with your brand",
+        "module": "influencer_finder",
     },
-
     "Insights to Caption": {
-        "description": "Convert insights into captions",
-        "runner": lambda args: {"status": "Coming soon"},
+        "desc": "Turn insights into scroll-stopping captions",
+        "module": "insights_to_caption",
     },
-
     "Loyalty": {
-        "description": "Design loyalty programs that retain users",
-        "runner": lambda args: {"status": "Coming soon"},
+        "desc": "Design loyalty programs that retain customers",
+        "module": "loyalty",
     },
-
     "Menu Pricing": {
-        "description": "Optimize pricing using demand psychology",
-        "runner": lambda args: {"status": "Coming soon"},
+        "desc": "Optimize pricing using demand psychology",
+        "module": "menu_pricing",
     },
-
     "OCR Sentiment": {
-        "description": "Analyze sentiment from images & menus",
-        "runner": lambda args: {"status": "Coming soon"},
+        "desc": "Analyze sentiment from images & screenshots",
+        "module": "ocr_sentiment",
     },
-
     "Prompts": {
-        "description": "AI prompt tools for marketers",
-        "runner": lambda args: {"status": "Coming soon"},
+        "desc": "Ready-to-use AI prompts for marketing",
+        "module": "prompts",
     },
 }
-
-
-# -----------------------------
-# PUBLIC API
-# -----------------------------
-def get_available_tools() -> Dict[str, str]:
-    """Return tool name → description"""
-    return {k: v["description"] for k, v in TOOLS.items()}
-
-
-def run_tool(name: str, args: dict) -> dict:
-    """Safely execute a tool"""
-    if name not in TOOLS:
-        raise ValueError("Tool not registered")
-
-    return TOOLS[name]["runner"](args)
