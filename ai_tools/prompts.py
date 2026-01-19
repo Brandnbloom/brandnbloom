@@ -1,21 +1,20 @@
-# ai_tools/prompts.py
+# ai_tools/color_extractor.py
 
-from typing import List
+from typing import List, Tuple
+from PIL import Image
+import numpy as np
+from collections import Counter
 
-def generate_prompts(topic: str, n: int = 5) -> List[str]:
+def extract_dominant_colors(image_path: str, n_colors: int = 5) -> List[Tuple[int, int, int]]:
     """
-    Generates AI content prompts based on a given topic.
-    For now, uses template-based mock prompts.
+    Returns the top n_colors dominant colors in an image.
     """
-    base_templates = [
-        f"Write a catchy social media caption about {topic}.",
-        f"Create a fun tweet about {topic}.",
-        f"Draft a short Instagram story script on {topic}.",
-        f"Suggest a creative blog intro about {topic}.",
-        f"Give 3 ideas for promotional emails on {topic}.",
-        f"Write a motivational quote related to {topic}.",
-        f"Generate hashtags for {topic} to boost engagement."
-    ]
-
-    # Return the first n prompts
-    return base_templates[:n]
+    try:
+        img = Image.open(image_path).convert("RGB")
+        img = img.resize((100, 100))  # speed optimization
+        pixels = np.array(img).reshape(-1, 3)
+        counts = Counter(map(tuple, pixels))
+        dominant_colors = [color for color, _ in counts.most_common(n_colors)]
+        return dominant_colors
+    except Exception:
+        return []
