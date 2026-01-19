@@ -1,54 +1,42 @@
- # ai_tools/consumer_behavior.py
+# ai_tools/consumer_behavior.py
 
-def analyze_consumer_behavior(data: dict) -> dict:
-    """
-    Inputs expected (normalized 0–100):
-    - price_sensitivity
-    - brand_loyalty
-    - impulse_buying
-    - trust_level
-    """
+from typing import Dict
 
-    price = data.get("price_sensitivity", 50)
-    loyalty = data.get("brand_loyalty", 50)
-    impulse = data.get("impulse_buying", 50)
-    trust = data.get("trust_level", 50)
+
+def analyze(profile: Dict) -> Dict:
+    engagement = profile.get("engagement_rate", 0)
+    repeat_customers = profile.get("repeat_customer_ratio", 0)
+    price_sensitivity = profile.get("price_sensitivity", 0.5)  # 0 = low, 1 = high
+    content_saves = profile.get("content_save_rate", 0)
+
+    # Buyer type inference
+    if repeat_customers > 0.6:
+        buyer_type = "Loyal"
+    elif price_sensitivity > 0.7:
+        buyer_type = "Price Sensitive"
+    elif engagement > 0.06:
+        buyer_type = "Emotion Driven"
+    else:
+        buyer_type = "Exploratory"
 
     insights = []
 
-    if price > 70:
-        insights.append("Customers are highly price sensitive")
-    else:
-        insights.append("Customers prioritize value over price")
-
-    if loyalty > 65:
-        insights.append("Strong brand loyalty detected")
-    else:
-        insights.append("Brand switching behavior is common")
-
-    if impulse > 60:
-        insights.append("Impulse buying plays a major role")
-    else:
-        insights.append("Purchases are mostly planned")
-
-    if trust < 50:
-        insights.append("Low trust – social proof is critical")
-    else:
-        insights.append("Customers trust the brand")
-
-    recommendations = [
-        "Use limited-time offers to trigger action",
-        "Highlight reviews and testimonials",
-        "Create loyalty rewards for repeat buyers",
-    ]
+    if buyer_type == "Loyal":
+        insights.append("Reward repeat buyers with exclusive offers")
+    if buyer_type == "Price Sensitive":
+        insights.append("Limited-time discounts drive conversions")
+    if buyer_type == "Emotion Driven":
+        insights.append("Storytelling & reels outperform static posts")
+    if buyer_type == "Exploratory":
+        insights.append("Educational content builds trust")
 
     return {
-        "segments": {
-            "price_sensitive": price,
-            "loyalty": loyalty,
-            "impulse": impulse,
-            "trust": trust,
+        "buyer_type": buyer_type,
+        "metrics": {
+            "engagement_rate": engagement,
+            "repeat_customer_ratio": repeat_customers,
+            "price_sensitivity": price_sensitivity,
+            "content_save_rate": content_saves,
         },
-        "insights": insights,
-        "recommendations": recommendations,
+        "recommendations": insights
     }
