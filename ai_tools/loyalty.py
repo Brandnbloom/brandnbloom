@@ -1,25 +1,16 @@
 # ai_tools/loyalty.py
-# Simple loyalty engine: converts purchases to points and recommends rewards.
 
-def points_for_amount(amount: float) -> int:
-    """Returns loyalty points earned for a given purchase amount."""
-    if amount < 0:
-        return 0
-    return int(amount // 10)  # 1 point per ₹10
+from typing import List
 
+def generate_loyalty_program(brand_name: str, type_: str = "Points-Based") -> List[str]:
+    """
+    Generates 3 sample loyalty program ideas for a brand.
+    """
+    programs = [
+        f"{brand_name}: Earn points on every purchase and redeem for discounts!",
+        f"{brand_name}: Exclusive VIP club for top customers with early access to products.",
+        f"{brand_name}: Referral rewards – bring friends and both get perks!"
+    ]
 
-def update_balance(balance: int, amount: float) -> int:
-    """Updates a user's points balance after a purchase."""
-    pts = points_for_amount(amount)
-    return balance + pts
-
-
-def recommend_reward(points: int) -> str:
-    """Recommends a reward based on available loyalty points."""
-    if points >= 500:
-        return "Free product / VIP access"
-    if points >= 200:
-        return "20% off coupon"
-    if points >= 50:
-        return "Free shipping / small gift"
-    return "Keep earning: 1 point per ₹10"
+    # Could expand with AI logic later
+    return programs
