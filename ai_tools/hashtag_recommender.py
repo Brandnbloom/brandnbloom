@@ -1,43 +1,50 @@
 # ai_tools/hashtag_recommender.py
-# Lightweight hashtag recommendation engine.
-# Expands context into branded, niche-friendly hashtags.
 
-from typing import List
-from ai_tools.prompts import HASHTAG_PROMPT
+from typing import Dict, List
 
 
-def recommend_hashtags(context: str) -> List[str]:
-    """
-    Generates simple but clean hashtags based on text context.
-    Avoids API calls to keep the system fast & deterministic.
-    """
-
-    # Baseline universal hashtags for small businesses & creators
-    base = [
-        "#SmallBusiness",
-        "#Branding",
-        "#CreatorEconomy",
-        "#MarketingTips",
-        "#Growth",
-        "#BusinessEssentials",
-        "#BloomScore"
+HASHTAG_DB = {
+    "marketing": [
+        "#digitalmarketing", "#brandstrategy", "#growthmarketing",
+        "#contentmarketing", "#marketingtips", "#socialmediamarketing"
+    ],
+    "fashion": [
+        "#streetstyle", "#fashionbrand", "#slowfashion",
+        "#ootd", "#ethicalfashion", "#fashionmarketing"
+    ],
+    "food": [
+        "#foodbrand", "#foodmarketing", "#restaurantlife",
+        "#foodpreneur", "#cloudkitchen", "#foodstartup"
+    ],
+    "default": [
+        "#branding", "#smallbusiness", "#entrepreneurlife",
+        "#startupindia", "#creatoreconomy"
     ]
+}
 
-    # Convert context → unique hashtags
-    dynamic_tags = []
-    words = context.split()
 
-    for w in words[:7]:   # Avoid spammy long lists
-        clean = w.strip().replace("#", "")
-        if not clean:
-            continue
-        tag = f"#{clean.title().replace(' ', '')}"
-        dynamic_tags.append(tag)
+def recommend(
+    niche: str,
+    audience_size: str = "medium"
+) -> Dict:
+    niche = niche.lower()
+    base_tags = HASHTAG_DB.get(niche, HASHTAG_DB["default"])
 
-    # Remove duplicates while keeping order
-    final_list = []
-    for t in base + dynamic_tags:
-        if t not in final_list:
-            final_list.append(t)
+    if audience_size == "small":
+        strategy = "Use niche & low-competition hashtags"
+    elif audience_size == "large":
+        strategy = "Blend viral + niche hashtags"
+    else:
+        strategy = "Balanced reach & relevance"
 
-    return final_list
+    return {
+        "niche": niche,
+        "audience_size": audience_size,
+        "hashtags": base_tags[:8],
+        "strategy": strategy,
+        "tips": [
+            "Avoid banned or spammy hashtags",
+            "Rotate hashtag sets weekly",
+            "Use 3–5 hashtags in captions, rest in comments"
+        ]
+    }
