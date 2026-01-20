@@ -74,7 +74,7 @@ if page == "Home":
     with page_container():
         st.markdown("## Welcome to Brand N Bloom 🌱")
         st.markdown("Grow your brand with AI-powered clarity.")
-        if st.button("Get Started →"):
+               if st.button("Get Started →"):
         st.session_state.page = "Tools"
         st.rerun()
 
