@@ -3,18 +3,29 @@
 import streamlit as st
 from PIL import Image
 import numpy as np
-from collections import Counter
 
 
-def extract_colors(image: Image.Image, k: int = 5):
-    img = image.resize((150, 150))
-    img = np.array(img)
+def extract_colors(image, k=5):
+    """
+    Simple dominant color extraction using numpy clustering.
+    """
+    img = image.resize((200, 200))
+    data = np.array(img).reshape(-1, 3)
 
-    pixels = img.reshape(-1, 3)
-    pixels = [tuple(p) for p in pixels]
+    # random sampling for speed
+    pixels = data[np.random.choice(data.shape[0], 1000, replace=False)]
 
-    common = Counter(pixels).most_common(k)
-    return [color for color, _ in common]
+    # k-means style clustering (manual, lightweight)
+    colors = pixels[np.random.choice(len(pixels), k, replace=False)]
+
+    for _ in range(8):
+        distances = np.sqrt(((pixels[:, None] - colors[None, :]) ** 2).sum(axis=2))
+        clusters = np.argmin(distances, axis=1)
+        for i in range(k):
+            if np.any(clusters == i):
+                colors[i] = pixels[clusters == i].mean(axis=0)
+
+    return colors.astype(int)
 
 
 def rgb_to_hex(rgb):
@@ -28,55 +39,42 @@ def luminance(rgb):
 
 def run():
     st.markdown("## 🎨 Color Extractor")
-    st.markdown("Upload your brand image to extract dominant colors.")
+    st.markdown("Extract brand colors from logos, creatives, or banners.")
 
-    uploaded = st.file_uploader(
-        "Upload logo / banner / creative",
+    file = st.file_uploader(
+        "Upload an image (PNG / JPG)",
         type=["png", "jpg", "jpeg"]
     )
 
-    if uploaded:
-        image = Image.open(uploaded).convert("RGB")
-        st.image(image, caption="Uploaded Image", width=300)
+    if not file:
+        st.info("Upload an image to extract colors.")
+        return
 
-        colors = extract_colors(image)
+    image = Image.open(file).convert("RGB")
+    st.image(image, caption="Uploaded image", width=300)
 
-        st.markdown("### 🎯 Dominant Colors")
+    colors = extract_colors(image)
 
-        cols = st.columns(len(colors))
-        luminances = []
+    st.markdown("### 🎯 Extracted Brand Colors")
 
-        for i, rgb in enumerate(colors):
-            hex_code = rgb_to_hex(rgb)
-            lum = luminance(rgb)
-            luminances.append(lum)
+    cols = st.columns(len(colors))
+    for i, rgb in enumerate(colors):
+        hex_color = rgb_to_hex(tuple(rgb))
+        lum = luminance(rgb)
 
-            with cols[i]:
-                st.markdown(
-                    f"""
-                    <div style="
-                        background:{hex_code};
-                        height:80px;
-                        border-radius:10px;
-                        border:1px solid #ccc;">
-                    </div>
-                    <p style="text-align:center">{hex_code}</p>
-                    """,
-                    unsafe_allow_html=True
-                )
-
-        avg_lum = sum(luminances) / len(luminances)
-
-        st.markdown("### 🧠 Brand Insight")
-
-        if avg_lum < 120:
-            st.success("This is a **Dark / Premium** palette.")
-            st.write("Best for luxury, tech, premium brands.")
-        else:
-            st.success("This is a **Light / Friendly** palette.")
-            st.write("Great for wellness, lifestyle, and consumer brands.")
-
-        st.markdown("### 💡 Suggestions")
-        st.write("• Keep 1 primary + 2 accent colors")
-        st.write("• Ensure text contrast for accessibility")
-        st.write("• Stay consistent across socials & website")
+        with cols[i]:
+            st.markdown(
+                f"""
+                <div style="
+                    background:{hex_color};
+                    height:80px;
+                    border-radius:12px;
+                    border:1px solid #ccc;
+                "></div>
+                <p style="text-align:center;margin-top:6px;">
+                    <strong>{hex_color}</strong><br/>
+                    {'Dark' if lum < 140 else 'Light'}
+                </p>
+                """,
+                unsafe_allow_html=True,
+            )
