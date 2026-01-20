@@ -24,7 +24,8 @@ if "page" not in st.session_state:
 # =============================================================
 # Header & Banner
 # =============================================================
-st.image("assets/banner.png", width=None)
+st.image("assets/banner.png", 
+use_container_width=True)
 
 st.markdown("""
 # 🌸 Brand N Bloom
