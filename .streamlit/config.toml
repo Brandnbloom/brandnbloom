@@ -10,3 +10,6 @@ font = "sans serif"
 headless = true
 enableCORS = true
 enableXsrfProtection = true
+
+[browser]
+gatherUsagestats = false
