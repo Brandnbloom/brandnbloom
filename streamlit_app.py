@@ -11,25 +11,31 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed"
 )
-st.write("")
 
 inject_css()
 dark_mode_toggle()
 
 # =============================================================
-# Header & Banner
+# Session State Init
 # =============================================================
-st.image("assets/banner.png", use_column_width=True)
-st.markdown("""
-# 🌸 Brand N Bloom
-AI-powered growth tools for modern brands
-""", unsafe_allow_html=True)
+if "page" not in st.session_state:
+    st.session_state.page = "Home"
 
 # =============================================================
-# Top Menu Bar (Pages + Tools)
+# Header & Banner
+# =============================================================
+st.image("assets/banner.png", width=None)
+
+st.markdown("""
+# 🌸 Brand N Bloom
+**AI-powered growth tools for modern brands**
+""")
+
+# =============================================================
+# Navigation (Top Menu)
 # =============================================================
 PAGES = [
-    "Home", "Features", "Pricing", "Blog", "Dashboard", 
+    "Home", "Features", "Pricing", "Blog", "Dashboard",
     "Contact", "About", "Login", "Signup", "Settings"
 ]
 
@@ -45,117 +51,134 @@ TOOLS = [
     "Loyalty",
     "OCR Sentiment",
     "Profile Mock",
-    "Prompts"
+    "Prompts",
 ]
 
-# Combine Pages + Tools for top menu
 TOP_MENU = PAGES + TOOLS
 
 st.session_state.page = st.radio(
     "Navigate",
     TOP_MENU,
     horizontal=True,
-    index=0
+    index=TOP_MENU.index(st.session_state.page)
 )
 
-# =============================================================
-# Helper: Page Container
-# =============================================================
-def page_container():
-    return st.container()
-
-# =============================================================
-# Page Routing
-# =============================================================
 page = st.session_state.page
 
-# ---------------- Home ----------------
+# =============================================================
+# ---------------- HOME ----------------
+# =============================================================
 if page == "Home":
-    with page_container():
-        st.markdown("## Welcome to Brand N Bloom 🌱")
-        st.markdown("Grow your brand with AI-powered clarity.")
-if st.button("Get Started →"):
-    st.session_state.page = "Tools"
+    st.markdown("## Welcome to Brand N Bloom 🌱")
+    st.markdown("Grow your brand with clarity, data & AI.")
 
+    if st.button("Get Started →"):
+        st.session_state.page = "Features"
         st.rerun()
 
-# ---------------- Features ----------------
+# =============================================================
+# ---------------- FEATURES ----------------
+# =============================================================
 elif page == "Features":
-    from ai_tools.audit_tools import run as audit_run
-    with page_container():
-        st.markdown("## Features")
-        st.markdown("Click a tool below to explore its capabilities:")
-        cols = st.columns(3)
-        for i, tool in enumerate(TOOLS):
-            with cols[i % 3]:
-                if st.button(tool, use_container_width=True):
-                    st.session_state.page = tool
-                card(tool)
+    st.markdown("## 🧰 Our Tools")
 
-# ---------------- Pricing ----------------
+    cols = st.columns(3)
+    for i, tool in enumerate(TOOLS):
+        with cols[i % 3]:
+            if st.button(tool, use_container_width=True):
+                st.session_state.page = tool
+                st.rerun()
+            card(tool)
+
+# =============================================================
+# ---------------- PRICING ----------------
+# =============================================================
 elif page == "Pricing":
-    with page_container():
-        st.markdown("## Pricing Plans")
-        col1, col2 = st.columns(2)
-        with col1:
-            st.markdown("<div class='bnb-card'><h3>Starter</h3><p>₹0 / month</p></div>", unsafe_allow_html=True)
-        with col2:
-            st.markdown("<div class='bnb-card'><h3>Pro</h3><p>₹1999 / month</p></div>", unsafe_allow_html=True)
-            st.markdown("<a class='bnb-cta' href='https://www.paypal.com'>Pay with PayPal</a>", unsafe_allow_html=True)
+    st.markdown("## 💰 Pricing")
 
-# ---------------- Blog ----------------
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown(
+            "<div class='bnb-card'><h3>Starter</h3><p>₹0 / month</p></div>",
+            unsafe_allow_html=True
+        )
+
+    with c2:
+        st.markdown(
+            "<div class='bnb-card'><h3>Pro</h3><p>₹1999 / month</p></div>",
+            unsafe_allow_html=True
+        )
+        st.markdown(
+            "<a class='bnb-cta' href='https://www.paypal.com' target='_blank'>Pay with PayPal</a>",
+            unsafe_allow_html=True
+        )
+
+# =============================================================
+# ---------------- BLOG ----------------
+# =============================================================
 elif page == "Blog":
-    from ai_tools.prompts import run as prompts_run
-    with page_container():
-        st.markdown("## Blog / Ideas")
-        prompts_run()
+    st.markdown("## 📰 Blog & Prompts")
+    try:
+        from ai_tools.prompts import run
+        run()
+    except Exception as e:
+        st.error(f"Blog module error: {e}")
 
-# ---------------- Dashboard ----------------
+# =============================================================
+# ---------------- DASHBOARD ----------------
+# =============================================================
 elif page == "Dashboard":
-    with page_container():
-        st.markdown("## Dashboard")
-        st.warning("Connect tools to activate dashboard analytics.")
+    st.markdown("## 📊 Dashboard")
+    st.info("Analytics will appear once tools are connected.")
 
-# ---------------- Contact ----------------
+# =============================================================
+# ---------------- CONTACT ----------------
+# =============================================================
 elif page == "Contact":
-    from ai_tools.profile_mock import run as profile_run
-    with page_container():
-        st.markdown("## Contact Us")
-        profile_run()
+    st.markdown("## 📩 Contact Us")
+    st.text_input("Email")
+    st.text_area("Message")
+    st.button("Send")
 
-# ---------------- About ----------------
+# =============================================================
+# ---------------- ABOUT ----------------
+# =============================================================
 elif page == "About":
-    with page_container():
-        st.markdown("## About Brand N Bloom")
-        st.markdown("AI-powered brand growth platform for creators and businesses.")
+    st.markdown("## ℹ️ About")
+    st.markdown(
+        "Brand N Bloom is an AI-powered marketing & analytics platform "
+        "for brands, creators, and businesses."
+    )
 
-# ---------------- Login ----------------
+# =============================================================
+# ---------------- LOGIN ----------------
+# =============================================================
 elif page == "Login":
-    with page_container():
-        st.markdown("## Login")
-        st.text_input("Email")
-        st.text_input("Password", type="password")
-        st.button("Login")
+    st.markdown("## 🔐 Login")
+    st.text_input("Email")
+    st.text_input("Password", type="password")
+    st.button("Login")
 
-# ---------------- Signup ----------------
+# =============================================================
+# ---------------- SIGNUP ----------------
+# =============================================================
 elif page == "Signup":
-    with page_container():
-        st.markdown("## Signup")
-        st.text_input("Name")
-        st.text_input("Email")
-        st.text_input("Password", type="password")
-        st.button("Signup")
+    st.markdown("## 🆕 Signup")
+    st.text_input("Name")
+    st.text_input("Email")
+    st.text_input("Password", type="password")
+    st.button("Create Account")
 
-# ---------------- Settings ----------------
+# =============================================================
+# ---------------- SETTINGS ----------------
+# =============================================================
 elif page == "Settings":
-    with page_container():
-        st.markdown("## Settings")
-        st.info("Theme, account & integrations.")
+    st.markdown("## ⚙️ Settings")
+    st.info("Theme, account & integrations.")
 
 # =============================================================
-# ---------------- Tools Routing ----------------
+# ---------------- TOOLS ROUTER ----------------
 # =============================================================
-# Mapping tool name → run function
 TOOL_MAPPING = {
     "Audit Tools": "audit_tools",
     "BloomScore": "bloomscore",
@@ -172,15 +195,16 @@ TOOL_MAPPING = {
 }
 
 if page in TOOL_MAPPING:
-    tool_module_name = TOOL_MAPPING[page]
-    with page_container():
-        st.markdown(f"## 🧰 {page}")
-        st.markdown("Loading tool...")
-        try:
-            tool_module = __import__(f"ai_tools.{tool_module_name}", fromlist=["run"])
-            tool_module.run()
-        except Exception as e:
-            st.error(f"Failed to load {page}. Error: {e}")
+    st.markdown(f"## 🔧 {page}")
+
+    try:
+        module = __import__(f"ai_tools.{TOOL_MAPPING[page]}", fromlist=["run"])
+        if hasattr(module, "run"):
+            module.run()
+        else:
+            st.warning("This tool is under development.")
+    except Exception as e:
+        st.error(f"Failed to load {page}: {e}")
 
 # =============================================================
 # Footer
@@ -188,4 +212,4 @@ if page in TOOL_MAPPING:
 st.markdown("""
 ---
 © 2026 Brand N Bloom • Built with ❤️
-""", unsafe_allow_html=True)
+""")
