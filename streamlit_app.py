@@ -39,32 +39,6 @@ PAGES = [
     "Contact", "About", "Login", "Signup", "Settings"
 ]
 
-TOOLS = {
-    "Audit Tools": "Analyze your brand’s website and social media performance",
-    "BloomScore": "Instant brand health score for social profiles",
-    "Business Compare": "Benchmark your brand against competitors",
-    "Color Extractor": "Extract and analyze your brand’s color palette",
-    "Consumer Behavior": "Understand how customers think, feel & buy",
-    "Hashtag Recommender": "Generate high-performing hashtags",
-    "Influencer Finder": "Find creators aligned with your brand",
-    "Insights to Caption": "AI-assisted caption suggestions",
-    "Loyalty": "Design loyalty programs that retain customers",
-    "OCR Sentiment": "Extract and analyze text sentiment from images",
-    "Profile Mock": "Simulate social profiles for testing",
-    "Prompts": "AI prompts library for marketing"
-}
-
-# =============================================================
-# Tools Section on Home / Features
-# =============================================================
-st.markdown("## 🧰 Explore Our Tools")
-cols = st.columns(3)
-for i, (tool, desc) in enumerate(TOOLS.items()):
-    with cols[i % 3]:
-        if st.button(tool, use_container_width=True):
-            st.session_state.page = tool
-            st.experimental_rerun()
-        card(f"**{tool}**\n{desc}")
 
 # =============================================================
 # Top Menu Navigation
@@ -89,7 +63,7 @@ if page == "Home":
 
     if st.button("Get Started →"):
         st.session_state.page = "Features"
-        st.experimental_rerun()
+        st.rerun()
 
 # =============================================================
 # ---------------- FEATURES ----------------
@@ -102,7 +76,7 @@ elif page == "Features":
         with cols[i % 3]:
             if st.button(tool, use_container_width=True):
                 st.session_state.page = tool
-                st.experimental_rerun()
+                st.rerun()
             card(f"**{tool}**\n{desc}")
 
 # =============================================================
@@ -176,6 +150,33 @@ elif page == "Signup":
 elif page == "Settings":
     st.markdown("## ⚙️ Settings")
     st.info("Theme, account & integrations.")
+
+TOOLS = {
+    "Audit Tools": "Analyze your brand’s website and social media performance",
+    "BloomScore": "Instant brand health score for social profiles",
+    "Business Compare": "Benchmark your brand against competitors",
+    "Color Extractor": "Extract and analyze your brand’s color palette",
+    "Consumer Behavior": "Understand how customers think, feel & buy",
+    "Hashtag Recommender": "Generate high-performing hashtags",
+    "Influencer Finder": "Find creators aligned with your brand",
+    "Insights to Caption": "AI-assisted caption suggestions",
+    "Loyalty": "Design loyalty programs that retain customers",
+    "OCR Sentiment": "Extract and analyze text sentiment from images",
+    "Profile Mock": "Simulate social profiles for testing",
+    "Prompts": "AI prompts library for marketing"
+}
+
+# =============================================================
+# Tools Section on Home / Features
+# =============================================================
+st.markdown("## 🧰 Explore Our Tools")
+cols = st.columns(3)
+for i, (tool, desc) in enumerate(TOOLS.items()):
+    with cols[i % 3]:
+        if st.button(tool, use_container_width=True):
+            st.session_state.page = tool
+            st.rerun()
+        card(f"**{tool}**\n{desc}")
 
 # =============================================================
 # ---------------- TOOLS ROUTER ----------------
