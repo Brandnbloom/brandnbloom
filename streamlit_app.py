@@ -24,8 +24,7 @@ if "page" not in st.session_state:
 # =============================================================
 # Header & Banner
 # =============================================================
-st.image("assets/banner.png", 
-use_container_width=True)
+st.image("assets/banner.png", use_container_width=True)
 
 st.markdown("""
 # 🌸 Brand N Bloom
@@ -33,7 +32,7 @@ st.markdown("""
 """)
 
 # =============================================================
-# Navigation (Top Menu)
+# Pages & Tools
 # =============================================================
 PAGES = [
     "Home", "Features", "Pricing", "Blog", "Dashboard",
@@ -55,6 +54,9 @@ TOOLS = {
     "Prompts": "AI prompts library for marketing"
 }
 
+# =============================================================
+# Tools Section on Home / Features
+# =============================================================
 st.markdown("## 🧰 Explore Our Tools")
 cols = st.columns(3)
 for i, (tool, desc) in enumerate(TOOLS.items()):
@@ -64,8 +66,10 @@ for i, (tool, desc) in enumerate(TOOLS.items()):
             st.experimental_rerun()
         card(f"**{tool}**\n{desc}")
 
-
-TOP_MENU = PAGES + TOOLS
+# =============================================================
+# Top Menu Navigation
+# =============================================================
+TOP_MENU = PAGES + list(TOOLS.keys())
 
 st.session_state.page = st.radio(
     "Navigate",
@@ -85,30 +89,33 @@ if page == "Home":
 
     if st.button("Get Started →"):
         st.session_state.page = "Features"
-        st.rerun()
+        st.experimental_rerun()
+
+# =============================================================
+# ---------------- FEATURES ----------------
+# =============================================================
+elif page == "Features":
+    st.markdown("## Features")
+    st.markdown("Click a tool below to explore its capabilities:")
+    cols = st.columns(3)
+    for i, (tool, desc) in enumerate(TOOLS.items()):
+        with cols[i % 3]:
+            if st.button(tool, use_container_width=True):
+                st.session_state.page = tool
+                st.experimental_rerun()
+            card(f"**{tool}**\n{desc}")
 
 # =============================================================
 # ---------------- PRICING ----------------
 # =============================================================
 elif page == "Pricing":
-    st.markdown("## 💰 Pricing")
-
+    st.markdown("## 💰 Pricing Plans")
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown(
-            "<div class='bnb-card'><h3>Starter</h3><p>₹0 / month</p></div>",
-            unsafe_allow_html=True
-        )
-
+        st.markdown("<div class='bnb-card'><h3>Starter</h3><p>₹0 / month</p></div>", unsafe_allow_html=True)
     with c2:
-        st.markdown(
-            "<div class='bnb-card'><h3>Pro</h3><p>₹1999 / month</p></div>",
-            unsafe_allow_html=True
-        )
-        st.markdown(
-            "<a class='bnb-cta' href='https://www.paypal.com' target='_blank'>Pay with PayPal</a>",
-            unsafe_allow_html=True
-        )
+        st.markdown("<div class='bnb-card'><h3>Pro</h3><p>₹1999 / month</p></div>", unsafe_allow_html=True)
+        st.markdown("<a class='bnb-cta' href='https://www.paypal.com' target='_blank'>Pay with PayPal</a>", unsafe_allow_html=True)
 
 # =============================================================
 # ---------------- BLOG ----------------
@@ -141,11 +148,8 @@ elif page == "Contact":
 # ---------------- ABOUT ----------------
 # =============================================================
 elif page == "About":
-    st.markdown("## ℹ️ About")
-    st.markdown(
-        "Brand N Bloom is an AI-powered marketing & analytics platform "
-        "for brands, creators, and businesses."
-    )
+    st.markdown("## ℹ️ About Brand N Bloom")
+    st.markdown("AI-powered brand growth platform for creators and businesses.")
 
 # =============================================================
 # ---------------- LOGIN ----------------
@@ -193,7 +197,6 @@ TOOL_MAPPING = {
 
 if page in TOOL_MAPPING:
     st.markdown(f"## 🔧 {page}")
-
     try:
         module = __import__(f"ai_tools.{TOOL_MAPPING[page]}", fromlist=["run"])
         if hasattr(module, "run"):
