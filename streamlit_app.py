@@ -42,7 +42,6 @@ TOOLS = [
     "Influencer Finder",
     "Insights to Caption",
     "Loyalty",
-    "Menu Pricing",
     "OCR Sentiment",
     "Profile Mock",
     "Prompts"
@@ -165,7 +164,6 @@ TOOL_MAPPING = {
     "Influencer Finder": "influencer_finder",
     "Insights to Caption": "insights_caption",
     "Loyalty": "loyalty",
-    "Menu Pricing": "menu_pricing",
     "OCR Sentiment": "ocr_sentiment",
     "Profile Mock": "profile_mock",
     "Prompts": "prompts",
