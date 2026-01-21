@@ -1,79 +1,100 @@
 # ai_tools/bloomscore.py
 
 import streamlit as st
-
-
-def calculate_engagement(likes: int, comments: int, followers: int) -> float:
-    if followers <= 0:
-        return 0.0
-    return ((likes + comments) / followers) * 100
+import requests
+from bs4 import BeautifulSoup
+import time
+import re
 
 
 def run():
     st.markdown("## 🌸 BloomScore")
-    st.markdown("Measure your brand’s social media health.")
+    st.markdown("Instant brand health score for your website")
 
-    col1, col2 = st.columns(2)
-
-    with col1:
-        username = st.text_input("Instagram Username", placeholder="brandnbloom")
-        followers = st.number_input("Followers", min_value=0, step=100)
-        posts_per_week = st.slider("Posts per week", 0, 7, 3)
-
-    with col2:
-        avg_likes = st.number_input("Average Likes per Post", min_value=0, step=10)
-        avg_comments = st.number_input("Average Comments per Post", min_value=0, step=5)
+    url = st.text_input("Enter website URL (with https://)")
 
     if st.button("Calculate BloomScore"):
-        if not username or followers == 0:
-            st.error("Please enter valid profile details.")
+        if not url.startswith("http"):
+            st.error("Please enter a valid URL starting with http or https")
             return
 
-        engagement_rate = calculate_engagement(avg_likes, avg_comments, followers)
+        score = 0
+        details = []
 
-        # -------------------------
-        # Scoring Logic (v1)
-        # -------------------------
-        engagement_score = min(engagement_rate * 10, 40)   # max 40
-        consistency_score = min(posts_per_week * 5, 20)    # max 20
+        try:
+            start = time.time()
+            response = requests.get(url, timeout=10)
+            load_time = time.time() - start
+            soup = BeautifulSoup(response.text, "html.parser")
 
-        reach_score = 0
-        if followers >= 10000:
-            reach_score = 25
-        elif followers >= 3000:
-            reach_score = 18
-        elif followers >= 1000:
-            reach_score = 12
-        else:
-            reach_score = 8
+            # 1️⃣ Site reachable
+            score += 20
+            details.append("✅ Website reachable")
 
-        bloomscore = int(engagement_score + consistency_score + reach_score)
-        bloomscore = min(bloomscore, 100)
+            # 2️⃣ HTTPS
+            if url.startswith("https"):
+                score += 10
+                details.append("✅ HTTPS enabled")
+            else:
+                details.append("❌ No HTTPS")
 
-        if bloomscore >= 80:
-            category = "🌟 Excellent"
-        elif bloomscore >= 60:
-            category = "✅ Good"
-        elif bloomscore >= 40:
-            category = "⚠️ Average"
-        else:
-            category = "❌ Needs Improvement"
+            # 3️⃣ Meta title
+            if soup.title and soup.title.string:
+                score += 10
+                details.append("✅ Meta title found")
+            else:
+                details.append("❌ Missing meta title")
 
-        # -------------------------
-        # Output
-        # -------------------------
-        st.success(f"BloomScore for @{username}: **{bloomscore}/100**")
-        st.write("### Category:", category)
+            # 4️⃣ Meta description
+            if soup.find("meta", attrs={"name": "description"}):
+                score += 10
+                details.append("✅ Meta description found")
+            else:
+                details.append("❌ Missing meta description")
 
-        st.markdown("### 📊 Breakdown")
-        st.write(f"Engagement Rate: **{engagement_rate:.2f}%**")
-        st.write(f"Posting Consistency Score: **{consistency_score}/20**")
-        st.write(f"Reach Score: **{reach_score}/25**")
+            # 5️⃣ Page speed
+            if load_time < 3:
+                score += 20
+                details.append(f"✅ Fast load time ({load_time:.2f}s)")
+            else:
+                details.append(f"⚠️ Slow load time ({load_time:.2f}s)")
 
-        st.markdown("### 💡 Recommendations")
-        if engagement_rate < 2:
-            st.write("• Improve content quality and hooks")
-        if posts_per_week < 3:
-            st.write("• Post at least 3–4 times per week")
-        if followers < 3000:
-            st.write("• Focus on collaborations and reels")
+            # 6️⃣ Mobile viewport
+            if soup.find("meta", attrs={"name": "viewport"}):
+                score += 10
+                details.append("✅ Mobile friendly")
+            else:
+                details.append("❌ Not mobile optimized")
+
+            # 7️⃣ Social links
+            socials = re.findall(r"(instagram|linkedin|facebook|twitter)", response.text, re.I)
+            if socials:
+                score += 10
+                details.append("✅ Social links detected")
+            else:
+                details.append("❌ No social links found")
+
+            # 8️⃣ Image alt tags
+            images = soup.find_all("img")
+            if images and all(img.get("alt") for img in images[:5]):
+                score += 10
+                details.append("✅ Image alt tags present")
+            else:
+                details.append("⚠️ Missing image alt tags")
+
+            # 🎯 Final Output
+            st.markdown(f"### 🌼 BloomScore: **{score}/100**")
+
+            for d in details:
+                st.write(d)
+
+            if score >= 80:
+                st.success("Excellent brand health 🚀")
+            elif score >= 50:
+                st.warning("Good, but needs improvement 🌱")
+            else:
+                st.error("Brand health needs urgent attention ⚠️")
+
+        except Exception as e:
+            st.error("Failed to analyze website")
+            st.exception(e)
