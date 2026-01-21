@@ -1,144 +1,148 @@
 import streamlit as st
-from typing import List
+import requests
+from bs4 import BeautifulSoup
+import re
+from textblob import TextBlob
 
 
-def analyze_psychology(
-    awareness_level: str,
-    decision_stage: str,
-    motivation: List[str],
-    price_sensitivity: str,
-    trust_level: str,
-):
-    insights = []
-    recommendations = []
-
-    # Awareness analysis
-    if awareness_level == "Low":
-        insights.append("Users are not fully aware of the problem or your solution.")
-        recommendations.append("Focus on educational content and problem-awareness messaging.")
-
-    elif awareness_level == "Medium":
-        insights.append("Users are aware but still comparing options.")
-        recommendations.append("Use comparison content, case studies, and social proof.")
-
-    else:
-        insights.append("Users are highly aware and solution-ready.")
-        recommendations.append("Push strong CTAs, offers, and urgency-driven campaigns.")
-
-    # Decision stage
-    if decision_stage == "Researching":
-        recommendations.append("Provide blogs, guides, FAQs, and explainer videos.")
-
-    elif decision_stage == "Considering":
-        recommendations.append("Highlight differentiators, testimonials, and guarantees.")
-
-    else:
-        recommendations.append("Simplify checkout and reduce friction to convert faster.")
-
-    # Motivation
-    if "Growth" in motivation:
-        insights.append("Audience is growth-oriented and future-focused.")
-
-    if "Security" in motivation:
-        insights.append("Audience seeks stability, trust, and risk reduction.")
-
-    if "Status" in motivation:
-        insights.append("Audience is influenced by premium branding and authority.")
-
-    # Price sensitivity
-    if price_sensitivity == "High":
-        recommendations.append("Use bundles, discounts, and value-driven messaging.")
-
-    elif price_sensitivity == "Medium":
-        recommendations.append("Anchor pricing with value justification.")
-
-    else:
-        recommendations.append("Premium pricing is acceptable for this audience.")
-
-    # Trust
-    if trust_level == "Low":
-        recommendations.append("Add reviews, testimonials, certifications, and founder story.")
-
-    elif trust_level == "Medium":
-        recommendations.append("Reinforce trust with case studies and transparent pricing.")
-
-    else:
-        recommendations.append("Leverage loyalty programs and referrals.")
-
-    return insights, recommendations
+# -------------------------------------------------
+# TEXT CLEANING
+# -------------------------------------------------
+def clean_text(text):
+    text = re.sub(r"\s+", " ", text)
+    text = re.sub(r"[^a-zA-Z0-9 .,!?]", "", text)
+    return text.strip()
 
 
+# -------------------------------------------------
+# BEHAVIOR ANALYSIS ENGINE
+# -------------------------------------------------
+def analyze_consumer_behavior(url, audience, product_type):
+    try:
+        response = requests.get(url, timeout=10)
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        # Extract visible text
+        texts = " ".join(
+            [p.get_text() for p in soup.find_all(["p", "h1", "h2", "h3"])]
+        )
+        texts = clean_text(texts)
+
+        blob = TextBlob(texts)
+        sentiment = blob.sentiment.polarity
+
+        # Sentiment mapping
+        if sentiment > 0.25:
+            emotion = "Positive & Trust-Building"
+        elif sentiment < -0.1:
+            emotion = "Confusing or Emotionally Weak"
+        else:
+            emotion = "Neutral / Informational"
+
+        # CTA detection
+        ctas = re.findall(
+            r"(buy now|sign up|get started|contact us|book now|try free)",
+            texts.lower()
+        )
+
+        # Awareness stage
+        if "why" in texts.lower() or "problem" in texts.lower():
+            stage = "Awareness (Problem-aware)"
+        elif ctas:
+            stage = "Decision-ready"
+        else:
+            stage = "Consideration"
+
+        # Trust signals
+        trust_keywords = [
+            "testimonials", "reviews", "clients", "trusted",
+            "years", "experience", "certified"
+        ]
+        trust_score = sum(
+            1 for k in trust_keywords if k in texts.lower()
+        )
+
+        # Friction indicators
+        friction = []
+        if len(texts) < 400:
+            friction.append("Low information depth")
+        if not ctas:
+            friction.append("No strong CTA")
+        if trust_score < 2:
+            friction.append("Weak trust signals")
+
+        return {
+            "emotion": emotion,
+            "sentiment_score": round(sentiment, 2),
+            "buyer_stage": stage,
+            "cta_count": len(ctas),
+            "trust_score": trust_score,
+            "friction": friction,
+            "summary": f"""
+Audience: {audience}
+Product Type: {product_type}
+
+Visitors feel: {emotion}
+They are in: {stage}
+
+Main blockers:
+{', '.join(friction) if friction else 'No major friction detected'}
+"""
+        }
+
+    except Exception as e:
+        return {"error": str(e)}
+
+
+# -------------------------------------------------
+# STREAMLIT UI
+# -------------------------------------------------
 def run():
     st.markdown("## 🧠 Consumer Behavior Analysis")
     st.markdown(
-        "Understand **why** your customers think, feel, and buy — "
-        "based on real behavioral psychology."
+        "Understand **how your consumers think, feel, and decide** using real behavioral signals."
     )
 
     st.divider()
 
-    # =========================
-    # USER INPUTS (LIVE)
-    # =========================
-    awareness_level = st.selectbox(
-        "Customer Awareness Level",
-        ["Low", "Medium", "High"],
-        help="How aware is your audience about the problem and your solution?"
+    url = st.text_input("Website URL", placeholder="https://yourwebsite.com")
+    audience = st.selectbox("Target Audience", ["B2C", "B2B"])
+    product_type = st.selectbox(
+        "Offering Type", ["Product", "Service", "SaaS"]
     )
 
-    decision_stage = st.selectbox(
-        "Decision Stage",
-        ["Researching", "Considering", "Ready to Buy"],
-        help="Where is your audience in the buying journey?"
-    )
-
-    motivation = st.multiselect(
-        "Primary Motivations",
-        ["Growth", "Security", "Status", "Convenience", "Cost-Saving"],
-        help="What emotionally drives your customers?"
-    )
-
-    price_sensitivity = st.selectbox(
-        "Price Sensitivity",
-        ["High", "Medium", "Low"],
-        help="How sensitive is your audience to pricing?"
-    )
-
-    trust_level = st.selectbox(
-        "Trust Level",
-        ["Low", "Medium", "High"],
-        help="How much does your audience trust your brand right now?"
-    )
-
-    st.divider()
-
-    # =========================
-    # ANALYSIS
-    # =========================
     if st.button("Analyze Consumer Behavior"):
-        if not motivation:
-            st.warning("Please select at least one motivation.")
+        if not url:
+            st.warning("Please enter a website URL.")
             return
 
-        insights, recommendations = analyze_psychology(
-            awareness_level,
-            decision_stage,
-            motivation,
-            price_sensitivity,
-            trust_level,
-        )
+        with st.spinner("Reading consumer signals..."):
+            result = analyze_consumer_behavior(url, audience, product_type)
 
-        st.markdown("### 🔍 Key Insights")
-        for i in insights:
-            st.write("•", i)
-
-        st.markdown("### ✅ Strategic Recommendations")
-        for r in recommendations:
-            st.write("•", r)
+        if "error" in result:
+            st.error(result["error"])
+            return
 
         st.divider()
+        st.subheader("🔍 Consumer Insights")
 
-        st.info(
-            "🔗 **Next step:** Connect real data sources like Google Analytics, "
-            "Instagram Insights, CRM, and Search data to unlock advanced behavior analytics."
+        st.metric("Emotional Tone", result["emotion"])
+        st.metric("Buyer Stage", result["buyer_stage"])
+        st.metric("CTA Strength", result["cta_count"])
+        st.metric("Trust Signals", result["trust_score"])
+
+        st.divider()
+        st.markdown("### 🚧 Conversion Friction")
+        if result["friction"]:
+            for f in result["friction"]:
+                st.write("•", f)
+        else:
+            st.success("No major friction detected")
+
+        st.divider()
+        st.markdown("### 🧠 Behavioral Summary")
+        st.write(result["summary"])
+
+        st.caption(
+            "Insights generated using live content psychology & consumer behavior models."
         )
