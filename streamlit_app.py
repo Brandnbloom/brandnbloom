@@ -2,6 +2,8 @@
 
 import streamlit as st
 from utils.ui import inject_css, dark_mode_toggle, card
+from dotenv import load_dotenv
+load_dotenv()
 
 # =============================================================
 # Page Setup
