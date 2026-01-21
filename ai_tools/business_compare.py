@@ -1,121 +1,158 @@
-# ai_tools/business_compare.py
-
 import streamlit as st
 import requests
 from bs4 import BeautifulSoup
 import time
-import re
 
 
-def analyze_site(url):
+# -------------------------------------------------
+# WEBSITE ANALYSIS ENGINE
+# -------------------------------------------------
+def analyze_site(url: str) -> dict:
     score = 0
-    insights = []
+    issues = []
 
     try:
         start = time.time()
         response = requests.get(url, timeout=10)
-        load_time = time.time() - start
-        soup = BeautifulSoup(response.text, "html.parser")
+        load_time = round(time.time() - start, 2)
 
-        # Reachable
-        score += 20
-        insights.append("✅ Website reachable")
+        soup = BeautifulSoup(response.text, "html.parser")
 
         # HTTPS
         if url.startswith("https"):
             score += 10
-            insights.append("✅ HTTPS enabled")
         else:
-            insights.append("❌ HTTPS missing")
+            issues.append("No HTTPS")
 
-        # Meta title
+        # Title
         if soup.title and soup.title.string:
             score += 10
-            insights.append("✅ Meta title present")
         else:
-            insights.append("❌ Meta title missing")
+            issues.append("Missing title tag")
 
         # Meta description
-        if soup.find("meta", attrs={"name": "description"}):
+        meta_desc = soup.find("meta", attrs={"name": "description"})
+        if meta_desc and meta_desc.get("content"):
             score += 10
-            insights.append("✅ Meta description present")
         else:
-            insights.append("❌ Meta description missing")
+            issues.append("Missing meta description")
 
-        # Page speed
+        # H1
+        if soup.find("h1"):
+            score += 10
+        else:
+            issues.append("Missing H1 heading")
+
+        # Images alt text
+        images = soup.find_all("img")
+        if images:
+            missing_alt = [img for img in images if not img.get("alt")]
+            if not missing_alt:
+                score += 10
+            else:
+                issues.append(f"{len(missing_alt)} images missing alt text")
+        else:
+            score += 5  # no images, no penalty
+
+        # Load time
         if load_time < 3:
-            score += 20
-            insights.append(f"✅ Fast load ({load_time:.2f}s)")
+            score += 10
         else:
-            insights.append(f"⚠️ Slow load ({load_time:.2f}s)")
+            issues.append(f"Slow load time ({load_time}s)")
 
-        # Mobile friendly
+        # Page size
+        page_size_kb = len(response.content) / 1024
+        if page_size_kb < 2000:
+            score += 10
+        else:
+            issues.append("Page size too large")
+
+        # Mobile viewport
         if soup.find("meta", attrs={"name": "viewport"}):
             score += 10
-            insights.append("✅ Mobile optimized")
         else:
-            insights.append("❌ Not mobile friendly")
+            issues.append("Not mobile optimized")
 
-        # Social links
-        socials = re.findall(
-            r"(instagram|linkedin|facebook|twitter)",
-            response.text,
-            re.I
-        )
-        if socials:
+        # Trust signals
+        links = [a.get("href", "") for a in soup.find_all("a")]
+        if any("contact" in l.lower() for l in links):
             score += 10
-            insights.append("✅ Social presence detected")
         else:
-            insights.append("❌ No social links found")
+            issues.append("No contact page found")
 
     except Exception as e:
-        insights.append(f"❌ Error analyzing site: {e}")
+        issues.append(str(e))
 
-    return score, insights
+    return {
+        "score": min(score, 100),
+        "issues": issues
+    }
 
 
+# -------------------------------------------------
+# STREAMLIT UI
+# -------------------------------------------------
 def run():
-    st.markdown("## ⚖️ Business Compare")
-    st.markdown("Compare your brand against competitors in real time.")
+    st.markdown("## 📈 Business Compare")
+    st.markdown(
+        "Compare your business website against competitors using **real performance & SEO signals**."
+    )
 
-    col1, col2 = st.columns(2)
+    st.divider()
 
-    with col1:
-        site1 = st.text_input("Your Website (https://)")
+    your_site = st.text_input(
+        "Your Website",
+        placeholder="https://yourbusiness.com"
+    )
 
-    with col2:
-        site2 = st.text_input("Competitor Website (https://)")
+    st.markdown("### Competitor Websites")
+    comp1 = st.text_input("Competitor 1", placeholder="https://competitor1.com")
+    comp2 = st.text_input("Competitor 2", placeholder="https://competitor2.com")
+    comp3 = st.text_input("Competitor 3", placeholder="https://competitor3.com")
 
-    if st.button("Compare Now"):
-        if not site1 or not site2:
-            st.warning("Please enter both websites")
+    competitors = [c for c in [comp1, comp2, comp3] if c]
+
+    if st.button("Run Comparison"):
+        if not your_site or not competitors:
+            st.warning("Please enter your site and at least one competitor.")
             return
 
         with st.spinner("Analyzing websites..."):
-            score1, insights1 = analyze_site(site1)
-            score2, insights2 = analyze_site(site2)
+            your_result = analyze_site(your_site)
+            competitor_results = {
+                url: analyze_site(url) for url in competitors
+            }
 
-        st.markdown("### 📊 Comparison Results")
+        st.divider()
+        st.subheader("📊 Comparison Results")
 
-        c1, c2 = st.columns(2)
+        col1, col2 = st.columns(2)
+        with col1:
+            st.metric("Your Score", your_result["score"])
+        with col2:
+            best_comp = max(competitor_results.items(), key=lambda x: x[1]["score"])
+            st.metric("Best Competitor", best_comp[1]["score"])
 
-        with c1:
-            st.markdown(f"### 🌸 Your Brand")
-            st.metric("Score", f"{score1}/100")
-            for i in insights1:
-                st.write(i)
+        st.divider()
+        st.markdown("### 🔍 Detailed Breakdown")
 
-        with c2:
-            st.markdown(f"### 🧩 Competitor")
-            st.metric("Score", f"{score2}/100")
-            for i in insights2:
-                st.write(i)
-
-        st.markdown("---")
-
-        if score1 > score2:
-            st.success("🎉 Your brand is stronger than your competitor!")
-        elif score2 > score1:
-            st.warning("⚠️ Competitor brand is stronger. Improvement needed.")
+        st.markdown(f"#### 🟢 Your Website ({your_site})")
+        st.write("Score:", your_result["score"])
+        if your_result["issues"]:
+            for i in your_result["issues"]:
+                st.write("•", i)
         else:
-            st.info("🤝 Both brands are equally strong.")
+            st.success("No major issues")
+
+        for site, result in competitor_results.items():
+            st.markdown(f"#### 🔵 Competitor ({site})")
+            st.write("Score:", result["score"])
+            if result["issues"]:
+                for i in result["issues"]:
+                    st.write("•", i)
+            else:
+                st.success("No major issues")
+
+        st.caption(
+            "Comparison based on real website SEO, performance, and accessibility signals."
+        )
