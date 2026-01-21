@@ -1,78 +1,99 @@
-# ai_tools/audit_tools.py
+ai_tools/audit_tools.py
 
-import streamlit as st
-import requests
-from bs4 import BeautifulSoup
+import streamlit as st 
+import requests 
+from bs4 import BeautifulSoup 
 from urllib.parse import urlparse
 
+def run(): 
+    st.markdown("### 🔍 Website Audit (Live)") 
+    st.caption("Real-time technical & content audit — no mock data")
+    url = st.text_input("Enter website URL", placeholder="https://example.com")
 
-def run():
-    st.markdown("## 🔍 Website Audit Tool")
-    st.markdown("Analyze your website’s technical, SEO, and brand health.")
+if not url:
+    return
 
-    url = st.text_input("Enter your website URL", placeholder="https://example.com")
+if not url.startswith("http"):
+    st.error("Please enter a valid URL including http:// or https://")
+    return
 
-    if not url:
-        st.info("Please enter a website URL to begin.")
-        return
+with st.spinner("Auditing website…"):
+    try:
+        response = requests.get(url, timeout=15, headers={"User-Agent": "BrandNBloomAuditBot"})
+        load_time = response.elapsed.total_seconds()
+        status_code = response.status_code
 
-    if not url.startswith("http"):
-        st.error("Please include http:// or https://")
-        return
+        soup = BeautifulSoup(response.text, "html.parser")
 
-    if st.button("Run Audit"):
-        with st.spinner("Auditing website..."):
-            try:
-                response = requests.get(url, timeout=10)
-                soup = BeautifulSoup(response.text, "html.parser")
+        # ---------------- BASIC CHECKS ----------------
+        title = soup.title.string.strip() if soup.title else None
+        meta_desc = soup.find("meta", attrs={"name": "description"})
+        meta_desc = meta_desc["content"].strip() if meta_desc else None
 
-                results = {}
+        h1_tags = soup.find_all("h1")
+        img_tags = soup.find_all("img")
+        imgs_without_alt = [img for img in img_tags if not img.get("alt")]
 
-                # ------------------------
-                # Technical checks
-                # ------------------------
-                results["HTTPS"] = "✅ Secure" if url.startswith("https") else "❌ Not Secure"
-                results["Status Code"] = response.status_code
+        links = soup.find_all("a", href=True)
+        internal_links = 0
+        external_links = 0
 
-                # ------------------------
-                # SEO checks
-                # ------------------------
-                title = soup.title.string.strip() if soup.title else None
-                meta_desc = soup.find("meta", attrs={"name": "description"})
-                h1 = soup.find("h1")
+        domain = urlparse(url).netloc
+        for link in links:
+            href = link.get("href")
+            if domain in href:
+                internal_links += 1
+            elif href.startswith("http"):
+                external_links += 1
 
-                results["Title Tag"] = title if title else "❌ Missing"
-                results["Meta Description"] = (
-                    meta_desc["content"] if meta_desc and meta_desc.get("content") else "❌ Missing"
-                )
-                results["H1 Tag"] = h1.text.strip() if h1 else "❌ Missing"
+        # ---------------- RESULTS ----------------
+        st.success("Audit completed")
 
-                # ------------------------
-                # Brand / UX checks
-                # ------------------------
-                text = soup.get_text().lower()
-                cta_keywords = ["buy", "contact", "signup", "subscribe", "book"]
-                results["CTA Detected"] = (
-                    "✅ Yes" if any(k in text for k in cta_keywords) else "❌ No clear CTA"
-                )
+        c1, c2, c3 = st.columns(3)
+        c1.metric("Status Code", status_code)
+        c2.metric("Load Time (sec)", round(load_time, 2))
+        c3.metric("Page Title", "OK" if title else "Missing")
 
-                # ------------------------
-                # Display results
-                # ------------------------
-                st.success("Audit completed successfully")
+        st.markdown("---")
 
-                st.markdown("### 🛠 Technical")
-                st.write("HTTPS:", results["HTTPS"])
-                st.write("Status Code:", results["Status Code"])
+        st.markdown("#### 🧠 SEO & Content")
+        st.write("**Title:**", title or "❌ Missing")
+        st.write("**Meta Description:**", meta_desc or "❌ Missing")
+        st.write("**H1 Tags:**", len(h1_tags))
 
-                st.markdown("### 🔎 SEO")
-                st.write("Title Tag:", results["Title Tag"])
-                st.write("Meta Description:", results["Meta Description"])
-                st.write("H1 Tag:", results["H1 Tag"])
+        st.markdown("#### 🖼 Accessibility")
+        st.write("Total Images:", len(img_tags))
+        st.write("Images Missing ALT:", len(imgs_without_alt))
 
-                st.markdown("### 🎯 Brand & UX")
-                st.write("CTA:", results["CTA Detected"])
+        st.markdown("#### 🔗 Links")
+        st.write("Internal Links:", internal_links)
+        st.write("External Links:", external_links)
 
-            except Exception as e:
-                st.error("Audit failed. Please try again.")
-                st.exception(e)
+        # ---------------- SIMPLE SCORE ----------------
+        score = 100
+        if not title:
+            score -= 15
+        if not meta_desc:
+            score -= 15
+        if len(h1_tags) != 1:
+            score -= 10
+        if imgs_without_alt:
+            score -= min(20, len(imgs_without_alt))
+        if load_time > 3:
+            score -= 10
+
+        score = max(score, 0)
+
+        st.markdown("---")
+        st.markdown(f"## 🌸 Bloom Audit Score: **{score}/100**")
+
+        if score >= 80:
+            st.success("Great foundation! Minor optimizations needed.")
+        elif score >= 50:
+            st.warning("Average performance. SEO & UX improvements recommended.")
+        else:
+            st.error("Poor performance. Immediate fixes required.")
+
+    except Exception as e:
+        st.error("Audit failed. The site may block bots or be unreachable.")
+        st.exception(e)
