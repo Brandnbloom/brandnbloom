@@ -1,144 +1,156 @@
 import streamlit as st
-from typing import List
+import re
 
 
-def analyze_psychology(
-    awareness_level: str,
-    decision_stage: str,
-    motivation: List[str],
-    price_sensitivity: str,
-    trust_level: str,
+PLATFORM_LIMITS = {
+    "Instagram": 30,
+    "LinkedIn": 5,
+    "Twitter / X": 3
+}
+
+
+INTENT_HASHTAGS = {
+    "Branding": [
+        "branding", "brandidentity", "brandstrategy",
+        "brandbuilding", "personalbrand"
+    ],
+    "Education": [
+        "learning", "education", "knowledge",
+        "growthmindset", "skillbuilding"
+    ],
+    "Marketing": [
+        "marketing", "digitalmarketing", "contentmarketing",
+        "businessgrowth", "onlinemarketing"
+    ],
+    "Sales": [
+        "sales", "leadgeneration", "funnels",
+        "conversion", "growthhacking"
+    ],
+}
+
+
+def sanitize_keyword(text: str) -> str:
+    text = text.lower().strip()
+    text = re.sub(r"[^a-z0-9 ]", "", text)
+    return text.replace(" ", "")
+
+
+def generate_hashtags(
+    keyword: str,
+    platform: str,
+    intent: str,
+    niche: str
 ):
-    insights = []
-    recommendations = []
+    base = sanitize_keyword(keyword)
+    niche_clean = sanitize_keyword(niche)
 
-    # Awareness analysis
-    if awareness_level == "Low":
-        insights.append("Users are not fully aware of the problem or your solution.")
-        recommendations.append("Focus on educational content and problem-awareness messaging.")
+    hashtags = []
 
-    elif awareness_level == "Medium":
-        insights.append("Users are aware but still comparing options.")
-        recommendations.append("Use comparison content, case studies, and social proof.")
+    # Keyword-based
+    hashtags.extend([
+        f"#{base}",
+        f"#{base}tips",
+        f"#{base}strategy",
+        f"#{base}growth",
+    ])
 
-    else:
-        insights.append("Users are highly aware and solution-ready.")
-        recommendations.append("Push strong CTAs, offers, and urgency-driven campaigns.")
+    # Niche-based
+    if niche_clean:
+        hashtags.extend([
+            f"#{niche_clean}",
+            f"#{niche_clean}business",
+            f"#{niche_clean}community",
+        ])
 
-    # Decision stage
-    if decision_stage == "Researching":
-        recommendations.append("Provide blogs, guides, FAQs, and explainer videos.")
+    # Intent-based
+    for tag in INTENT_HASHTAGS.get(intent, []):
+        hashtags.append(f"#{tag}")
 
-    elif decision_stage == "Considering":
-        recommendations.append("Highlight differentiators, testimonials, and guarantees.")
+    # Platform-specific behavior
+    if platform == "Instagram":
+        hashtags.extend([
+            "#instagrowth", "#reels", "#contentcreator",
+            "#explorepage", "#socialmedia"
+        ])
 
-    else:
-        recommendations.append("Simplify checkout and reduce friction to convert faster.")
+    elif platform == "LinkedIn":
+        hashtags.extend([
+            "#linkedin", "#b2b", "#founders",
+            "#professionallife", "#careerdevelopment"
+        ])
 
-    # Motivation
-    if "Growth" in motivation:
-        insights.append("Audience is growth-oriented and future-focused.")
+    else:  # Twitter / X
+        hashtags.extend([
+            "#startups", "#marketingtips", "#buildinpublic"
+        ])
 
-    if "Security" in motivation:
-        insights.append("Audience seeks stability, trust, and risk reduction.")
+    # Remove duplicates while preserving order
+    seen = set()
+    final = []
+    for h in hashtags:
+        if h not in seen:
+            final.append(h)
+            seen.add(h)
 
-    if "Status" in motivation:
-        insights.append("Audience is influenced by premium branding and authority.")
-
-    # Price sensitivity
-    if price_sensitivity == "High":
-        recommendations.append("Use bundles, discounts, and value-driven messaging.")
-
-    elif price_sensitivity == "Medium":
-        recommendations.append("Anchor pricing with value justification.")
-
-    else:
-        recommendations.append("Premium pricing is acceptable for this audience.")
-
-    # Trust
-    if trust_level == "Low":
-        recommendations.append("Add reviews, testimonials, certifications, and founder story.")
-
-    elif trust_level == "Medium":
-        recommendations.append("Reinforce trust with case studies and transparent pricing.")
-
-    else:
-        recommendations.append("Leverage loyalty programs and referrals.")
-
-    return insights, recommendations
+    return final[:PLATFORM_LIMITS.get(platform, 10)]
 
 
 def run():
-    st.markdown("## 🧠 Consumer Behavior Analysis")
+    st.markdown("## 🔖 Hashtag Recommender")
     st.markdown(
-        "Understand **why** your customers think, feel, and buy — "
-        "based on real behavioral psychology."
+        "Generate **relevant, intent-driven hashtags** optimized for each platform."
     )
 
     st.divider()
 
     # =========================
-    # USER INPUTS (LIVE)
+    # INPUTS (REAL)
     # =========================
-    awareness_level = st.selectbox(
-        "Customer Awareness Level",
-        ["Low", "Medium", "High"],
-        help="How aware is your audience about the problem and your solution?"
+    keyword = st.text_input(
+        "Primary Keyword",
+        placeholder="e.g. brand strategy, content marketing"
     )
 
-    decision_stage = st.selectbox(
-        "Decision Stage",
-        ["Researching", "Considering", "Ready to Buy"],
-        help="Where is your audience in the buying journey?"
+    niche = st.text_input(
+        "Niche / Industry (optional)",
+        placeholder="e.g. fashion, SaaS, food, fitness"
     )
 
-    motivation = st.multiselect(
-        "Primary Motivations",
-        ["Growth", "Security", "Status", "Convenience", "Cost-Saving"],
-        help="What emotionally drives your customers?"
+    platform = st.selectbox(
+        "Platform",
+        ["Instagram", "LinkedIn", "Twitter / X"]
     )
 
-    price_sensitivity = st.selectbox(
-        "Price Sensitivity",
-        ["High", "Medium", "Low"],
-        help="How sensitive is your audience to pricing?"
-    )
-
-    trust_level = st.selectbox(
-        "Trust Level",
-        ["Low", "Medium", "High"],
-        help="How much does your audience trust your brand right now?"
+    intent = st.selectbox(
+        "Content Intent",
+        ["Branding", "Education", "Marketing", "Sales"]
     )
 
     st.divider()
 
     # =========================
-    # ANALYSIS
+    # OUTPUT
     # =========================
-    if st.button("Analyze Consumer Behavior"):
-        if not motivation:
-            st.warning("Please select at least one motivation.")
+    if st.button("Generate Hashtags"):
+        if not keyword:
+            st.warning("Please enter a primary keyword.")
             return
 
-        insights, recommendations = analyze_psychology(
-            awareness_level,
-            decision_stage,
-            motivation,
-            price_sensitivity,
-            trust_level,
+        hashtags = generate_hashtags(
+            keyword=keyword,
+            platform=platform,
+            intent=intent,
+            niche=niche
         )
 
-        st.markdown("### 🔍 Key Insights")
-        for i in insights:
-            st.write("•", i)
+        st.markdown("### ✅ Recommended Hashtags")
+        st.code(" ".join(hashtags))
 
-        st.markdown("### ✅ Strategic Recommendations")
-        for r in recommendations:
-            st.write("•", r)
-
-        st.divider()
+        st.caption(
+            f"Limit respected: {PLATFORM_LIMITS[platform]} hashtags for {platform}"
+        )
 
         st.info(
-            "🔗 **Next step:** Connect real data sources like Google Analytics, "
-            "Instagram Insights, CRM, and Search data to unlock advanced behavior analytics."
+            "🔗 Next upgrade: connect Instagram / LinkedIn trend APIs "
+            "for real-time hashtag popularity & competition scores."
         )
