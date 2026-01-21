@@ -1,100 +1,125 @@
-# ai_tools/bloomscore.py
-
 import streamlit as st
 import requests
 from bs4 import BeautifulSoup
-import time
 import re
+from textblob import TextBlob
+from textstat import flesch_reading_ease
 
 
+# -------------------------------------------------
+# UTILITIES
+# -------------------------------------------------
+def extract_text(url):
+    response = requests.get(url, timeout=10)
+    soup = BeautifulSoup(response.text, "html.parser")
+    text = " ".join(
+        [t.get_text() for t in soup.find_all(["p", "h1", "h2", "h3", "li"])]
+    )
+    return re.sub(r"\s+", " ", text).strip()
+
+
+# -------------------------------------------------
+# BLOOMSCORE ENGINE
+# -------------------------------------------------
+def calculate_bloomscore(url):
+    text = extract_text(url)
+    text_lower = text.lower()
+
+    # 1️⃣ Clarity
+    clarity_keywords = ["we help", "our mission", "we provide", "solution", "problem"]
+    clarity_score = sum(1 for k in clarity_keywords if k in text_lower) * 10
+    clarity_score = min(clarity_score, 100)
+
+    # 2️⃣ Trust
+    trust_keywords = [
+        "trusted", "clients", "testimonials", "reviews",
+        "years of experience", "certified", "award"
+    ]
+    trust_score = sum(1 for k in trust_keywords if k in text_lower) * 12
+    trust_score = min(trust_score, 100)
+
+    # 3️⃣ CTA Strength
+    ctas = re.findall(
+        r"(get started|sign up|book now|contact us|try free|buy now)",
+        text_lower
+    )
+    cta_score = min(len(ctas) * 20, 100)
+
+    # 4️⃣ Consistency
+    headings = re.findall(r"(h1|h2|h3)", text_lower)
+    consistency_score = 80 if len(headings) >= 5 else 50
+
+    # 5️⃣ Emotional Tone
+    sentiment = TextBlob(text).sentiment.polarity
+    emotional_score = int((sentiment + 1) * 50)
+
+    # 6️⃣ Readability
+    readability = flesch_reading_ease(text)
+    if readability > 60:
+        ux_score = 90
+    elif readability > 40:
+        ux_score = 70
+    else:
+        ux_score = 40
+
+    # Final BloomScore
+    bloomscore = int(
+        (clarity_score + trust_score + cta_score +
+         consistency_score + emotional_score + ux_score) / 6
+    )
+
+    return {
+        "BloomScore": bloomscore,
+        "Clarity": clarity_score,
+        "Trust": trust_score,
+        "CTA": cta_score,
+        "Consistency": consistency_score,
+        "Emotion": emotional_score,
+        "UX Readability": ux_score,
+        "Sentiment": round(sentiment, 2)
+    }
+
+
+# -------------------------------------------------
+# STREAMLIT UI
+# -------------------------------------------------
 def run():
     st.markdown("## 🌸 BloomScore")
-    st.markdown("Instant brand health score for your website")
+    st.markdown(
+        "Your **live brand health score** based on consumer psychology & content clarity."
+    )
 
-    url = st.text_input("Enter website URL (with https://)")
+    st.divider()
 
-    if st.button("Calculate BloomScore"):
-        if not url.startswith("http"):
-            st.error("Please enter a valid URL starting with http or https")
+    url = st.text_input("Website URL", placeholder="https://yourbrand.com")
+
+    if st.button("Generate BloomScore"):
+        if not url:
+            st.warning("Please enter a website URL.")
             return
 
-        score = 0
-        details = []
+        with st.spinner("Calculating brand health..."):
+            try:
+                result = calculate_bloomscore(url)
+            except Exception as e:
+                st.error(f"Analysis failed: {e}")
+                return
 
-        try:
-            start = time.time()
-            response = requests.get(url, timeout=10)
-            load_time = time.time() - start
-            soup = BeautifulSoup(response.text, "html.parser")
+        st.divider()
 
-            # 1️⃣ Site reachable
-            score += 20
-            details.append("✅ Website reachable")
+        st.metric("🌸 BloomScore", f"{result['BloomScore']} / 100")
 
-            # 2️⃣ HTTPS
-            if url.startswith("https"):
-                score += 10
-                details.append("✅ HTTPS enabled")
-            else:
-                details.append("❌ No HTTPS")
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Clarity", result["Clarity"])
+        col1.metric("Trust", result["Trust"])
 
-            # 3️⃣ Meta title
-            if soup.title and soup.title.string:
-                score += 10
-                details.append("✅ Meta title found")
-            else:
-                details.append("❌ Missing meta title")
+        col2.metric("CTA Strength", result["CTA"])
+        col2.metric("Consistency", result["Consistency"])
 
-            # 4️⃣ Meta description
-            if soup.find("meta", attrs={"name": "description"}):
-                score += 10
-                details.append("✅ Meta description found")
-            else:
-                details.append("❌ Missing meta description")
+        col3.metric("Emotion", result["Emotion"])
+        col3.metric("UX Readability", result["UX Readability"])
 
-            # 5️⃣ Page speed
-            if load_time < 3:
-                score += 20
-                details.append(f"✅ Fast load time ({load_time:.2f}s)")
-            else:
-                details.append(f"⚠️ Slow load time ({load_time:.2f}s)")
-
-            # 6️⃣ Mobile viewport
-            if soup.find("meta", attrs={"name": "viewport"}):
-                score += 10
-                details.append("✅ Mobile friendly")
-            else:
-                details.append("❌ Not mobile optimized")
-
-            # 7️⃣ Social links
-            socials = re.findall(r"(instagram|linkedin|facebook|twitter)", response.text, re.I)
-            if socials:
-                score += 10
-                details.append("✅ Social links detected")
-            else:
-                details.append("❌ No social links found")
-
-            # 8️⃣ Image alt tags
-            images = soup.find_all("img")
-            if images and all(img.get("alt") for img in images[:5]):
-                score += 10
-                details.append("✅ Image alt tags present")
-            else:
-                details.append("⚠️ Missing image alt tags")
-
-            # 🎯 Final Output
-            st.markdown(f"### 🌼 BloomScore: **{score}/100**")
-
-            for d in details:
-                st.write(d)
-
-            if score >= 80:
-                st.success("Excellent brand health 🚀")
-            elif score >= 50:
-                st.warning("Good, but needs improvement 🌱")
-            else:
-                st.error("Brand health needs urgent attention ⚠️")
-
-        except Exception as e:
-            st.error("Failed to analyze website")
-            st.exception(e)
+        st.divider()
+        st.caption(
+            "BloomScore uses live website content, behavioral psychology & NLP analysis."
+        )
