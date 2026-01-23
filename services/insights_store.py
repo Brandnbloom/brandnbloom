@@ -1,16 +1,34 @@
-import datetime
+import json
+from datetime import datetime
+from pathlib import Path
 
-INSIGHTS_DB = {}  # later this becomes real DB
+DATA_DIR = Path("data")
+DATA_DIR.mkdir(exist_ok=True)
+
+def _file(user_id):
+    return DATA_DIR / f"{user_id}_insights.json"
 
 def save_insight(user_id, tool, data):
-    entry = {
+    record = {
         "tool": tool,
         "data": data,
-        "timestamp": datetime.datetime.utcnow().isoformat()
+        "timestamp": datetime.utcnow().isoformat()
     }
 
-    INSIGHTS_DB.setdefault(user_id, []).append(entry)
-    return entry
+    file = _file(user_id)
 
-def get_insights(user_id):
-    return INSIGHTS_DB.get(user_id, [])
+    if file.exists():
+        existing = json.loads(file.read_text())
+    else:
+        existing = []
+
+    existing.append(record)
+    file.write_text(json.dumps(existing, indent=2))
+
+def load_insights(user_id):
+    file = _file(user_id)
+    if not file.exists():
+        return []
+    return json.loads(file.read_text())
+
+
