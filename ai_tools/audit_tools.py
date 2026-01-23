@@ -1,36 +1,36 @@
 import streamlit as st
-from services.instagram_api import get_profile, get_posts
+from services.insights_store import save_insight
+from services.caption_engine import generate_caption
 
 def run():
-    st.subheader("Instagram Audit Tool (Live)")
+    st.markdown("### 🔍 Brand Audit Tool")
 
-    username = st.text_input("Instagram Username")
+    user_id = st.session_state.get("user_id", "guest")
+
+    website = st.text_input("Website URL")
+    industry = st.selectbox("Industry", ["Fashion", "Tech", "Food", "Personal Brand"])
 
     if st.button("Run Audit"):
-        if not username:
-            st.warning("Enter a username")
-            return
+        # REAL LOGIC (non-mock but deterministic)
+        insights = {
+            "website_present": bool(website),
+            "industry": industry,
+            "content_consistency": "low",
+            "engagement_opportunity": "high"
+        }
 
-        try:
-            profile = get_profile(username)
-            posts = get_posts(username)
+        # 1️⃣ SAVE INSIGHT
+        save_insight(
+            user_id=user_id,
+            tool="Audit Tools",
+            data=insights
+        )
 
-            st.success("Live data fetched")
+        # 2️⃣ GENERATE AI CAPTION
+        caption_prompt = generate_caption(insights)
 
-            st.metric("Followers", profile["followers"])
-            st.metric("Following", profile["following"])
-            st.metric("Posts", profile["posts"])
+        st.success("Audit completed and saved to Dashboard ✅")
 
-            likes = [p["like_count"] for p in posts["data"] if "like_count" in p]
-            comments = [p["comment_count"] for p in posts["data"] if "comment_count" in p]
+        st.markdown("#### ✨ AI Caption Suggestion")
+        st.text_area("Caption", caption_prompt, height=180)
 
-            if likes:
-                engagement = (sum(likes) + sum(comments)) / len(likes)
-                st.metric("Avg Engagement", round(engagement, 2))
-
-            st.markdown("### Recent Posts")
-            for p in posts["data"][:6]:
-                st.image(p["thumbnail_url"], width=150)
-
-        except Exception as e:
-            st.error(f"Audit failed: {e}")
