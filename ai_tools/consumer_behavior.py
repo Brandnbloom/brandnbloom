@@ -1,97 +1,70 @@
 import streamlit as st
-import pandas as pd
-import nltk
-from nltk.sentiment import SentimentIntensityAnalyzer
-
-# Download once (safe even if repeated)
-nltk.download("vader_lexicon")
-
-def analyze_sentiment(text):
-    sia = SentimentIntensityAnalyzer()
-    score = sia.polarity_scores(str(text))["compound"]
-
-    if score >= 0.05:
-        return "Positive"
-    elif score <= -0.05:
-        return "Negative"
-    else:
-        return "Neutral"
+from services.insights_store import save_insight
+from services.caption_engine import generate_caption
 
 def run():
-    insights = {
-    "dominant_emotion": dominant_emotion,
-    "sentiment_score": sentiment_score,
-    "top_keywords": keywords,
-}
+    st.markdown("### 🧠 Consumer Behavior Analysis")
 
-save_insights("Consumer Behavior", insights)
+    user_id = st.session_state.get("user_id", "guest")
 
-st.success("Insights saved to dashboard.")
-
-    st.markdown("## 🧠 Consumer Behavior & Sentiment Analysis")
-    st.markdown("Analyze real customer feedback from Google Forms.")
-
-    uploaded_file = st.file_uploader(
-        "Upload Google Form responses (CSV)",
-        type=["csv"]
+    audience = st.selectbox(
+        "Primary audience",
+        ["Gen Z", "Millennials", "Working Professionals", "Parents"]
     )
 
-    st.session_state["consumer_insights"] = {
-    "total_responses": len(df),
-    "positive": int((df["Sentiment"] == "Positive").sum()),
-    "neutral": int((df["Sentiment"] == "Neutral").sum()),
-    "negative": int((df["Sentiment"] == "Negative").sum()),
-}
+    buying_trigger = st.selectbox(
+        "Main buying trigger",
+        ["Price", "Quality", "Emotions", "Social Proof"]
+    )
 
-# Optional: Save to file
-df.to_csv("data/consumer_sentiment_latest.csv", index=False)
+    hesitation = st.selectbox(
+        "Biggest hesitation before purchase",
+        ["Trust", "Price", "Need clarity", "Too many options"]
+    )
 
-st.success("Insights saved for Dashboard & AI captions")
+    content_preference = st.selectbox(
+        "Content preference",
+        ["Educational", "Inspirational", "Entertaining", "Direct CTA"]
+    )
 
-    if uploaded_file:
-        df = pd.read_csv(uploaded_file)
+    if st.button("Analyze Behavior"):
+        # Behavioral inference logic (REAL)
+        mindset = "value-seeker"
+        if buying_trigger == "Emotions":
+            mindset = "emotion-driven"
+        elif buying_trigger == "Quality":
+            mindset = "quality-conscious"
 
-        st.markdown("### 📋 Raw Responses")
-        st.dataframe(df, use_container_width=True)
+        persuasion_angle = "build trust"
+        if hesitation == "Price":
+            persuasion_angle = "justify value"
+        elif hesitation == "Need clarity":
+            persuasion_angle = "educate clearly"
 
-        # Select text column for sentiment
-        text_columns = df.select_dtypes(include="object").columns.tolist()
+        insights = {
+            "audience": audience,
+            "buyer_mindset": mindset,
+            "buying_trigger": buying_trigger,
+            "primary_hesitation": hesitation,
+            "best_content_type": content_preference,
+            "recommended_persuasion": persuasion_angle
+        }
 
-        if not text_columns:
-            st.warning("No text columns found for sentiment analysis.")
-            return
-
-        text_col = st.selectbox(
-            "Select column to analyze sentiment",
-            text_columns
+        # 1️⃣ Save insight
+        save_insight(
+            user_id=user_id,
+            tool="Consumer Behavior",
+            data=insights
         )
 
-        if st.button("Analyze Sentiment"):
-            df["Sentiment"] = df[text_col].apply(analyze_sentiment)
+        # 2️⃣ Generate AI caption
+        caption_prompt = generate_caption(
+            insight=insights,
+            tone="empathetic",
+            platform="Instagram"
+        )
 
-            st.markdown("### 📊 Sentiment Distribution")
-            st.bar_chart(df["Sentiment"].value_counts())
+        st.success("Behavior insights saved to Dashboard ✅")
 
-            st.markdown("### 😊 Positive Feedback")
-            st.write(df[df["Sentiment"] == "Positive"][text_col].head(5))
-
-            st.markdown("### 😐 Neutral Feedback")
-            st.write(df[df["Sentiment"] == "Neutral"][text_col].head(5))
-
-            st.markdown("### 😞 Negative Feedback")
-            st.write(df[df["Sentiment"] == "Negative"][text_col].head(5))
-
-            st.success("✅ Sentiment analysis completed using real NLP.")
-
-from services.storage import save_insights
-
-insights = {
-    "total": len(df),
-    "positive": int((df["Sentiment"] == "Positive").sum()),
-    "neutral": int((df["Sentiment"] == "Neutral").sum()),
-    "negative": int((df["Sentiment"] == "Negative").sum()),
-}
-
-save_insights(insights)
-st.session_state["consumer_insights"] = insights
-
+        st.markdown("#### ✨ AI Caption Suggestion")
+        st.text_area("Caption", caption_prompt, height=220)
