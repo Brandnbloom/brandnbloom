@@ -164,19 +164,34 @@ elif page == "About":
 # =============================================================
 elif page == "Login":
     st.markdown("## 🔐 Login")
-    st.text_input("Email")
-    st.text_input("Password", type="password")
-    st.button("Login")
+    email = st.text_input("Email")
+    if st.button("Login"):
+        from services.user_store import get_user
+        user = get_user(email.lower())
+        if user:
+            st.session_state.user_id = email.lower()
+            st.success(f"Logged in as {user['name']}")
+        else:
+            st.error("User not found")
+
 
 # =============================================================
 # ---------------- SIGNUP ----------------
 # =============================================================
 elif page == "Signup":
     st.markdown("## 🆕 Signup")
-    st.text_input("Name")
-    st.text_input("Email")
-    st.text_input("Password", type="password")
-    st.button("Create Account")
+    name = st.text_input("Name")
+    email = st.text_input("Email")
+
+    if st.button("Create Account"):
+        if not name or not email:
+            st.warning("Enter both name and email")
+        else:
+            from services.user_store import create_user
+            user_id = create_user(name, email)
+            st.session_state.user_id = user_id
+            st.success(f"Account created! Logged in as {name}")
+
 
 # =============================================================
 # ---------------- SETTINGS ----------------
