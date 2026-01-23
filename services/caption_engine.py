@@ -1,13 +1,42 @@
+def generate_caption(insight, tone="friendly", platform="Instagram"):
+    """
+    Converts structured insights into human-like captions
+    """
 
-def generate_caption(insight, tone="professional", platform="Instagram"):
-    prompt = f"""
-You are a brand strategist.
+    audience = insight.get("audience", "your audience")
+    goal = insight.get("collaboration_goal", insight.get("recommended_persuasion", "engage"))
+    mood = insight.get("brand_mood", "confident")
+    mindset = insight.get("buyer_mindset", "curious")
 
-Create a high-performing {platform} caption based on this insight:
+    intro_map = {
+        "friendly": "Hey there 👋",
+        "professional": "Hello",
+        "empathetic": "We get it 🤍",
+        "creative": "Let’s talk creativity ✨",
+        "bold": "Here’s the truth 🚀"
+    }
 
-{insight}
+    cta_map = {
+        "Instagram": "💬 Tell us what you think below",
+        "LinkedIn": "💡 Share your thoughts in the comments",
+        "YouTube": "👉 Subscribe for more insights"
+    }
 
-Tone: {tone}
-Add a strong CTA.
-"""
-    return prompt
+    intro = intro_map.get(tone, "Hey")
+    cta = cta_map.get(platform, "Let us know your thoughts")
+
+    caption = f"""
+{intro}
+
+If you're a {audience.lower()}, this is for you.
+
+We know you're {mindset}, and what truly matters is {goal}.
+That’s why we’re showing up with a {mood} approach — not noise, not pressure.
+
+Because growth should feel aligned, not forced.
+
+{cta}
+""".strip()
+
+    return caption
+
