@@ -1,100 +1,36 @@
 import streamlit as st
 
+def generate_caption(insights, tone):
+    if insights["negative"] > insights["positive"]:
+        base = "We hear you. We're improving based on your feedback."
+    else:
+        base = "Thanks for loving our brand! More value coming your way."
 
-# -------------------------------------------------
-# CAPTION LOGIC ENGINE
-# -------------------------------------------------
-def generate_caption(insight, audience, goal, platform, tone):
-    hooks = {
-        "Instagram": [
-            "Nobody tells you this 👀",
-            "This changed everything for us 🔥",
-            "If you're struggling with this, read this 👇",
-        ],
-        "LinkedIn": [
-            "Here’s a lesson most professionals learn too late:",
-            "One hard truth about growth:",
-            "This insight changed how I work:",
-        ],
-    }
+    if tone == "Friendly":
+        return base + " 💛 Stay tuned!"
+    elif tone == "Professional":
+        return base + " We appreciate your trust."
+    else:
+        return base
 
-    cta = {
-        "Awareness": "What do you think?",
-        "Engagement": "Comment your thoughts 👇",
-        "Conversion": "DM us to get started.",
-    }
-
-    tone_modifier = {
-        "Professional": "",
-        "Friendly": "😊",
-        "Bold": "🔥",
-        "Inspirational": "✨",
-    }
-
-    hook = hooks[platform][0]
-    ending = cta[goal]
-
-    caption = f"""{hook}
-
-{insight}
-
-This matters especially for {audience.lower()}.
-
-{ending} {tone_modifier[tone]}
-"""
-
-    return caption.strip()
-
-
-# -------------------------------------------------
-# STREAMLIT UI
-# -------------------------------------------------
 def run():
-    st.markdown("## 🧠 Insights → Caption")
-    st.markdown(
-        "Turn **insights & data** into high-impact captions that actually convert."
-    )
+    st.markdown("## ✨ Insights → AI Captions")
 
-    st.divider()
+    insights = st.session_state.get("consumer_insights")
 
-    insight = st.text_area(
-        "Core insight / data point",
-        placeholder="Example: Brands that post consistently grow 3x faster."
-    )
-
-    audience = st.text_input(
-        "Target audience",
-        placeholder="Founders, small business owners, creators"
-    )
-
-    platform = st.selectbox(
-        "Platform",
-        ["Instagram", "LinkedIn"]
-    )
-
-    goal = st.selectbox(
-        "Primary goal",
-        ["Awareness", "Engagement", "Conversion"]
-    )
+    if not insights:
+        st.warning("Analyze consumer behavior first.")
+        return
 
     tone = st.selectbox(
-        "Tone",
-        ["Professional", "Friendly", "Bold", "Inspirational"]
+        "Select tone",
+        ["Friendly", "Professional", "Neutral"]
     )
 
     if st.button("Generate Caption"):
-        if not insight or not audience:
-            st.warning("Please fill all required fields.")
-            return
+        caption = generate_caption(insights, tone)
 
-        caption = generate_caption(
-            insight=insight,
-            audience=audience,
-            goal=goal,
-            platform=platform,
-            tone=tone
-        )
+        st.markdown("### 📝 Generated Caption")
+        st.text_area("", caption, height=100)
 
-        st.divider()
-        st.markdown("### ✨ Generated Caption")
-        st.code(caption)
+        st.success("Caption generated from real insights")
