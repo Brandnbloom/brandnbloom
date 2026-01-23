@@ -108,4 +108,4 @@ sentry-sdk>=1.27.2
 
 regex>=2024.5.1
 nltk
-
+pandas
