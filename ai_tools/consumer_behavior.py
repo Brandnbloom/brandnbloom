@@ -18,6 +18,16 @@ def analyze_sentiment(text):
         return "Neutral"
 
 def run():
+    insights = {
+    "dominant_emotion": dominant_emotion,
+    "sentiment_score": sentiment_score,
+    "top_keywords": keywords,
+}
+
+save_insights("Consumer Behavior", insights)
+
+st.success("Insights saved to dashboard.")
+
     st.markdown("## 🧠 Consumer Behavior & Sentiment Analysis")
     st.markdown("Analyze real customer feedback from Google Forms.")
 
