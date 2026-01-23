@@ -72,3 +72,16 @@ st.success("Insights saved for Dashboard & AI captions")
             st.write(df[df["Sentiment"] == "Negative"][text_col].head(5))
 
             st.success("✅ Sentiment analysis completed using real NLP.")
+
+from services.storage import save_insights
+
+insights = {
+    "total": len(df),
+    "positive": int((df["Sentiment"] == "Positive").sum()),
+    "neutral": int((df["Sentiment"] == "Neutral").sum()),
+    "negative": int((df["Sentiment"] == "Negative").sum()),
+}
+
+save_insights(insights)
+st.session_state["consumer_insights"] = insights
+
