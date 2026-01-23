@@ -146,6 +146,30 @@ elif page == "Signup":
 elif page == "Settings":
     st.markdown("## ⚙️ Settings")
     st.info("Theme, account & integrations.")
+# Legacy tools
+from ai_tools.audit_tools import run as run_audit
+from ai_tools.bloomscore import run as run_bloomscore
+
+# New Marketing & Data Science tools
+from ai_tools.segmentation import run_rfm_analysis
+from ai_tools.sentiment import run_sentiment_analyzer
+from ai_tools.churn import run_churn_predictor
+
+TOOLS = {
+    "Audit Tools": run_audit,
+    "BloomScore": run_bloomscore,
+    "Business Compare": run_business_compare,
+    "Segmentation": run_rfm_analysis,
+    "Sentiment Analyzer": run_sentiment_analyzer,
+    "Churn Prediction": run_churn_predictor,
+    "Dashboard": run_dashboard,
+    # ... other tools
+}
+
+selected = st.sidebar.radio("Navigate", list(TOOLS.keys()))
+
+# Run the selected tool
+TOOLS[selected]()
 
 # ------------------------------
 # Tools Router
