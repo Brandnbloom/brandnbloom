@@ -1,46 +1,31 @@
 import streamlit as st
-from services.storage import load_insights
-from services.insights_store import get_insights
-from services.insights_store import save_insight
+from services.insights_store import load_insights
 from services.caption_engine import generate_caption
 
-
-
 def run():
-    st.markdown("## 📊 Brand Intelligence Dashboard")
+    st.markdown("## 📊 Insight Dashboard")
 
-data = load_insights()
+    user_id = st.session_state.get("user_id", "guest")
+    insights = load_insights(user_id)
 
-if not data:
-    st.warning("No insights generated yet.")
-    return
+    if not insights:
+        st.info("No insights yet. Use tools to generate intelligence.")
+        return
 
-st.subheader("Saved Brand Insights")
+    for record in reversed(insights):
+        with st.expander(
+            f"🔹 {record['tool']} • {record['timestamp'][:19]}"
+        ):
+            st.json(record["data"])
 
-for tool, insights in data.items():
-    st.markdown(f"### {tool}")
-    st.json(insights)
-user_id = st.session_state.get("user_id", "guest")
+            if st.button(
+                f"Generate Caption from {record['tool']}",
+                key=f"{record['tool']}_{record['timestamp']}"
+            ):
+                caption = generate_caption(
+                    insight=record["data"],
+                    tone="friendly",
+                    platform="Instagram"
+                )
+                st.text_area("Caption", caption, height=180)
 
-insights = get_insights(user_id)
-
-if not insights:
-    st.info("No insights yet. Run a tool to see results.")
-else:
-    for item in insights:
-        st.markdown(f"### 🔍 {item['tool']}")
-        st.json(item["data"])
-        st.caption(item["timestamp"])
-result = {
-    "engagement_rate": 4.2,
-    "posting_consistency": "low"
-}
-
-save_insight(
-    user_id="guest",
-    tool="Audit Tools",
-    data=result
-)
-
-caption_prompt = generate_caption(result)
-st.text_area("AI Caption Suggestion", caption_prompt)
