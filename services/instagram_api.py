@@ -1,39 +1,81 @@
-# services/instagram_api.py
-
 import os
 import requests
+from bs4 import BeautifulSoup
 
-RAPIDAPI_KEY = os.getenv("RAPIDAPI_KEY")
+API_KEY = os.getenv("INSTAGRAM_API_KEY")  # your Phase 2 API key
 
-if not RAPIDAPI_KEY:
-    raise EnvironmentError("RAPIDAPI_KEY not found in environment variables")
+# -----------------------
+# 1️⃣ Official API Fallback
+# -----------------------
+def get_profile(username):
+    """
+    Try API first, fallback to scraper if fails
+    """
+    if API_KEY:
+        try:
+            resp = requests.get(
+                f"https://api.instagram.com/v1/users/{username}?api_key={API_KEY}"
+            )
+            data = resp.json()
+            if "error" not in data:
+                return data
+        except Exception:
+            pass
+    # fallback
+    return scrape_profile(username)
 
-BASE_HEADERS = {
-    "X-RapidAPI-Key": RAPIDAPI_KEY,
-    "X-RapidAPI-Host": "instagram-scraper-2025.p.rapidapi.com",
-}
-
-BASE_URL = "https://instagram-scraper-2025.p.rapidapi.com"
-
-
-def get_profile(username: str):
-    url = f"{BASE_URL}/v1/profile"
-    params = {"username": username}
-
-    response = requests.get(url, headers=BASE_HEADERS, params=params, timeout=15)
-    response.raise_for_status()
-
-    return response.json()
-
-
-def get_posts(username: str, count: int = 6):
-    url = f"{BASE_URL}/v1/posts"
-    params = {
-        "username": username,
-        "count": count
+# -----------------------
+# 2️⃣ Scraper Fallback
+# -----------------------
+def scrape_profile(username):
+    url = f"https://www.instagram.com/{username}/"
+    headers = {
+        "User-Agent": "Mozilla/5.0"
     }
+    resp = requests.get(url, headers=headers)
+    if resp.status_code != 200:
+        return {"error": "Profile not found / private"}
 
-    response = requests.get(url, headers=BASE_HEADERS, params=params, timeout=15)
-    response.raise_for_status()
+    soup = BeautifulSoup(resp.text, "html.parser")
+    scripts = soup.find_all("script", type="text/javascript")
+    shared_data = None
+    for s in scripts:
+        if "window._sharedData" in s.text:
+            text = s.string.partition("=")[2].strip(" ;")
+            import json
+            shared_data = json.loads(text)
+            break
+    if not shared_data:
+        return {"error": "Failed to parse profile"}
 
-    return response.json()
+    user = shared_data["entry_data"]["ProfilePage"][0]["graphql"]["user"]
+    profile_info = {
+        "username": user["username"],
+        "full_name": user["full_name"],
+        "followers": user["edge_followed_by"]["count"],
+        "following": user["edge_follow"]["count"],
+        "posts": user["edge_owner_to_timeline_media"]["count"],
+        "bio": user["biography"]
+    }
+    return profile_info
+
+# -----------------------
+# 3️⃣ Get Recent Posts
+# -----------------------
+def get_posts(username, limit=5):
+    profile = get_profile(username)
+    if "error" in profile:
+        return []
+    edges = profile.get("edge_owner_to_timeline_media", {}).get("edges", [])
+    posts = []
+    for edge in edges[:limit]:
+        node = edge["node"]
+        posts.append({
+            "id": node["id"],
+            "likes": node["edge_liked_by"]["count"],
+            "comments": node["edge_media_to_comment"]["count"],
+            "caption": node.get("edge_media_to_caption", {}).get("edges", [{}])[0].get("node", {}).get("text", "")
+        })
+    return posts
+
+
