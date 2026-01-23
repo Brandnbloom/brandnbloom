@@ -3,6 +3,22 @@ from PIL import Image
 from collections import Counter
 from services.insights_store import save_insight
 from services.caption_engine import generate_caption
+import pandas as pd
+
+sample_data = pd.DataFrame({
+    "customer_id": [1,2,3],
+    "recency": [10, 20, 5],
+    "frequency": [3, 1, 5],
+    "monetary": [200, 150, 500],
+    "churn": [0, 1, 0]
+})
+
+st.download_button(
+    "📥 Download Sample Data",
+    data=sample_data.to_csv(index=False),
+    file_name="sample_data.csv",
+    mime="text/csv"
+)
 
 def extract_colors(image, num_colors=5):
     image = image.resize((150, 150))
