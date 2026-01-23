@@ -16,15 +16,25 @@ def generate_caption(data, tone):
     return tones[tone]
 
 def run():
-    st.markdown("## ✨ Insights → AI Captions")
-
     data = load_insights()
 
-    if not data:
-        st.warning("Run Consumer Behavior analysis first.")
-        return
+if not data:
+    st.warning("Run at least one tool first.")
+    return
 
-    tone = st.selectbox("Caption Tone", ["Friendly", "Professional", "Bold"])
+st.subheader("AI Caption Generator")
+
+tone = st.selectbox("Tone", ["Professional", "Friendly", "Bold"])
+
+for tool, insights in data.items():
+    caption = f"""
+Based on our {tool} analysis, we found {insights}.
+Here’s what that means for your brand.
+"""
+
+    st.text_area(f"Caption from {tool}", caption.strip(), height=120)
+
+"Bold"])
 
     if st.button("Generate Caption"):
         caption = generate_caption(data, tone)
