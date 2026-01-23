@@ -201,6 +201,8 @@ TOOL_MAPPING = {
     "OCR Sentiment": "ocr_sentiment",
     "Profile Mock": "profile_mock",
     "Prompts": "prompts",
+    "Dashboard": "dashboard"
+
 }
 
 if page in TOOL_MAPPING:
