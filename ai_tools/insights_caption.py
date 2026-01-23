@@ -1,36 +1,31 @@
 import streamlit as st
+from services.storage import load_insights
 
-def generate_caption(insights, tone):
-    if insights["negative"] > insights["positive"]:
-        base = "We hear you. We're improving based on your feedback."
+def generate_caption(data, tone):
+    if data["negative"] > data["positive"]:
+        base = "We heard your feedback and are improving."
     else:
-        base = "Thanks for loving our brand! More value coming your way."
+        base = "Thanks for trusting our brand."
 
-    if tone == "Friendly":
-        return base + " 💛 Stay tuned!"
-    elif tone == "Professional":
-        return base + " We appreciate your trust."
-    else:
-        return base
+    tones = {
+        "Friendly": base + " 💛 Stay connected!",
+        "Professional": base + " We value our community.",
+        "Bold": base + " Big improvements coming soon."
+    }
+
+    return tones[tone]
 
 def run():
     st.markdown("## ✨ Insights → AI Captions")
 
-    insights = st.session_state.get("consumer_insights")
+    data = load_insights()
 
-    if not insights:
-        st.warning("Analyze consumer behavior first.")
+    if not data:
+        st.warning("Run Consumer Behavior analysis first.")
         return
 
-    tone = st.selectbox(
-        "Select tone",
-        ["Friendly", "Professional", "Neutral"]
-    )
+    tone = st.selectbox("Caption Tone", ["Friendly", "Professional", "Bold"])
 
     if st.button("Generate Caption"):
-        caption = generate_caption(insights, tone)
-
-        st.markdown("### 📝 Generated Caption")
-        st.text_area("", caption, height=100)
-
-        st.success("Caption generated from real insights")
+        caption = generate_caption(data, tone)
+        st.text_area("Generated Caption", caption, height=120)
