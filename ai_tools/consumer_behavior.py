@@ -26,6 +26,18 @@ def run():
         type=["csv"]
     )
 
+    st.session_state["consumer_insights"] = {
+    "total_responses": len(df),
+    "positive": int((df["Sentiment"] == "Positive").sum()),
+    "neutral": int((df["Sentiment"] == "Neutral").sum()),
+    "negative": int((df["Sentiment"] == "Negative").sum()),
+}
+
+# Optional: Save to file
+df.to_csv("data/consumer_sentiment_latest.csv", index=False)
+
+st.success("Insights saved for Dashboard & AI captions")
+
     if uploaded_file:
         df = pd.read_csv(uploaded_file)
 
