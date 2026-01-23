@@ -1,13 +1,13 @@
-def generate_caption(insight, tone="professional", platform="Instagram"):
-    base = f"""
-You are a brand strategist.
-Convert this insight into a high-performing {platform} caption.
 
-Insight:
+def generate_caption(insight, tone="professional", platform="Instagram"):
+    prompt = f"""
+You are a brand strategist.
+
+Create a high-performing {platform} caption based on this insight:
+
 {insight}
 
 Tone: {tone}
-Include CTA.
+Add a strong CTA.
 """
-
-    return base  # later sent to LLM
+    return prompt
