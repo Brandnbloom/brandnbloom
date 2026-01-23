@@ -3,6 +3,39 @@ import requests
 from bs4 import BeautifulSoup
 import re
 from textblob import TextBlob
+import pandas as pd
+
+def run():
+    st.markdown("## 🧠 Consumer Behavior Analysis")
+    st.markdown("Upload real customer responses from Google Forms.")
+
+    uploaded_file = st.file_uploader(
+        "Upload Google Form responses (CSV)",
+        type=["csv"]
+    )
+
+    if uploaded_file:
+        df = pd.read_csv(uploaded_file)
+
+        st.markdown("### 📋 Raw Responses")
+        st.dataframe(df, use_container_width=True)
+
+        st.markdown("### 🔍 Key Insights")
+
+        # Example insights (REAL DATA driven)
+        if "Would you recommend this brand?" in df.columns:
+            rec_counts = df["Would you recommend this brand?"].value_counts()
+            st.bar_chart(rec_counts)
+
+        if "What frustrates you?" in df.columns:
+            st.markdown("#### Common Frustrations")
+            st.write(df["What frustrates you?"].dropna().head(10))
+
+        if "What do you like most?" in df.columns:
+            st.markdown("#### What Customers Love")
+            st.write(df["What do you like most?"].dropna().head(10))
+
+        st.success("✅ Live consumer behavior insights generated!")
 
 
 # -------------------------------------------------
