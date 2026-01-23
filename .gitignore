@@ -34,3 +34,6 @@ uploads/
 
 # --- Streamlit ---
 .streamlit/config.toml
+
+# --- data ---
+data/*.csv
