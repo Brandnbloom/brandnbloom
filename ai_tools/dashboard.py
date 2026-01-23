@@ -1,6 +1,10 @@
 import streamlit as st
 from services.storage import load_insights
 from services.insights_store import get_insights
+from services.insights_store import save_insight
+from services.caption_engine import generate_caption
+
+
 
 def run():
     st.markdown("## 📊 Brand Intelligence Dashboard")
@@ -27,3 +31,16 @@ else:
         st.markdown(f"### 🔍 {item['tool']}")
         st.json(item["data"])
         st.caption(item["timestamp"])
+result = {
+    "engagement_rate": 4.2,
+    "posting_consistency": "low"
+}
+
+save_insight(
+    user_id="guest",
+    tool="Audit Tools",
+    data=result
+)
+
+caption_prompt = generate_caption(result)
+st.text_area("AI Caption Suggestion", caption_prompt)
