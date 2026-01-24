@@ -1,40 +1,15 @@
 import streamlit as st
-import pandas as pd
-import plotly.express as px
+from services.market_api import get_market_trends, get_marketing_roi
+from utils.dashboard import save_to_dashboard
+from services.openai_api import generate_ai_caption
 
-def run_marketing_roi():
-    st.subheader("📊 Marketing ROI Tracker")
+def run():
+    market_df = get_market_trends()
+    roi_df = get_marketing_roi()
 
-    uploaded_file = st.file_uploader("Upload Campaign Data (CSV)", type=['csv'])
-    if uploaded_file:
-        df = pd.read_csv(uploaded_file)
-        st.write("Data Preview", df.head())
+    save_to_dashboard("market_trends", market_df)
+    save_to_dashboard("roi", roi_df)
 
-        if st.button("Calculate ROI"):
-            # Simple ROI: revenue / cost
-            df['roi'] = df['revenue'] / df['cost']
-            st.write(df[['campaign', 'roi']])
+    st.success(generate_ai_caption("market_trends", market_df))
+    st.success(generate_ai_caption("roi", roi_df))
 
-            fig = px.bar(df, x='campaign', y='roi', color='campaign', title="Campaign ROI")
-            st.plotly_chart(fig)
-
-            st.download_button(
-                "📥 Download ROI CSV",
-                data=df.to_csv(index=False),
-                file_name="roi_results.csv",
-                mime="text/csv"
-            )
-    else:
-        # Sample
-        sample = pd.DataFrame({
-            "campaign": ["C1","C2","C3"],
-            "revenue": [1000, 1500, 1200],
-            "cost": [500, 700, 600]
-        })
-        st.download_button(
-            "📥 Download Sample Data",
-            data=sample.to_csv(index=False),
-            file_name="sample_roi.csv",
-            mime="text/csv"
-        )
-save_to_dashboard("roi", df)
