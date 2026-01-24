@@ -41,4 +41,4 @@ def run_ad_creative_tester():
             file_name="sample_ab_test.csv",
             mime="text/csv"
         )
-
+save_to_dashboard("ab_test", summary)
