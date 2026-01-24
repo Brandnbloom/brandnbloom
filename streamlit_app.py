@@ -6,8 +6,9 @@ import plotly.express as px
 import openai
 import os
 
-# Load environment variables
+# Load env
 load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 # =============================================================
 # Page Setup
@@ -27,35 +28,74 @@ dark_mode_toggle()
 if "page" not in st.session_state:
     st.session_state.page = "Home"
 
+# Dashboard storage
+if "dashboard_data" not in st.session_state:
+    st.session_state.dashboard_data = {
+        "ab_test": [],
+        "churn": [],
+        "clv": [],
+        "market_trends": [],
+        "roi": []
+    }
+
+def save_to_dashboard(tool_name, df):
+    if tool_name in st.session_state.dashboard_data:
+        st.session_state.dashboard_data[tool_name].append(df)
+    else:
+        st.session_state.dashboard_data[tool_name] = [df]
+
+# =============================================================
+# Helper Functions
+# =============================================================
+def visualize_data(tool_name, df):
+    st.markdown(f"#### Data Visualization for {tool_name.replace('_',' ').title()}")
+    numeric_cols = df.select_dtypes(include='number').columns.tolist()
+    if len(numeric_cols) >= 2:
+        fig = px.scatter(df, x=numeric_cols[0], y=numeric_cols[1],
+                         color=df.columns[0],
+                         title=f"{tool_name.replace('_',' ').title()} Analysis")
+        st.plotly_chart(fig, use_container_width=True)
+    elif numeric_cols:
+        fig = px.bar(df, x=df.index, y=numeric_cols[0],
+                     title=f"{tool_name.replace('_',' ').title()} Metrics")
+        st.plotly_chart(fig, use_container_width=True)
+    else:
+        st.info("No numeric data available for visualization.")
+
+def generate_ai_caption(tool_name, df):
+    try:
+        preview = df.head(5).to_dict()
+        prompt = f"Provide actionable marketing insights based on the following {tool_name} data: {preview}"
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[
+                {"role":"system","content":"You are a marketing analyst."},
+                {"role":"user","content":prompt}
+            ],
+            temperature=0.7,
+            max_tokens=150
+        )
+        caption = response.choices[0].message.content.strip()
+        return caption
+    except Exception as e:
+        return f"AI Caption generation failed: {e}"
+
 # =============================================================
 # Header & Banner
 # =============================================================
 st.image("assets/banner.png", use_container_width=True)
-
-st.markdown(
-    """
-# 🌸 Brand N Bloom
-**AI-powered growth tools for modern brands**
-""",
-    unsafe_allow_html=True,
-)
+st.markdown("# 🌸 Brand N Bloom\n**AI-powered growth tools for modern brands**", unsafe_allow_html=True)
 
 # =============================================================
-# Top Menu Bar (Horizontal)
+# Top Menu
 # =============================================================
 TOP_MENU = [
     "Home", "Features", "Pricing", "Blog", "Dashboard",
     "Contact", "About", "Login", "Signup", "Settings",
-    "Audit Tools",
-    "BloomScore",
-    "Business Compare",
-    "Ad Creative Tester",
-    "Churn Predictor",
-    "CLV Calculator",
-    "Market Trend Analyzer",
-    "Marketing ROI Tracker",
-    "Segmentation",
-    "Sentiment Analyzer"
+    "Audit Tools", "BloomScore", "Business Compare",
+    "Ad Creative Tester", "Churn Predictor", "CLV Calculator",
+    "Market Trend Analyzer", "Marketing ROI Tracker",
+    "Segmentation", "Sentiment Analyzer"
 ]
 
 st.session_state.page = st.radio(
@@ -66,69 +106,19 @@ st.session_state.page = st.radio(
 )
 
 page = st.session_state.page
-# Initialize dashboard storage
-if "dashboard_data" not in st.session_state:
-    st.session_state.dashboard_data = {
-        "ab_test": [],
-        "churn": [],
-        "clv": [],
-        "market_trends": [],
-        "roi": []
-    }
-
-# Function to save results from any tool
-def save_to_dashboard(tool_name, df):
-    if tool_name in st.session_state.dashboard_data:
-        st.session_state.dashboard_data[tool_name].append(df)
-    else:
-        st.session_state.dashboard_data[tool_name] = [df]
-
-def generate_ai_caption(tool_name, df):
-    # Placeholder: for now, simple textual insight
-    if tool_name == "ab_test":
-        best_ad = df.loc[df['ctr'].idxmax(), 'ad_version']
-        return f"Ad version {best_ad} performed best based on CTR."
-    elif tool_name == "churn":
-        churn_rate = df['churn'].mean()
-        return f"Predicted churn rate: {churn_rate*100:.2f}%."
-    elif tool_name == "clv":
-        top_customer = df.loc[df['clv'].idxmax(), 'customer_id']
-        return f"Customer {top_customer} has highest predicted CLV."
-    elif tool_name == "roi":
-        top_campaign = df.loc[df['roi'].idxmax(), 'campaign']
-        return f"Campaign {top_campaign} delivered highest ROI."
-    else:
-        return "AI insights not available for this tool yet."
-elif page == "Dashboard":
-    st.markdown("## 📊 Centralized Dashboard")
-    st.info("All tool results and insights in one place")
-
-    for tool_name, data_list in st.session_state.dashboard_data.items():
-        if data_list:  # Only show tools with data
-            st.markdown(f"### 🛠 {tool_name.replace('_',' ').title()}")
-            for i, df in enumerate(data_list):
-                st.write(f"Result {i+1}")
-                st.dataframe(df)
-                caption = generate_ai_caption(tool_name, df)
-                st.success(f"💡 AI Insight: {caption}")
 
 # =============================================================
-# ---------------- HOME ----------------
+# ---------------- PAGES ----------------
 # =============================================================
 if page == "Home":
     st.markdown("## Welcome to Brand N Bloom 🌱")
     st.markdown("Grow your brand with clarity, data & AI.")
-
     if st.button("Get Started →"):
         st.session_state.page = "Features"
         st.experimental_rerun()
 
-# =============================================================
-# ---------------- FEATURES ----------------
-# =============================================================
 elif page == "Features":
     st.markdown("## 🧰 Explore Our Tools")
-    # Cards layout
     TOOLS_DESCRIPTIONS = {
         "Audit Tools": "Analyze your brand’s website and social media performance",
         "BloomScore": "Instant brand health score for social profiles",
@@ -149,9 +139,6 @@ elif page == "Features":
                 st.experimental_rerun()
             card(f"**{tool}**\n\n{desc}")
 
-# =============================================================
-# ---------------- PRICING ----------------
-# =============================================================
 elif page == "Pricing":
     st.markdown("## 💰 Pricing")
     c1, c2 = st.columns(2)
@@ -161,9 +148,6 @@ elif page == "Pricing":
         st.markdown("<div class='bnb-card'><h3>Pro</h3><p>₹1999 / month</p></div>", unsafe_allow_html=True)
         st.markdown("<a class='bnb-cta' href='https://www.paypal.com' target='_blank'>Pay with PayPal</a>", unsafe_allow_html=True)
 
-# =============================================================
-# ---------------- BLOG ----------------
-# =============================================================
 elif page == "Blog":
     st.markdown("## 📰 Blog & Prompts")
     try:
@@ -172,42 +156,35 @@ elif page == "Blog":
     except Exception as e:
         st.error(f"Blog module error: {e}")
 
-# =============================================================
-# ---------------- DASHBOARD ----------------
-# =============================================================
 elif page == "Dashboard":
-    st.markdown("## 📊 Dashboard")
-    st.info("Analytics from all tools will appear here.")
-    # Placeholder for consolidated dashboard
+    st.markdown("## 📊 Centralized Dashboard")
+    st.info("All tool results and AI insights in one place")
+    for tool_name, data_list in st.session_state.dashboard_data.items():
+        if data_list:
+            st.markdown(f"### 🛠 {tool_name.replace('_',' ').title()}")
+            for i, df in enumerate(data_list):
+                st.write(f"Result {i+1}")
+                st.dataframe(df)
+                visualize_data(tool_name, df)
+                caption = generate_ai_caption(tool_name, df)
+                st.success(f"💡 AI Insight: {caption}")
 
-# =============================================================
-# ---------------- CONTACT ----------------
-# =============================================================
 elif page == "Contact":
     st.markdown("## 📩 Contact Us")
     st.text_input("Email")
     st.text_area("Message")
     st.button("Send")
 
-# =============================================================
-# ---------------- ABOUT ----------------
-# =============================================================
 elif page == "About":
     st.markdown("## ℹ️ About")
     st.markdown("Brand N Bloom is an AI-powered marketing & analytics platform for brands, creators, and businesses.")
 
-# =============================================================
-# ---------------- LOGIN ----------------
-# =============================================================
 elif page == "Login":
     st.markdown("## 🔐 Login")
     st.text_input("Email")
     st.text_input("Password", type="password")
     st.button("Login")
 
-# =============================================================
-# ---------------- SIGNUP ----------------
-# =============================================================
 elif page == "Signup":
     st.markdown("## 🆕 Signup")
     st.text_input("Name")
@@ -215,9 +192,6 @@ elif page == "Signup":
     st.text_input("Password", type="password")
     st.button("Create Account")
 
-# =============================================================
-# ---------------- SETTINGS ----------------
-# =============================================================
 elif page == "Settings":
     st.markdown("## ⚙️ Settings")
     st.info("Theme, account & integrations.")
@@ -225,7 +199,6 @@ elif page == "Settings":
 # =============================================================
 # ---------------- TOOLS MAPPING ----------------
 # =============================================================
-# Legacy + Phase 2 Tools
 from ai_tools.audit_tools import run as run_audit
 from ai_tools.bloomscore import run as run_bloomscore
 from ai_tools.business_compare import run as run_business_compare
