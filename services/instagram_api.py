@@ -1,7 +1,7 @@
 import os
 import requests
 from bs4 import BeautifulSoup
-
+import panda as pd
 API_KEY = os.getenv("INSTAGRAM_API_KEY")  # your Phase 2 API key
 
 # -----------------------
@@ -76,6 +76,7 @@ def get_posts(username, limit=5):
             "comments": node["edge_media_to_comment"]["count"],
             "caption": node.get("edge_media_to_caption", {}).get("edges", [{}])[0].get("node", {}).get("text", "")
         })
-    return posts
+    return pd.DataFrame(data)
+
 
 
