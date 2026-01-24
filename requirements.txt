@@ -89,7 +89,7 @@ google-auth-httplib2>=0.2.0
 google-auth-oauthlib>=1.2.0
 googleapis-common-protos>=1.70.0
 protobuf>=4.23,<5
-
+google-analytics-data
 # -------------------------
 # Instagram / Web Scraping
 # -------------------------
