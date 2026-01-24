@@ -1,6 +1,7 @@
 import streamlit as st
 from services.insights_store import save_insight
 from services.caption_engine import generate_caption
+from services.instagram_api import get_profile, get_posts
 import pandas as pd
 
 sample_data = pd.DataFrame({
@@ -50,3 +51,19 @@ def run():
         st.markdown("#### ✨ AI Caption Suggestion")
         st.text_area("Caption", caption_prompt, height=180)
 
+st.subheader("Instagram Data Analysis")
+username = st.text_input("Enter Instagram Username")
+if username:
+    # Fetch latest posts
+    posts_df = get_posts(username, limit=50)  # limit to last 50 posts
+    st.dataframe(posts_df)
+    
+    # Save to dashboard
+    save_to_dashboard("social_posts", posts_df)
+    
+    # Visualization
+    visualize_data("social_posts", posts_df)
+    
+    # AI insights
+    caption = generate_ai_caption("social_posts", posts_df)
+    st.success(f"💡 AI Insight: {caption}")
