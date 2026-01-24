@@ -2,6 +2,9 @@ import streamlit as st
 from utils.ui import inject_css, dark_mode_toggle, card
 from dotenv import load_dotenv
 import pandas as pd
+import plotly.express as px
+import openai
+import os
 
 # Load environment variables
 load_dotenv()
