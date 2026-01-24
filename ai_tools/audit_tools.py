@@ -1,6 +1,11 @@
 import streamlit as st
 from services.insights_store import save_insight
 from services.caption_engine import generate_caption
+from services.instagram_api import get_profile, get_posts
+from utils.dashboard import save_to_dashboard
+from utils.visualization import visualize_data
+from services.openai_api import generate_ai_caption
+
 import pandas as pd
 
 sample_data = pd.DataFrame({
@@ -19,34 +24,15 @@ st.download_button(
 )
 
 def run():
-    st.markdown("### 🔍 Brand Audit Tool")
+    st.subheader("Instagram Data Analysis")
+    username = st.text_input("Enter Instagram Username")
 
-    user_id = st.session_state.get("user_id", "guest")
+    if username:
+        posts_df = get_posts(username, limit=50)
+        st.dataframe(posts_df)
 
-    website = st.text_input("Website URL")
-    industry = st.selectbox("Industry", ["Fashion", "Tech", "Food", "Personal Brand"])
+        save_to_dashboard("social_posts", posts_df)
+        visualize_data("social_posts", posts_df)
 
-    if st.button("Run Audit"):
-        # REAL LOGIC (non-mock but deterministic)
-        insights = {
-            "website_present": bool(website),
-            "industry": industry,
-            "content_consistency": "low",
-            "engagement_opportunity": "high"
-        }
-
-        # 1️⃣ SAVE INSIGHT
-        save_insight(
-            user_id=user_id,
-            tool="Audit Tools",
-            data=insights
-        )
-
-        # 2️⃣ GENERATE AI CAPTION
-        caption_prompt = generate_caption(insights)
-
-        st.success("Audit completed and saved to Dashboard ✅")
-
-        st.markdown("#### ✨ AI Caption Suggestion")
-        st.text_area("Caption", caption_prompt, height=180)
-
+        caption = generate_ai_caption("social_posts", posts_df)
+        st.success(f"💡 AI Insight: {caption}")
