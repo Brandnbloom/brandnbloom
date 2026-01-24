@@ -34,5 +34,6 @@ def run_clv_calculator():
             file_name="sample_clv.csv",
             mime="text/csv"
         )
+save_to_dashboard("clv", df)
 
 
