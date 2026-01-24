@@ -1,15 +1,17 @@
 import streamlit as st
-from services.market_api import get_market_trends, get_marketing_roi
+from services.google_analytics_api import get_ga4_metrics
 from utils.dashboard import save_to_dashboard
+from utils.visualization import visualize_data
 from services.openai_api import generate_ai_caption
 
 def run():
-    market_df = get_market_trends()
-    roi_df = get_marketing_roi()
+    st.subheader("📊 Google Analytics Insights")
 
-    save_to_dashboard("market_trends", market_df)
-    save_to_dashboard("roi", roi_df)
+    df = get_ga4_metrics()
+    st.dataframe(df)
 
-    st.success(generate_ai_caption("market_trends", market_df))
-    st.success(generate_ai_caption("roi", roi_df))
+    save_to_dashboard("ga4_metrics", df)
+    visualize_data("ga4_metrics", df)
 
+    insight = generate_ai_caption("ga4_metrics", df)
+    st.success(f"💡 GA Insight: {insight}"
