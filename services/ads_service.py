@@ -4,6 +4,8 @@ from db.db import get_session
 from models.models import Campaign, Event
 from services.ai_client import generate_text
 import json
+import pandas as pd
+
 
 
 def log_event(event_type: str, payload: dict):
@@ -78,3 +80,11 @@ def generate_ad_creative(brief: str, platform: str):
     log_event("ad_creative_generated", {"platform": platform, "brief": brief})
 
     return {"creative": output}
+
+def get_ad_performance(campaign_id):
+    data = [
+        {"creative": "A", "CTR": 1.8, "CPA": 120},
+        {"creative": "B", "CTR": 2.5, "CPA": 90},
+    ]
+    return pd.DataFrame(data)
+
