@@ -42,3 +42,19 @@ def run_ad_creative_tester():
             mime="text/csv"
         )
 save_to_dashboard("ab_test", summary)
+
+st.subheader("Ad Creative Tester")
+campaign_id = st.text_input("Enter Campaign ID")
+if campaign_id:
+    # Pull real ad metrics
+    df_ads = get_ad_performance(campaign_id)  # implement in your services
+    st.dataframe(df_ads)
+    
+    # Save + visualize
+    save_to_dashboard("ab_test", df_ads)
+    visualize_data("ab_test", df_ads)
+    
+    # AI suggestions
+    caption = generate_ai_caption("ab_test", df_ads)
+    st.success(f"💡 AI Insight: {caption}")
+
