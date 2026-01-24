@@ -1,5 +1,3 @@
-# services/google_analytics_api.py
-
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import RunReportRequest
 import os
