@@ -2,10 +2,22 @@ import streamlit as st
 import pandas as pd
 from services.ads_api import get_ad_performance  # Your real ads API service
 from streamlit_app import save_to_dashboard, visualize_data, generate_ai_caption
-
+from utils.dashboard import save_to_dashboard
+from utils.visualization import visualize_data
+from services.openai_api import generate_ai_caption
 def run():
-    st.header("🧪 Ad Creative Tester - Real Data A/B Testing")
+    st.subheader("🧪 Ad Creative Tester")
 
+    if st.button("Fetch Live Ad Data"):
+        df_ads = get_ad_performance()
+
+        st.dataframe(df_ads)
+
+        save_to_dashboard("ad_performance", df_ads)
+        visualize_data("ad_performance", df_ads)
+
+        insight = generate_ai_caption("ad_performance", df_ads)
+        st.success(f"💡 AI Insight: {insight}")
     # ------------------- Input -------------------
     campaign_id = st.text_input("Enter Campaign ID or Name")
     limit = st.number_input("Number of recent ads to analyze", min_value=1, max_value=100, value=10)
@@ -23,11 +35,6 @@ def run():
                 st.success("✅ Data fetched successfully!")
                 st.dataframe(df_ads)
 
-                # ------------------- Dashboard Save -------------------
-                save_to_dashboard("ab_test", df_ads)
-
-                # ------------------- Visualization -------------------
-                visualize_data("ab_test", df_ads)
 
                 # ------------------- AI Caption -------------------
                 caption = generate_ai_caption("ab_test", df_ads)
