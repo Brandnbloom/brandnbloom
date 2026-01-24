@@ -35,4 +35,5 @@ def run_churn_predictor():
             file_name="sample_churn.csv",
             mime="text/csv"
         )
+save_to_dashboard("churn", df_results)
 
