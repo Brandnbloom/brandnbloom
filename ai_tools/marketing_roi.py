@@ -37,3 +37,4 @@ def run_marketing_roi():
             file_name="sample_roi.csv",
             mime="text/csv"
         )
+save_to_dashboard("roi", df)
