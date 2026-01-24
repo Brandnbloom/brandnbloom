@@ -1,6 +1,24 @@
 import streamlit as st
 from ai_tools.profile_fetcher import InstagramProfileFetcher
 import pandas as pd
+from services.instagram_api import get_profile, get_posts
+
+st.subheader("Instagram Data Analysis")
+username = st.text_input("Enter Instagram Username")
+if username:
+    # Fetch latest posts
+    posts_df = get_posts(username, limit=50)  # limit to last 50 posts
+    st.dataframe(posts_df)
+    
+    # Save to dashboard
+    save_to_dashboard("social_posts", posts_df)
+    
+    # Visualization
+    visualize_data("social_posts", posts_df)
+    
+    # AI insights
+    caption = generate_ai_caption("social_posts", posts_df)
+    st.success(f"💡 AI Insight: {caption}")
 
 sample_data = pd.DataFrame({
     "customer_id": [1,2,3],
