@@ -96,6 +96,18 @@ def generate_ai_caption(tool_name, df):
         return f"Campaign {top_campaign} delivered highest ROI."
     else:
         return "AI insights not available for this tool yet."
+elif page == "Dashboard":
+    st.markdown("## 📊 Centralized Dashboard")
+    st.info("All tool results and insights in one place")
+
+    for tool_name, data_list in st.session_state.dashboard_data.items():
+        if data_list:  # Only show tools with data
+            st.markdown(f"### 🛠 {tool_name.replace('_',' ').title()}")
+            for i, df in enumerate(data_list):
+                st.write(f"Result {i+1}")
+                st.dataframe(df)
+                caption = generate_ai_caption(tool_name, df)
+                st.success(f"💡 AI Insight: {caption}")
 
 # =============================================================
 # ---------------- HOME ----------------
