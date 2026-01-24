@@ -63,6 +63,39 @@ st.session_state.page = st.radio(
 )
 
 page = st.session_state.page
+# Initialize dashboard storage
+if "dashboard_data" not in st.session_state:
+    st.session_state.dashboard_data = {
+        "ab_test": [],
+        "churn": [],
+        "clv": [],
+        "market_trends": [],
+        "roi": []
+    }
+
+# Function to save results from any tool
+def save_to_dashboard(tool_name, df):
+    if tool_name in st.session_state.dashboard_data:
+        st.session_state.dashboard_data[tool_name].append(df)
+    else:
+        st.session_state.dashboard_data[tool_name] = [df]
+
+def generate_ai_caption(tool_name, df):
+    # Placeholder: for now, simple textual insight
+    if tool_name == "ab_test":
+        best_ad = df.loc[df['ctr'].idxmax(), 'ad_version']
+        return f"Ad version {best_ad} performed best based on CTR."
+    elif tool_name == "churn":
+        churn_rate = df['churn'].mean()
+        return f"Predicted churn rate: {churn_rate*100:.2f}%."
+    elif tool_name == "clv":
+        top_customer = df.loc[df['clv'].idxmax(), 'customer_id']
+        return f"Customer {top_customer} has highest predicted CLV."
+    elif tool_name == "roi":
+        top_campaign = df.loc[df['roi'].idxmax(), 'campaign']
+        return f"Campaign {top_campaign} delivered highest ROI."
+    else:
+        return "AI insights not available for this tool yet."
 
 # =============================================================
 # ---------------- HOME ----------------
