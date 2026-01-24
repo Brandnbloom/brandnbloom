@@ -5,6 +5,10 @@ from models.models import Campaign, Event
 from services.ai_client import generate_text
 import json
 import pandas as pd
+from facebook_business.adobjects.adaccount import AdAccount
+from facebook_business.api import FacebookAdsApi
+import os
+import pandas as pd
 
 
 
@@ -81,10 +85,31 @@ def generate_ad_creative(brief: str, platform: str):
 
     return {"creative": output}
 
-def get_ad_performance(campaign_id):
-    data = [
-        {"creative": "A", "CTR": 1.8, "CPA": 120},
-        {"creative": "B", "CTR": 2.5, "CPA": 90},
-    ]
-    return pd.DataFrame(data)
+def get_ad_performance():
+    FB_ACCESS_TOKEN = os.getenv("FB_ACCESS_TOKEN")
+    FB_AD_ACCOUNT_ID = os.getenv("FB_AD_ACCOUNT_ID")
+    FB_APP_ID = os.getenv("FB_APP_ID")
+    FB_APP_SECRET = os.getenv("FB_APP_SECRET")
+
+    # Initialize Meta API
+    FacebookAdsApi.init(
+        app_id=FB_APP_ID,
+        app_secret=FB_APP_SECRET,
+        access_token=FB_ACCESS_TOKEN
+    )
+
+    account = AdAccount(FB_AD_ACCOUNT_ID)
+
+    ads = account.get_insights(fields=[
+        'ad_name',
+        'impressions',
+        'clicks',
+        'conversions',
+        'spend',
+        'ctr',
+        'cpc'
+    ])
+
+    return pd.DataFrame(list(ads))
+)
 
