@@ -38,7 +38,7 @@ stripe>=10.6.0
 fastapi==0.101.0
 uvicorn[standard]==0.23.2
 pydantic>=1.10.13,<3.0.0
-python-multipart==0.0.18
+python-multipart==0.0.22
 
 # -------------------------
 # Database & ORM
@@ -88,7 +88,7 @@ google-auth>=2.40.0
 google-auth-httplib2>=0.2.0
 google-auth-oauthlib>=1.2.0
 googleapis-common-protos>=1.70.0
-protobuf>=4.23,<5
+protobuf>=4.23,<7
 google-analytics-data
 # -------------------------
 # Instagram / Web Scraping
