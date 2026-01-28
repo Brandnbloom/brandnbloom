@@ -6,9 +6,7 @@ import razorpay
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import RunReportRequest
 import json
-from services.customer_api import get_customer_data
 
-df = get_customer_data()
 
 # Load environment variables
 GA4_PROPERTY_ID = os.getenv("GA4_PROPERTY_ID")
