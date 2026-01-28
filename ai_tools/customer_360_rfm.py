@@ -15,7 +15,7 @@ from utils.dashboard import save_to_dashboard
 # Merge GA + Stripe + Meta
 # -------------------------------------------------
 
-def build_customer_360(df_ga, df_stripe, df_meta):
+def build_customer_360(df_ga, df_razorpay, df_meta):
 
     df = df_ga.merge(df_razorpay, on="email", how="left")
     df = df.merge(df_meta, on="email", how="left")
@@ -89,7 +89,7 @@ def train_churn_model(df):
 # MAIN TOOL
 # -------------------------------------------------
 
-def run_customer_360_rfm_tool(df_ga, df_stripe, df_meta):
+def run_customer_360_rfm_tool(df_ga, df_razorpay, df_meta):
 
     st.title("🧠 Customer 360 + RFM + CLV + Churn")
 
