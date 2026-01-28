@@ -1,10 +1,14 @@
 import streamlit as st
 from utils.ui import inject_css, dark_mode_toggle, card
 from dotenv import load_dotenv
+from utils.session import get_user_id
+from utils.usage_limiter import init_usage
 import pandas as pd
 import plotly.express as px
 import openai
 import os
+get_user_id()
+init_usage()
 
 # Load env variables
 load_dotenv()
