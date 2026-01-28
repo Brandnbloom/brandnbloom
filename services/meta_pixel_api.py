@@ -1,24 +1,29 @@
+from facebook_business.api import FacebookAdsApi
+from facebook_business.adobjects.adaccount import AdAccount
 import os
-import requests
 import pandas as pd
 
-ACCESS_TOKEN = os.getenv("FB_ACCESS_TOKEN")
-PIXEL_ID = os.getenv("FB_PIXEL_ID")
+FB_ACCESS_TOKEN = os.getenv("FB_ACCESS_TOKEN")
+FB_AD_ACCOUNT_ID = os.getenv("FB_AD_ACCOUNT_ID")
+FB_APP_ID = os.getenv("FB_APP_ID")
+FB_APP_SECRET = os.getenv("FB_APP_SECRET")
+
+FacebookAdsApi.init(FB_APP_ID, FB_APP_SECRET, FB_ACCESS_TOKEN)
 
 def get_meta_pixel_data():
-    url = f"https://graph.facebook.com/v18.0/{PIXEL_ID}/events"
-    params = {
-        "access_token": ACCESS_TOKEN
-    }
-
-    res = requests.get(url, params=params).json()
-    events = res.get("data", [])
+    account = AdAccount(FB_AD_ACCOUNT_ID)
+    insights = account.get_insights(fields=[
+        "campaign_name", "spend", "impressions", "clicks", "actions"
+    ])
 
     data = []
-    for e in events:
+    for row in insights:
         data.append({
-            "email": e.get("user_data", {}).get("em"),
-            "conversions": e.get("custom_data", {}).get("value", 0)
+            "campaign": row["campaign_name"],
+            "spend": float(row.get("spend", 0)),
+            "clicks": int(row.get("clicks", 0)),
+            "conversions": sum([a["value"] for a in row.get("actions", []) if a["action_type"]=="offsite_conversion"])
         })
 
     return pd.DataFrame(data)
+
