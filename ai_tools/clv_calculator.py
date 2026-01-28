@@ -1,6 +1,9 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+from services.customer_api import get_customer_data
+
+df = get_customer_data()
 
 def run_clv_calculator():
     st.subheader("💰 Customer Lifetime Value Calculator")
