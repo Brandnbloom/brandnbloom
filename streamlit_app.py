@@ -6,11 +6,16 @@ import os
 from utils.ui import inject_css, dark_mode_toggle, card
 from dotenv import load_dotenv
 from utils.session import get_user_id
-from utils.usage_limiter import init_usage
+from utils.usage_limiter import init_usage, check_usage, show_limit_message
 from services.razorpay_service import
 get_razorpay_customers
 from utils.pdf_export import generate_pdf_report
-from utils.dashboard import load_dashboard_data
+from utils.dashboard import load_dashboard_data 
+
+user_id = get_user_id()  # from utils/session.py
+
+if not check_usage("customer_360"):
+    show_limit_message(user_id)
 
 
 # Load env variables
