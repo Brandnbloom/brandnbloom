@@ -9,6 +9,8 @@ from utils.session import get_user_id
 from utils.usage_limiter import init_usage
 from services.razorpay_service import
 get_razorpay_customers
+from utils.pdf_export import generate_pdf_report
+from utils.dashboard import load_dashboard_data
 
 
 # Load env variables
@@ -206,6 +208,19 @@ TOOLS_MAPPING = {
 
 if page in TOOLS_MAPPING:
     TOOLS_MAPPING[page]()  # Each tool now fetches real data from APIs / DB
+
+if st.button("📄 Download Full PDF Report"):
+    data = load_dashboard_data(user_id)
+    pdf_path = generate_pdf_report(user_id, data)
+    st.success("Report generated!")
+
+    with open(pdf_path, "rb") as f:
+        st.download_button(
+            label="⬇️ Download PDF",
+            data=f,
+            file_name="Brand_N_Bloom_Report.pdf",
+            mime="application/pdf"
+        )
 
 # =============================================================
 # Footer
