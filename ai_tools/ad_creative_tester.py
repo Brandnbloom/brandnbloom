@@ -5,8 +5,19 @@ from streamlit_app import save_to_dashboard, visualize_data, generate_ai_caption
 from utils.dashboard import save_to_dashboard
 from utils.visualization import visualize_data
 from services.openai_api import generate_ai_caption
+from utils.usage_limiter import can_use_tool, increment_usage, usage_banner
 def run():
     st.subheader("🧪 Ad Creative Tester")
+    usage_banner()
+
+    if not can_use_tool():
+        st.warning("🔒 Upgrade to unlock unlimited access.")
+        st.stop()
+
+    if st.button("Run A/B Analysis"):
+        increment_usage()
+        # 👉 real API + analytics logic here
+        st.success("Analysis complete!")
 
     if st.button("Fetch Live Ad Data"):
         df_ads = get_ad_performance()
