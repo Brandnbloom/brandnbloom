@@ -1,7 +1,8 @@
 import pandas as pd
 import streamlit as st
 from datetime import datetime
-
+from services.customer_api import get_customer_data
+df = get_customer_data()
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.linear_model import LogisticRegression
 from sklearn.model_selection import train_test_split
