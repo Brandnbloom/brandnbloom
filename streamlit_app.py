@@ -1,237 +1,192 @@
 import streamlit as st
-import pandas as pd
-import plotly.express as px
-import openai
 import os
-from utils.ui import inject_css, dark_mode_toggle, card
-from dotenv import load_dotenv
-from utils.session import get_user_id
-from utils.usage_limiter import init_usage, check_usage, show_limit_message
-from services.razorpay_service import
-get_razorpay_customers
-from utils.pdf_export import generate_pdf_report
-from utils.dashboard import load_dashboard_data 
 
+# ----------------------------
+# Utils
+# ----------------------------
+from utils.session import get_user_id
+from utils.usage_limiter import check_usage, show_limit_message
+from utils.dashboard import load_dashboard_data
+from utils.pdf_export import generate_pdf_report
+
+# ----------------------------
+# Tools (ai_tools)
+# ----------------------------
+from ai_tools.customer_360_rfm import run_customer_360_rfm_tool
+from ai_tools.ad_creative_tester import run_ad_creative_tester
+from ai_tools.churn_predictor import run_churn_predictor
+from ai_tools.clv_calculator import run_clv_calculator
+from ai_tools.market_trends import run_market_trends
+from ai_tools.roi_tracker import run_roi_tracker
+from ai_tools.rfm_segmentation import run_rfm_analysis
+from ai_tools.sentiment_analyzer import run_sentiment_analyzer
+from ai_tools.audit_tools import run_audit_tools
+
+# ----------------------------
+# User Session
+# ----------------------------
 user_id = get_user_id()  # from utils/session.py
 
-if not check_usage("customer_360"):
-    show_limit_message(user_id)
-
-
-# Load env variables
-load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
-
-# =============================================================
-# Page Setup
-# =============================================================
-st.set_page_config(
-    page_title="Brand N Bloom",
-    layout="wide",
-    initial_sidebar_state="collapsed"
-)
-
-inject_css()
-dark_mode_toggle()
-
-# =============================================================
-# Session State Init
-# =============================================================
-if "page" not in st.session_state:
-    st.session_state.page = "Home"
-
-# Dashboard storage
-if "dashboard_data" not in st.session_state:
-    st.session_state.dashboard_data = {
-        "ab_test": [],
-        "churn": [],
-        "clv": [],
-        "market_trends": [],
-        "roi": [],
-        "social_posts": []
-    }
-
-def save_to_dashboard(tool_name, df):
-    if tool_name in st.session_state.dashboard_data:
-        st.session_state.dashboard_data[tool_name].append(df)
-    else:
-        st.session_state.dashboard_data[tool_name] = [df]
-
-def visualize_data(tool_name, df):
-    st.markdown(f"#### Data Visualization: {tool_name.replace('_',' ').title()}")
-    numeric_cols = df.select_dtypes(include='number').columns.tolist()
-    if len(numeric_cols) >= 2:
-        fig = px.scatter(df, x=numeric_cols[0], y=numeric_cols[1],
-                         color=df.columns[0], title=f"{tool_name.replace('_',' ').title()} Analysis")
-        st.plotly_chart(fig, use_container_width=True)
-    elif numeric_cols:
-        fig = px.bar(df, x=df.index, y=numeric_cols[0], title=f"{tool_name.replace('_',' ').title()} Metrics")
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.info("No numeric data available for visualization.")
-
-def generate_ai_caption(tool_name, df):
-    try:
-        preview = df.head(5).to_dict()
-        prompt = f"Provide actionable marketing insights based on the following {tool_name} data: {preview}"
-        response = openai.ChatCompletion.create(
-            model="gpt-4",
-            messages=[
-                {"role":"system","content":"You are a marketing analyst."},
-                {"role":"user","content":prompt}
-            ],
-            temperature=0.7,
-            max_tokens=150
-        )
-        caption = response.choices[0].message.content.strip()
-        return caption
-    except Exception as e:
-        return f"AI Caption generation failed: {e}"
-
-# =============================================================
-# Header & Banner
-# =============================================================
-st.image("assets/banner.png", use_container_width=True)
-st.markdown("# 🌸 Brand N Bloom\n**AI-powered growth tools for modern brands**", unsafe_allow_html=True)
-
-# =============================================================
-# Top Menu
-# =============================================================
-TOP_MENU = [
-    "Home", "Features", "Pricing", "Blog", "Dashboard",
-    "Contact", "About", "Login", "Signup", "Settings",
-    "Audit Tools", "BloomScore", "Business Compare",
-    "Ad Creative Tester", "Churn Predictor", "CLV Calculator",
-    "Market Trend Analyzer", "Marketing ROI Tracker",
-    "Segmentation", "Sentiment Analyzer"
+# ----------------------------
+# Top Menu Bar
+# ----------------------------
+menu = [
+    "Home",
+    "Customer 360 + RFM",
+    "Ad Creative Tester",
+    "CLV + Churn ML",
+    "Market Trends",
+    "ROI Tracker",
+    "Segmentation + Sentiment",
+    "Audit Tools",
+    "Dashboard / PDF Export"
 ]
 
-st.session_state.page = st.radio(
-    "Navigate",
-    TOP_MENU,
-    horizontal=True,
-    index=TOP_MENU.index(st.session_state.page)
-)
+selected = st.selectbox("🔹 Select Tool", menu)
 
-page = st.session_state.page
+# ----------------------------
+# Tool Execution
+# ----------------------------
 
-# =============================================================
-# ---------------- PAGES ----------------
-# =============================================================
-if page == "Home":
-    st.markdown("## Welcome to Brand N Bloom 🌱")
-    st.markdown("Grow your brand with clarity, data & AI.")
-    if st.button("Get Started →"):
-        st.session_state.page = "Features"
-        st.experimental_rerun()
+# 0️⃣ Enhanced Home
+if selected == "Home":
+    # Custom CSS for banner & cards
+    st.markdown(
+        """
+        <style>
+        .home-banner {
+            background: linear-gradient(120deg, #A7E7F0, #539788, #F2DCE3);
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            color: #1D2233;
+            font-family: 'Inter', sans-serif;
+        }
+        .kpi-card {
+            background-color: #ffffffdd;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 2px 2px 10px #aaa;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
 
-elif page == "Features":
-    st.markdown("## 🧰 Explore Our Tools")
-    TOOLS_DESCRIPTIONS = {
-        "Audit Tools": "Analyze your brand’s website and social media performance",
-        "BloomScore": "Instant brand health score for social profiles",
-        "Business Compare": "Benchmark your brand against competitors",
-        "Ad Creative Tester": "A/B testing simulation for ads",
-        "Churn Predictor": "Predict customer churn using ML",
-        "CLV Calculator": "Forecast customer lifetime value",
-        "Market Trend Analyzer": "Time-series analysis of emerging niches",
-        "Marketing ROI Tracker": "Multi-touch attribution modeling",
-        "Segmentation": "Customer RFM segmentation",
-        "Sentiment Analyzer": "NLP-driven social sentiment analysis"
-    }
-    cols = st.columns(3)
-    for i, (tool, desc) in enumerate(TOOLS_DESCRIPTIONS.items()):
-        with cols[i % 3]:
-            if st.button(tool, use_container_width=True):
-                st.session_state.page = tool
-                st.experimental_rerun()
-            card(f"**{tool}**\n\n{desc}")
+    # Banner
+    st.markdown("""
+    <div class="home-banner">
+        <h1>Welcome to Brand N Bloom 🌱</h1>
+        <h3>Your AI-powered Marketing & Analytics Suite</h3>
+        <p>Track, analyze, and optimize your campaigns all in one place.</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-elif page == "Pricing":
-    st.markdown("## 💰 Pricing")
-    c1, c2 = st.columns(2)
-    with c1:
-        st.markdown("<div class='bnb-card'><h3>Starter</h3><p>₹0 / month</p></div>", unsafe_allow_html=True)
-    with c2:
-        st.markdown("<div class='bnb-card'><h3>Pro</h3><p>₹1999 / month</p></div>", unsafe_allow_html=True)
-        st.markdown("<a class='bnb-cta' href='https://www.paypal.com' target='_blank'>Pay with PayPal</a>", unsafe_allow_html=True)
+    st.markdown("---")
 
-elif page == "Blog":
-    st.markdown("## 📰 Blog & Prompts")
-    try:
-        from ai_tools.prompts import run
-        run()
-    except Exception as e:
-        st.error(f"Blog module error: {e}")
+    # KPI Cards
+    dashboard_data = load_dashboard_data(user_id)
+    total_tools = 8
+    free_uses = 3
+    used_uses = sum([d.get("usage_count", 0) for d in dashboard_data])
+    reports_generated = len([d for d in dashboard_data if d.get("chart_paths")])
 
-elif page == "Dashboard":
-    st.markdown("## 📊 Centralized Dashboard")
-    st.info("All tool results and AI insights in one place")
-    for tool_name, data_list in st.session_state.dashboard_data.items():
-        if data_list:
-            st.markdown(f"### 🛠 {tool_name.replace('_',' ').title()}")
-            for i, df in enumerate(data_list):
-                st.write(f"Result {i+1}")
-                st.dataframe(df)
-                visualize_data(tool_name, df)
-                caption = generate_ai_caption(tool_name, df)
-                st.success(f"💡 AI Insight: {caption}")
+    cols = st.columns(4)
 
-# Other legacy pages: Contact, About, Login, Signup, Settings
-# (unchanged)
+    with cols[0]:
+        st.markdown(f'<div class="kpi-card"><h2>{free_uses - used_uses}</h2><p>Free Uses Left</p></div>', unsafe_allow_html=True)
 
-# =============================================================
-# ---------------- TOOLS MAPPING ----------------
-# =============================================================
-from ai_tools.audit_tools import run as run_audit
-from ai_tools.bloomscore import run as run_bloomscore
-from ai_tools.business_compare import run as run_business_compare
-from ai_tools.ad_creative_tester import run as run_ad_creative_tester
-from ai_tools.churn_predictor import run as run_churn_predictor
-from ai_tools.clv_calculator import run as run_clv_calculator
-from ai_tools.market_trends import run as run_market_trends
-from ai_tools.marketing_roi import run as run_marketing_roi
-from ai_tools.segmentation import run_rfm_analysis
-from ai_tools.sentiment import run_sentiment_analyzer
-from ai_tools.customer_360_rfm import run_customer_360_tool
+    with cols[1]:
+        st.markdown(f'<div class="kpi-card"><h2>{total_tools}</h2><p>Total Tools</p></div>', unsafe_allow_html=True)
 
-if st.button("Generate Customer 360 + RFM"):
-    run_customer_360_tool()
+    with cols[2]:
+        st.markdown(f'<div class="kpi-card"><h2>{len(dashboard_data)}</h2><p>Active Users</p></div>', unsafe_allow_html=True)
 
-TOOLS_MAPPING = {
-    "Audit Tools": run_audit,
-    "BloomScore": run_bloomscore,
-    "Business Compare": run_business_compare,
-    "Ad Creative Tester": run_ad_creative_tester,
-    "Churn Predictor": run_churn_predictor,
-    "CLV Calculator": run_clv_calculator,
-    "Market Trend Analyzer": run_market_trends,
-    "Marketing ROI Tracker": run_marketing_roi,
-    "Segmentation": run_rfm_analysis,
-    "Sentiment Analyzer": run_sentiment_analyzer
-}
+    with cols[3]:
+        st.markdown(f'<div class="kpi-card"><h2>{reports_generated}</h2><p>Reports Generated</p></div>', unsafe_allow_html=True)
 
-if page in TOOLS_MAPPING:
-    TOOLS_MAPPING[page]()  # Each tool now fetches real data from APIs / DB
+    st.markdown("---")
 
-if st.button("📄 Download Full PDF Report"):
+    # Call-to-action
+    if used_uses >= free_uses:
+        st.warning("🚀 You have reached your free usage limit!")
+        st.markdown("[Upgrade Now](#)", unsafe_allow_html=True)
+    else:
+        st.info("🌟 You still have free tool uses left! Explore and optimize your campaigns.")
+
+
+# 1️⃣ Customer 360 + RFM
+elif selected == "Customer 360 + RFM":
+    if check_usage("customer_360"):
+        df_ga = ...  # call GA service
+        df_razorpay = ...  # call Razorpay service
+        df_meta = ...  # call Meta Pixel service
+        run_customer_360_rfm_tool(df_ga, df_stripe, df_meta)
+    else:
+        show_limit_message(user_id)
+
+# 2️⃣ Ad Creative Tester
+elif selected == "Ad Creative Tester":
+    if check_usage("ad_creative_tester"):
+        run_ad_creative_tester(user_id)
+    else:
+        show_limit_message(user_id)
+
+# 3️⃣ CLV + Churn ML
+elif selected == "CLV + Churn ML":
+    if check_usage("clv_churn"):
+        run_clv_calculator(user_id)
+        run_churn_predictor(user_id)
+    else:
+        show_limit_message(user_id)
+
+# 4️⃣ Market Trends
+elif selected == "Market Trends":
+    if check_usage("market_trends"):
+        run_market_trends(user_id)
+    else:
+        show_limit_message(user_id)
+
+# 5️⃣ ROI Tracker
+elif selected == "ROI Tracker":
+    if check_usage("roi_tracker"):
+        run_roi_tracker(user_id)
+    else:
+        show_limit_message(user_id)
+
+# 6️⃣ Segmentation + Sentiment
+elif selected == "Segmentation + Sentiment":
+    if check_usage("segmentation_sentiment"):
+        df_customers = ...  # real customer data
+        df_social = ...  # real social posts
+        run_rfm_analysis(df_customers)
+        run_sentiment_analyzer(df_social)
+    else:
+        show_limit_message(user_id)
+
+# 7️⃣ Audit Tools
+elif selected == "Audit Tools":
+    if check_usage("audit_tools"):
+        run_audit_tools(user_id)
+    else:
+        show_limit_message(user_id)
+
+# 8️⃣ Dashboard / PDF Export
+elif selected == "Dashboard / PDF Export":
+    st.title("📊 Dashboard & PDF Export")
     data = load_dashboard_data(user_id)
-    pdf_path = generate_pdf_report(user_id, data)
-    st.success("Report generated!")
+    st.dataframe(data)
 
-    with open(pdf_path, "rb") as f:
-        st.download_button(
-            label="⬇️ Download PDF",
-            data=f,
-            file_name="Brand_N_Bloom_Report.pdf",
-            mime="application/pdf"
-        )
+    if st.button("📄 Download Full PDF Report"):
+        pdf_path = generate_pdf_report(user_id, data)
+        st.success("Report generated!")
 
-# =============================================================
-# Footer
-# =============================================================
-st.markdown("""
----
-© 2026 Brand N Bloom • Built with ❤️
-""", unsafe_allow_html=True)
+        with open(pdf_path, "rb") as f:
+            st.download_button(
+                label="⬇️ Download PDF",
+                data=f,
+                file_name="Brand_N_Bloom_Report.pdf",
+                mime="application/pdf"
+            )
 
