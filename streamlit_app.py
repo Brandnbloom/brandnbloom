@@ -185,6 +185,10 @@ from ai_tools.market_trends import run as run_market_trends
 from ai_tools.marketing_roi import run as run_marketing_roi
 from ai_tools.segmentation import run_rfm_analysis
 from ai_tools.sentiment import run_sentiment_analyzer
+from ai_tools.customer_360_rfm import run_customer_360_tool
+
+if st.button("Generate Customer 360 + RFM"):
+    run_customer_360_tool()
 
 TOOLS_MAPPING = {
     "Audit Tools": run_audit,
