@@ -36,6 +36,19 @@ def run():
             st.warning("Please enter both brands.")
             return
 
+          # ---------------- Check usage ----------------
+    from streamlit_app import check_usage
+    if not check_usage("Business Compare"):
+        st.stop()  # Stop the tool if free limit reached
+
+    # ---------------- Tool logic ----------------
+    uploaded_file = st.file_uploader("Upload Customer Data", type=['csv'])
+    if uploaded_file:
+        df = pd.read_csv(uploaded_file)
+        st.success("Data loaded successfully!")
+        # Your Business compare logic here...
+
+
         # Deterministic insight logic
         insights = {
             "brand_a": brand_a,
