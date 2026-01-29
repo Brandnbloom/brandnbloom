@@ -41,6 +41,18 @@ def run():
         st.success("✅ Customer data loaded!")
         st.dataframe(df.head(10))
 
+          # ---------------- Check usage ----------------
+    from streamlit_app import check_usage
+    if not check_usage("CLV Calculator"):
+        st.stop()  # Stop the tool if free limit reached
+
+    # ---------------- Tool logic ----------------
+    uploaded_file = st.file_uploader("Upload Customer Data", type=['csv'])
+    if uploaded_file:
+        df = pd.read_csv(uploaded_file)
+        st.success("Data loaded successfully!")
+        # Your clv calculator logic here...
+
         # ---------------- CLV Calculation ----------------
         # Simple CLV = Average purchase value * Purchase frequency * 12 months (simplified)
         df["AveragePurchaseValue"] = df.get("TotalSpent", 0) / df.get("NumberOfPurchases", 1)
