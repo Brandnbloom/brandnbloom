@@ -125,3 +125,45 @@ elif selected == "Dashboard / PDF Export":
                 f,
                 file_name="brandnbloom.pdf"
             )
+if selected == "Dashboard":
+    st.header("📊 Unified Analytics Dashboard")
+
+    if "dashboard_data" not in st.session_state or not st.session_state["dashboard_data"]:
+        st.info("Run any tool to populate the dashboard with real data.")
+    else:
+        for tool_name, df in st.session_state["dashboard_data"].items():
+            st.subheader(f"📌 {tool_name}")
+            
+            # Show top 10 rows
+            st.dataframe(df.head(10))
+
+            # ---------------- Interactive Visualizations ----------------
+            if tool_name.lower() in ["churn predictor", "churn"]:
+                cols = ["Recency", "Frequency", "Monetary"]
+                if all(col in df.columns for col in cols):
+                    st.plotly_chart(px.bar(df[cols].fillna(0), title="Churn RFM Metrics"))
+
+            if tool_name.lower() in ["clv calculator", "clv"]:
+                if "CustomerID" in df.columns and "CLV" in df.columns:
+                    st.plotly_chart(px.line(df, x="CustomerID", y="CLV", title="Customer Lifetime Value"))
+
+            if tool_name.lower() in ["market trends", "market_trends"]:
+                if "LastPurchaseDate" in df.columns and "TotalSpent" in df.columns:
+                    trend = df.groupby(df["LastPurchaseDate"].dt.to_period("M"))["TotalSpent"].sum().reset_index()
+                    trend["LastPurchaseDate"] = trend["LastPurchaseDate"].dt.to_timestamp()
+                    st.plotly_chart(px.line(trend, x="LastPurchaseDate", y="TotalSpent", title="Monthly Total Spend Trend"))
+
+            if tool_name.lower() in ["roi tracker", "roi_tracker"]:
+                if "ad_name" in df.columns and "ROI" in df.columns:
+                    st.plotly_chart(px.bar(df, x="ad_name", y="ROI", title="Campaign ROI (%)"))
+
+            if tool_name.lower() in ["ad creative tester", "ad_creatives"]:
+                if "ad_name" in df.columns and "CTR" in df.columns:
+                    st.plotly_chart(px.bar(df, x="ad_name", y="CTR", title="Ad CTR Comparison"))
+
+            # ---------------- AI Insight ----------------
+            if "AI_Insight" in df.columns:
+                st.success(f"💡 AI Insight: {df['AI_Insight'].iloc[0]}")
+
+            st.markdown("---")
+
