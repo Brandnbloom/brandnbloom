@@ -55,3 +55,16 @@ Here’s what that means for your brand.
     if st.button("Generate Caption"):
         caption = generate_caption(data, tone)
         st.text_area("Generated Caption", caption, height=120)
+
+  # ---------------- Check usage ----------------
+    from streamlit_app import check_usage
+    if not check_usage("Insights caption"):
+        st.stop()  # Stop the tool if free limit reached
+
+    # ---------------- Tool logic ----------------
+    uploaded_file = st.file_uploader("Upload Customer Data", type=['csv'])
+    if uploaded_file:
+        df = pd.read_csv(uploaded_file)
+        st.success("Data loaded successfully!")
+        # Your Insights caption logic here...
+
