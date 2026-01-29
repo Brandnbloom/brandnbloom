@@ -23,6 +23,22 @@ st.set_page_config(page_title="Brand N Bloom", layout="wide")
 
 user_id = get_user_id()
 
+def check_usage(tool_name, free_limit=3):
+    """
+    Checks if the user has free usage left for a tool.
+    Increments usage count if allowed.
+    """
+    usage = st.session_state["tool_usage"].get(tool_name, 0)
+    if usage < free_limit:
+        st.session_state["tool_usage"][tool_name] = usage + 1
+        remaining = free_limit - st.session_state["tool_usage"][tool_name]
+        st.info(f"✅ Free usage remaining for '{tool_name}': {remaining}")
+        return True
+    else:
+        st.warning(f"❌ Free limit reached for '{tool_name}'. Please subscribe to continue.")
+        return False
+
+
 # ---------------- MENU ----------------
 
 menu = [
