@@ -13,7 +13,7 @@ def run():
     st.subheader("👤 Customer 360 View")
 
     df_ga = get_ga_user_data()
-    df_stripe = get_stripe_customers()
+    df_razorpay = get_razorpay_customers()
     df_meta = get_meta_pixel_data()
 
     df = df_ga.merge(df_stripe, on="email", how="left")
@@ -27,3 +27,14 @@ def run():
     insight = generate_ai_caption("customer_360", df)
     st.success(f"💡 Customer Insight: {insight}")
 
+  # ---------------- Check usage ----------------
+    from streamlit_app import check_usage
+    if not check_usage("Customer 360"):
+        st.stop()  # Stop the tool if free limit reached
+
+    # ---------------- Tool logic ----------------
+    uploaded_file = st.file_uploader("Upload Customer Data", type=['csv'])
+    if uploaded_file:
+        df = pd.read_csv(uploaded_file)
+        st.success("Data loaded successfully!")
+        # Your Customer 360 logic here...
