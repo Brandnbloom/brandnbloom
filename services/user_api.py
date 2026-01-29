@@ -7,14 +7,38 @@ DB_FILE = "data/users.db"
 def init_db():
     conn = sqlite3.connect(DB_FILE)
     c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS users (
-                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                 email TEXT UNIQUE,
-                 password TEXT,
-                 usage TEXT
-                 )''')
+
+c.execute('''CREATE TABLE IF NOT EXISTS users (
+             id INTEGER PRIMARY KEY AUTOINCREMENT,
+             email TEXT UNIQUE,
+             password TEXT,
+             usage TEXT,
+             subscribed INTEGER DEFAULT 0
+             )''')
+
+0 = free user
+
+1 = paid user
+
+
+Function to update subscription:
+
+def activate_subscription(email):
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("UPDATE users SET subscribed=1 WHERE email=?", (email,))
     conn.commit()
     conn.close()
+
+When a user logs in, load subscription status:
+
+def get_subscription(email):
+    conn = sqlite3.connect(DB_FILE)
+    c = conn.cursor()
+    c.execute("SELECT subscribed FROM users WHERE email=?", (email,))
+    res = c.fetchone()
+    conn.close()
+    return res[0] == 1 if res else False
 
 # Add user
 def add_user(email, password):
