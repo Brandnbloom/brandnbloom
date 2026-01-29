@@ -29,6 +29,19 @@ def run():
 
         insight = generate_ai_caption("ad_performance", df_ads)
         st.success(f"💡 AI Insight: {insight}")
+    
+    # ---------------- Check usage ----------------
+    from streamlit_app import check_usage
+    if not check_usage("Ad Creative Tester"):
+        st.stop()  # Stop the tool if free limit reached
+
+    # ---------------- Tool logic ----------------
+    uploaded_file = st.file_uploader("Upload Customer Data", type=['csv'])
+    if uploaded_file:
+        df = pd.read_csv(uploaded_file)
+        st.success("Data loaded successfully!")
+        # Your ad creative tester logic here...
+
     # ------------------- Input -------------------
     campaign_id = st.text_input("Enter Campaign ID or Name")
     limit = st.number_input("Number of recent ads to analyze", min_value=1, max_value=100, value=10)
