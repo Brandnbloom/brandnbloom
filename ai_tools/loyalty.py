@@ -78,3 +78,16 @@ def run():
         st.markdown("### Tips to Level Up:")
         if tier != "Platinum":
             st.markdown(f"- Make {TIERS[TIERS.index(tier)+1]} tier by earning more points!")
+
+  # ---------------- Check usage ----------------
+    from streamlit_app import check_usage
+    if not check_usage("Loyalty"):
+        st.stop()  # Stop the tool if free limit reached
+
+    # ---------------- Tool logic ----------------
+    uploaded_file = st.file_uploader("Upload Customer Data", type=['csv'])
+    if uploaded_file:
+        df = pd.read_csv(uploaded_file)
+        st.success("Data loaded successfully!")
+        # Your loyalty logic here...
+
