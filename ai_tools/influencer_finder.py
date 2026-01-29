@@ -76,6 +76,19 @@ def run():
 
         st.success("Influencer strategy saved to Dashboard ✅")
 
+          # ---------------- Check usage ----------------
+    from streamlit_app import check_usage
+    if not check_usage("Influencer finder"):
+        st.stop()  # Stop the tool if free limit reached
+
+    # ---------------- Tool logic ----------------
+    uploaded_file = st.file_uploader("Upload Customer Data", type=['csv'])
+    if uploaded_file:
+        df = pd.read_csv(uploaded_file)
+        st.success("Data loaded successfully!")
+        # Your influencer finder logic here...
+
+
         st.markdown("#### ✨ Outreach Message (DM / Email)")
         st.text_area("Message", caption_prompt, height=220)
 
