@@ -66,6 +66,19 @@ def run():
             "recommended_persuasion": persuasion_angle
         }
 
+          # ---------------- Check usage ----------------
+    from streamlit_app import check_usage
+    if not check_usage("Consumer Behavior"):
+        st.stop()  # Stop the tool if free limit reached
+
+    # ---------------- Tool logic ----------------
+    uploaded_file = st.file_uploader("Upload Customer Data", type=['csv'])
+    if uploaded_file:
+        df = pd.read_csv(uploaded_file)
+        st.success("Data loaded successfully!")
+        # Your Consumer Behavior logic here...
+
+
         # 1️⃣ Save insight
         save_insight(
             user_id=user_id,
