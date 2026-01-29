@@ -54,3 +54,16 @@ def run():
             st.markdown(f"### Sentiment: **{sentiment}**")
         except Exception as e:
             st.error(f"OCR failed: {e}")
+
+  # ---------------- Check usage ----------------
+    from streamlit_app import check_usage
+    if not check_usage("OCR Sentiment"):
+        st.stop()  # Stop the tool if free limit reached
+
+    # ---------------- Tool logic ----------------
+    uploaded_file = st.file_uploader("Upload Customer Data", type=['csv'])
+    if uploaded_file:
+        df = pd.read_csv(uploaded_file)
+        st.success("Data loaded successfully!")
+        # Your OCR Sentiment logic here...
+
