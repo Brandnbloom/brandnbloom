@@ -7,7 +7,7 @@ from utils.session import get_user_id
 from utils.usage_limiter import check_usage, show_limit_message
 from utils.dashboard import load_dashboard_data
 from utils.pdf_export import generate_pdf_report
-
+from utils.visualization import show_numeric_bar_chart
 # Services
 from services.razorpay_service import get_razorpay_customers
 
@@ -112,10 +112,7 @@ elif selected == "Dashboard / PDF Export":
         st.subheader(tool)
         st.dataframe(df.head())
 
-        numeric = df.select_dtypes(include="number")
-
-        if not numeric.empty:
-            st.plotly_chart(px.bar(numeric))
+        show_numeric_bar_chart(df, tool)
 
     if st.button("Download PDF"):
         path = generate_pdf_report(user_id, data)
