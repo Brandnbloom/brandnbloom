@@ -8,9 +8,12 @@ from utils.usage_limiter import check_usage, show_limit_message
 from utils.dashboard import load_dashboard_data
 from utils.pdf_export import generate_pdf_report
 from utils.visualization import show_numeric_bar_chart
+
 # Services
 from services.razorpay_service import get_razorpay_customers
 from services.pdf_export import export_dashboard_pdf
+from services.user_api import init_db, add_user, authenticate_user, get_usage, update_usage
+import json
 
 # Tools
 from ai_tools.customer_360_rfm import run_customer_360_rfm_tool
@@ -38,6 +41,31 @@ def check_usage(tool_name, free_limit=3):
     else:
         st.warning(f"❌ Free limit reached for '{tool_name}'. Please subscribe to continue.")
         return False
+
+init_db()
+if selected == "Login":
+    st.subheader("🔐 Login")
+    email = st.text_input("Email")
+    password = st.text_input("Password", type="password")
+    if st.button("Login"):
+        user = authenticate_user(email, password)
+        if user:
+            st.success("Login successful!")
+            st.session_state["user_email"] = email
+            # Load persistent usage
+            st.session_state["tool_usage"] = get_usage(email)
+        else:
+            st.error("Invalid credentials")
+
+elif selected == "Signup":
+    st.subheader("🆕 Signup")
+    email = st.text_input("Email")
+    password = st.text_input("Password", type="password")
+    if st.button("Create Account"):
+        if add_user(email, password):
+            st.success("Account created! Please login.")
+        else:
+            st.error("Email already exists")
 
 
 # ---------------- MENU ----------------
@@ -142,4 +170,42 @@ if st.button("📄 Export Full PDF Report"):
             file_name="BrandNBloom_Full_Report.pdf",
             mime="application/pdf"
         )
+
+def check_usage(tool_name, free_limit=3):
+    """
+    Checks if the user has free usage left for a tool.
+    If exceeded, prompts subscription.
+    """
+    usage = st.session_state["tool_usage"].get(tool_name, 0)
+
+    # If user has paid subscription, ignore limits
+    if st.session_state.get("user_subscribed", False):
+        return True
+
+    if usage < free_limit:
+        st.session_state["tool_usage"][tool_name] = usage + 1
+        st.info(f"✅ Free usage remaining for '{tool_name}': {free_limit - st.session_state['tool_usage'][tool_name]}")
+
+        # Persist usage if logged in
+        if "user_email" in st.session_state:
+            from services.user_api import update_usage
+            update_usage(st.session_state["user_email"], st.session_state["tool_usage"])
+        return True
+    else:
+        st.warning(f"❌ Free limit reached for '{tool_name}'.")
+
+        # Show subscription prompt
+        st.markdown("""
+        <div style='border:1px solid #F1C0D1; padding:10px; border-radius:10px; background-color:#FFF0F5'>
+        💳 **Upgrade to Pro to unlock unlimited access!**  
+        - Unlimited tool usage  
+        - Unlimited PDF exports  
+        - Priority AI insights  
+
+        <a href='https://yourpaymentlink.com' target='_blank'>
+        <button style='padding:10px 20px; background-color:#FF69B4; color:white; border:none; border-radius:5px;'>Subscribe Now</button>
+        </a>
+        </div>
+        """, unsafe_allow_html=True)
+        return False
 
