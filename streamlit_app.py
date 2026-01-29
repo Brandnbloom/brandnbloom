@@ -66,6 +66,7 @@ elif selected == "Signup":
             st.success("Account created! Please login.")
         else:
             st.error("Email already exists")
+st.session_state["user_subscribed"] = get_subscription(email)
 
 
 # ---------------- MENU ----------------
