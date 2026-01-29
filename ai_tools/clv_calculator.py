@@ -50,8 +50,8 @@ def run():
         visualize_data("clv", df)
 
         # AI Insight
-        df["AI_Insight"] = generate_ai_caption("churn", df)
-        save_to_dashboard("churn", df)
+        df["AI_Insight"] = generate_ai_caption("CLV", df)
+        save_to_dashboard("clv", df)
 
         # Export CSV
         csv = df.to_csv(index=False).encode("utf-8")
