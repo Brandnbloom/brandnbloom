@@ -2,6 +2,7 @@ import pandas as pd
 import streamlit as st
 from datetime import datetime
 from services.customer_api import get_customer_data
+from services.openai_api import generate_insight
 df = get_customer_data()
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.linear_model import LogisticRegression
@@ -115,5 +116,9 @@ def run_customer_360_rfm_tool(df_ga, df_razorpay, df_meta):
         dataframe=df
     )
 
-    st.success("✅ Customer intelligence generated!")
-    
+summary = df.describe().to_string()
+
+ai_text = generate_insight(summary)
+
+st.subheader("🤖 AI Business Insight")
+st.success(ai_text)  
