@@ -21,6 +21,45 @@ from ai_tools.roi_tracker import run_roi_tracker
 from ai_tools.rfm_segmentation import run_rfm_analysis
 from ai_tools.sentiment_analyzer import run_sentiment_analyzer
 from ai_tools.audit_tools import run_audit_tools
+st.set_page_config(page_title="Brand N Bloom Analytics", layout="wide")
+
+st.title("🌸 Brand N Bloom Analytics Suite")
+
+# ---------------- Top Menu ----------------
+menu_options = ["Home", "Churn Predictor", "CLV Calculator", "Dashboard"]
+selected = st.radio("Navigate", menu_options, horizontal=True)
+
+# ---------------- Pages ----------------
+if selected == "Home":
+    st.markdown("## Welcome to Brand N Bloom Analytics Suite")
+    st.markdown("Use the menu above to navigate between tools.")
+elif selected == "Churn Predictor":
+    run_churn()
+
+elif selected == "CLV Calculator":
+    run_clv()
+
+elif selected == "Dashboard":
+    st.header("📊 Central Dashboard")
+    
+    if "dashboard_data" not in st.session_state or not st.session_state["dashboard_data"]:
+        st.info("No data yet. Run Churn Predictor or CLV Calculator to populate dashboard.")
+    else:
+        for tool_name, df in st.session_state["dashboard_data"].items():
+            st.subheader(f"Results: {tool_name}")
+            st.dataframe(df.head(10))
+            
+            # Interactive charts
+            if "Recency" in df.columns and "Frequency" in df.columns and "Monetary" in df.columns:
+                st.bar_chart(df[["Recency", "Frequency", "Monetary"]].fillna(0))
+            
+            if "CLV" in df.columns:
+                st.line_chart(df[["CustomerID", "CLV"]].set_index("CustomerID"))
+
+            # AI Insight
+            if "AI_Insight" in df.columns:
+                st.success(f"💡 AI Insight: {df['AI_Insight'].iloc[0]}")
+
 
 # ----------------------------
 # User Session
