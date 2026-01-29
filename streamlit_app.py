@@ -10,6 +10,7 @@ from utils.pdf_export import generate_pdf_report
 from utils.visualization import show_numeric_bar_chart
 # Services
 from services.razorpay_service import get_razorpay_customers
+from services.pdf_export import export_dashboard_pdf
 
 # Tools
 from ai_tools.customer_360_rfm import run_customer_360_rfm_tool
@@ -130,8 +131,15 @@ elif selected == "Dashboard / PDF Export":
 
         show_numeric_bar_chart(df, tool)
 
-    if st.button("Download PDF"):
-        path = generate_pdf_report(user_id, data)
+if st.button("📄 Export Full PDF Report"):
+    if "dashboard_data" not in st.session_state or not st.session_state["dashboard_data"]:
+        st.warning("No data available. Run some tools first!")
+    else:
+        pdf_buffer = export_dashboard_pdf(st.session_state["dashboard_data"])
+        st.download_button(
+            label="📥 Download Full PDF Report",
+            data=pdf_buffer,
+            file_name="BrandNBloom_Full_Report.pdf",
+            mime="application/pdf"
+        )
 
-        with open(path, "rb") as f:
-            st.download_button("Download Report", f, file_name="brandnbloom.pdf")
