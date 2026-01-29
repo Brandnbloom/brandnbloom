@@ -36,3 +36,16 @@ def run():
 
         caption = generate_ai_caption("social_posts", posts_df)
         st.success(f"💡 AI Insight: {caption}")
+
+  # ---------------- Check usage ----------------
+    from streamlit_app import check_usage
+    if not check_usage("Instagram Data Analysis"):
+        st.stop()  # Stop the tool if free limit reached
+
+    # ---------------- Tool logic ----------------
+    uploaded_file = st.file_uploader("Upload Customer Data", type=['csv'])
+    if uploaded_file:
+        df = pd.read_csv(uploaded_file)
+        st.success("Data loaded successfully!")
+        # Your audit tools logic here...
+
