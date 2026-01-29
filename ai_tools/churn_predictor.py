@@ -81,8 +81,8 @@ def run():
         visualize_data("churn", df)
 
         # AI Insight
-        caption = generate_ai_caption("churn", df)
-        st.success(f"💡 AI Insight: {caption}")
+       df["AI_Insight"] = generate_ai_caption("churn", df)
+       save_to_dashboard("churn", df)
 
         # Export CSV
         csv = df.to_csv(index=False).encode("utf-8")
@@ -92,4 +92,5 @@ def run():
             file_name="churn_predictions.csv",
             mime="text/csv"
         )
+
 
