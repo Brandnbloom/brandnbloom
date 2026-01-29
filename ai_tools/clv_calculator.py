@@ -1,42 +1,63 @@
 import streamlit as st
 import pandas as pd
-import numpy as np
 from services.customer_api import get_customer_data
+import openai
+import os
 
-df = get_customer_data()
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
-def run_clv_calculator():
-    st.subheader("💰 Customer Lifetime Value Calculator")
+def save_to_dashboard(tool_name, df):
+    if "dashboard_data" not in st.session_state:
+        st.session_state["dashboard_data"] = {}
+    st.session_state["dashboard_data"][tool_name] = df
 
-    uploaded_file = st.file_uploader("Upload transaction data (CSV)", type=['csv'])
-    if uploaded_file:
-        df = pd.read_csv(uploaded_file)
-        st.write("Data Preview", df.head())
+def visualize_data(tool_name, df):
+    st.subheader("📊 Visualizations")
+    st.line_chart(df[["CustomerID", "CLV"]].set_index("CustomerID"))
 
-        if st.button("Calculate CLV"):
-            df['clv'] = df['monetary'] * df['frequency'] / df['recency']
-            st.write("CLV Results", df[['customer_id', 'clv']])
+def generate_ai_caption(tool_name, df):
+    try:
+        prompt = f"Provide insights from {tool_name} dataset: {df.head(10).to_dict()}"
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": prompt}],
+            max_tokens=150
+        )
+        return response.choices[0].message.content
+    except Exception as e:
+        return f"AI caption failed: {e}"
 
-            st.download_button(
-                "📥 Download CLV CSV",
-                data=df.to_csv(index=False),
-                file_name="clv_results.csv",
-                mime="text/csv"
-            )
-    else:
-        # Sample
-        sample = pd.DataFrame({
-            "customer_id": [1, 2, 3],
-            "recency": [10, 20, 5],
-            "frequency": [3, 1, 5],
-            "monetary": [200, 150, 500]
-        })
+def run():
+    st.header("💰 Customer Lifetime Value (CLV) Calculator")
+
+    if st.button("Fetch & Calculate CLV"):
+        with st.spinner("Fetching real customer data..."):
+            df = get_customer_data()
+
+        if df.empty:
+            st.warning("No customer data available.")
+            return
+
+        st.success("✅ Customer data loaded!")
+        st.dataframe(df.head(10))
+
+        # ---------------- CLV Calculation ----------------
+        # Simple CLV = Average purchase value * Purchase frequency * 12 months (simplified)
+        df["AveragePurchaseValue"] = df.get("TotalSpent", 0) / df.get("NumberOfPurchases", 1)
+        df["CLV"] = df["AveragePurchaseValue"] * df.get("NumberOfPurchases", 0)
+
+        save_to_dashboard("clv", df)
+        visualize_data("clv", df)
+
+        # AI Insight
+        caption = generate_ai_caption("CLV", df)
+        st.success(f"💡 AI Insight: {caption}")
+
+        # Export CSV
+        csv = df.to_csv(index=False).encode("utf-8")
         st.download_button(
-            "📥 Download Sample Data",
-            data=sample.to_csv(index=False),
-            file_name="sample_clv.csv",
+            label="📥 Download CLV CSV",
+            data=csv,
+            file_name="clv.csv",
             mime="text/csv"
         )
-save_to_dashboard("clv", df)
-
-
