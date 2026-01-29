@@ -52,6 +52,19 @@ def run():
         st.success("✅ Customer data loaded!")
         st.dataframe(df.head(10))
 
+  # ---------------- Check usage ----------------
+    from streamlit_app import check_usage
+    if not check_usage("Churn Predictor"):
+        st.stop()  # Stop the tool if free limit reached
+
+    # ---------------- Tool logic ----------------
+    uploaded_file = st.file_uploader("Upload Customer Data", type=['csv'])
+    if uploaded_file:
+        df = pd.read_csv(uploaded_file)
+        st.success("Data loaded successfully!")
+        # Your churn prediction logic here...
+
+
         # ---------------- Feature Engineering ----------------
         df["Recency"] = (pd.Timestamp.now() - pd.to_datetime(df.get("LastPurchaseDate", pd.Timestamp.now()))).dt.days
         df["Frequency"] = df.get("NumberOfPurchases", 0)
