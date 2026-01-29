@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 # Internal
 from utils.usage_limiter import check_usage
 from utils.dashboard import save_to_dashboard
-
+from utils.visualization import show_clv_chart, show_churn_chart
 
 # -------------------------------------------------
 # Merge GA + Stripe + Meta
@@ -112,3 +112,5 @@ def run_customer_360_rfm_tool(df_ga, df_razorpay, df_meta):
     )
 
     st.success("✅ Customer intelligence generated!")
+    show_clv_chart(df)
+    show_churn_chart(df)
