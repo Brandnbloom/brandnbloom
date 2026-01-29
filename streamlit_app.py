@@ -16,7 +16,7 @@ from ai_tools.customer_360_rfm import run_customer_360_rfm_tool
 from ai_tools.churn_predictor import run_churn_predictor
 from ai_tools.clv_calculator import run_clv_calculator
 from ai_tools.market_trends import run_market_trends
-from ai_tools.roi_tracker import run_roi_tracker
+from ai_tools.marketing_roi import run_marketing_roi
 from ai_tools.audit_tools import run_audit_tools
 
 st.set_page_config(page_title="Brand N Bloom", layout="wide")
@@ -95,7 +95,7 @@ elif selected == "Market Trends":
 
 # ---------------- ROI ----------------
 
-elif selected == "ROI Tracker":
+elif selected == "Marketing ROI":
 
     if check_usage("roi"):
         run_roi_tracker(user_id)
