@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -7,7 +8,7 @@ import { Card } from './ui/card';
 import { ScrollArea } from './ui/scroll-area';
 import { Avatar, AvatarFallback } from './ui/avatar';
 import { toast } from 'sonner';
-import { Send, LogOut, Sparkles, Brain, Zap } from 'lucide-react';
+import { Send, LogOut, Sparkles, Brain, Zap, BarChart3 } from 'lucide-react';
 
 const ChatPage = () => {
   const { user, token, logout, API } = useAuth();
