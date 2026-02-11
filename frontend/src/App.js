@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Toaster } from './components/ui/sonner';
 import AuthPage from './components/AuthPage';
 import ChatPage from './components/ChatPage';
+import MarketingDashboard from './components/MarketingDashboard';
 import './App.css';
 
 const PrivateRoute = ({ children }) => {
