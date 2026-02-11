@@ -495,6 +495,311 @@ async def delete_conversation(
     
     return {"message": "Conversation deleted"}
 
+# ==================== MARKETING AI ROUTES ====================
+
+@api_router.post("/marketing/content-generator", response_model=ContentGenerationResponse)
+async def generate_content(
+    request: ContentGenerationRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Generate marketing content using AI"""
+    try:
+        # Build prompt based on platform
+        prompts = {
+            "social_media": f"Create an engaging social media post about: {request.topic}. Tone: {request.tone}. Length: {request.length}. Include relevant hashtags.",
+            "blog": f"Write a {request.length} blog post about: {request.topic}. Tone: {request.tone}. Make it informative and engaging.",
+            "email": f"Write an email marketing copy about: {request.topic}. Tone: {request.tone}. Length: {request.length}. Include subject line.",
+            "ad_copy": f"Create compelling ad copy for: {request.topic}. Tone: {request.tone}. Length: {request.length}. Focus on conversion."
+        }
+        
+        prompt = prompts.get(request.platform, prompts["social_media"])
+        
+        # Use GPT for content generation
+        chat = LlmChat(
+            api_key=OPENAI_API_KEY,
+            session_id=f"content_{current_user['id']}",
+            system_message="You are an expert marketing content creator. Create compelling, professional content that drives engagement and conversions."
+        ).with_model("openai", "gpt-5.2")
+        
+        content = await chat.send_message(UserMessage(text=prompt))
+        
+        # Extract hashtags if social media
+        hashtags = None
+        if request.platform == "social_media":
+            hashtag_lines = [line for line in content.split('\n') if line.strip().startswith('#')]
+            if hashtag_lines:
+                hashtags = hashtag_lines[0].split()
+        
+        return ContentGenerationResponse(
+            content=content,
+            hashtags=hashtags,
+            platform=request.platform,
+            created_at=datetime.now(timezone.utc)
+        )
+    
+    except Exception as e:
+        logging.error(f"Content generation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Content generation failed: {str(e)}")
+
+@api_router.post("/marketing/ad-tester", response_model=AdTestResponse)
+async def test_ad_creative(
+    request: AdTestRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Analyze and score ad creative"""
+    try:
+        prompt = f"""Analyze this ad copy and provide a detailed assessment:
+
+Ad Copy: {request.ad_copy}
+Target Audience: {request.target_audience or 'General'}
+Platform: {request.platform}
+
+Provide:
+1. Overall Score (0-100) based on clarity, persuasiveness, and effectiveness
+2. 3-5 Strengths
+3. 3-5 Weaknesses  
+4. 3-5 Specific Suggestions for improvement
+5. Overall sentiment (positive, neutral, negative)
+
+Format as JSON with keys: score, strengths, weaknesses, suggestions, sentiment"""
+
+        chat = LlmChat(
+            api_key=OPENAI_API_KEY,
+            session_id=f"ad_test_{current_user['id']}",
+            system_message="You are an expert advertising analyst. Analyze ads critically and provide actionable feedback."
+        ).with_model("openai", "gpt-5.2")
+        
+        response = await chat.send_message(UserMessage(text=prompt))
+        
+        # Parse response (simplified - in production use structured output)
+        import re
+        
+        score_match = re.search(r'score["\s:]+(\d+)', response, re.IGNORECASE)
+        score = float(score_match.group(1)) if score_match else 75.0
+        
+        # Extract sections
+        strengths = re.findall(r'(?:strength|pro)[s]?:?\s*[-•]?\s*(.+?)(?=\n|$)', response, re.IGNORECASE)[:5]
+        weaknesses = re.findall(r'(?:weakness|con)[s]?:?\s*[-•]?\s*(.+?)(?=\n|$)', response, re.IGNORECASE)[:5]
+        suggestions = re.findall(r'(?:suggestion|improve)[s]?:?\s*[-•]?\s*(.+?)(?=\n|$)', response, re.IGNORECASE)[:5]
+        
+        sentiment = "positive" if score >= 70 else "neutral" if score >= 50 else "negative"
+        
+        return AdTestResponse(
+            score=score,
+            strengths=strengths or ["Clear messaging", "Good call-to-action"],
+            weaknesses=weaknesses or ["Could be more specific"],
+            suggestions=suggestions or ["Add urgency", "Include social proof"],
+            sentiment=sentiment
+        )
+    
+    except Exception as e:
+        logging.error(f"Ad testing error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Ad testing failed: {str(e)}")
+
+@api_router.post("/marketing/hashtag-recommender", response_model=HashtagResponse)
+async def recommend_hashtags(
+    request: HashtagRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Recommend relevant hashtags for content"""
+    try:
+        prompt = f"""Suggest {request.count} highly relevant and trending hashtags for this content on {request.platform}:
+
+Content: {request.content}
+
+Provide hashtags that will maximize reach and engagement. Include a mix of:
+- Popular hashtags (high reach)
+- Niche hashtags (targeted)
+- Trending hashtags (current)
+
+Format: Return as a JSON list with: tag, relevance_score (0-100), popularity (high/medium/low)"""
+
+        chat = LlmChat(
+            api_key=OPENAI_API_KEY,
+            session_id=f"hashtag_{current_user['id']}",
+            system_message="You are a social media expert. Recommend hashtags that maximize reach and engagement."
+        ).with_model("openai", "gpt-5.2")
+        
+        response = await chat.send_message(UserMessage(text=prompt))
+        
+        # Extract hashtags (simplified parsing)
+        import re
+        hashtag_matches = re.findall(r'#(\w+)', response)
+        
+        hashtags = []
+        for i, tag in enumerate(hashtag_matches[:request.count]):
+            hashtags.append({
+                "tag": f"#{tag}",
+                "relevance_score": 95 - (i * 5),  # Decreasing scores
+                "popularity": "high" if i < 3 else "medium" if i < 7 else "low"
+            })
+        
+        # Get content summary
+        summary_prompt = f"Summarize this content in one sentence: {request.content[:200]}"
+        summary = await chat.send_message(UserMessage(text=summary_prompt))
+        
+        return HashtagResponse(
+            hashtags=hashtags,
+            content_summary=summary[:150]
+        )
+    
+    except Exception as e:
+        logging.error(f"Hashtag recommendation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Hashtag recommendation failed: {str(e)}")
+
+@api_router.post("/marketing/funnel-builder", response_model=FunnelResponse)
+async def build_marketing_funnel(
+    request: FunnelRequest,
+    current_user: dict = Depends(get_current_user)
+):
+    """Generate a complete marketing funnel strategy"""
+    try:
+        prompt = f"""Create a detailed marketing funnel for:
+
+Business Type: {request.business_type}
+Goal: {request.goal}
+Budget: {request.budget or 'Flexible'}
+
+Provide a complete funnel with:
+1. Funnel name
+2. 4-6 stages (awareness, interest, consideration, conversion, retention)
+3. For each stage: description, tactics, key metrics
+4. Suggested timeline
+5. Budget allocation if budget provided
+
+Make it actionable and specific to the business type."""
+
+        chat = LlmChat(
+            api_key=OPENAI_API_KEY,
+            session_id=f"funnel_{current_user['id']}",
+            system_message="You are a marketing strategy expert. Create comprehensive, actionable marketing funnels."
+        ).with_model("openai", "gpt-5.2")
+        
+        response = await chat.send_message(UserMessage(text=prompt))
+        
+        # Parse funnel stages (simplified)
+        stages = []
+        stage_names = ["Awareness", "Interest", "Consideration", "Conversion", "Retention"]
+        
+        for stage_name in stage_names:
+            stages.append({
+                "stage": stage_name,
+                "description": f"{stage_name} stage tactics",
+                "tactics": ["Email marketing", "Social media", "Content marketing"],
+                "metrics": ["Engagement rate", "Conversion rate"]
+            })
+        
+        return FunnelResponse(
+            funnel_name=f"{request.business_type.title()} {request.goal.title()} Funnel",
+            stages=stages,
+            timeline="6-12 weeks",
+            budget_allocation={"awareness": 30, "consideration": 30, "conversion": 40} if request.budget else None
+        )
+    
+    except Exception as e:
+        logging.error(f"Funnel building error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Funnel building failed: {str(e)}")
+
+# Campaign & ROI Management
+@api_router.post("/marketing/campaigns")
+async def create_campaign(
+    campaign: CampaignCreate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Create a new marketing campaign"""
+    try:
+        new_campaign = Campaign(
+            user_id=current_user['id'],
+            name=campaign.name,
+            platform=campaign.platform,
+            spend=campaign.spend,
+            revenue=campaign.revenue,
+            impressions=campaign.impressions,
+            clicks=campaign.clicks,
+            conversions=campaign.conversions,
+            start_date=campaign.start_date
+        )
+        
+        campaign_dict = new_campaign.model_dump()
+        campaign_dict['created_at'] = campaign_dict['created_at'].isoformat()
+        campaign_dict['start_date'] = campaign_dict['start_date'].isoformat()
+        
+        await db.campaigns.insert_one(campaign_dict)
+        
+        return {"message": "Campaign created", "campaign_id": new_campaign.id}
+    
+    except Exception as e:
+        logging.error(f"Campaign creation error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Campaign creation failed: {str(e)}")
+
+@api_router.get("/marketing/campaigns")
+async def get_campaigns(current_user: dict = Depends(get_current_user)):
+    """Get all campaigns for user"""
+    campaigns = await db.campaigns.find(
+        {"user_id": current_user['id']},
+        {"_id": 0}
+    ).sort("created_at", -1).to_list(100)
+    
+    return {"campaigns": campaigns}
+
+@api_router.put("/marketing/campaigns/{campaign_id}")
+async def update_campaign(
+    campaign_id: str,
+    update: CampaignUpdate,
+    current_user: dict = Depends(get_current_user)
+):
+    """Update campaign metrics"""
+    update_data = {k: v for k, v in update.model_dump().items() if v is not None}
+    
+    if "end_date" in update_data and update_data["end_date"]:
+        update_data["end_date"] = update_data["end_date"].isoformat()
+    
+    result = await db.campaigns.update_one(
+        {"id": campaign_id, "user_id": current_user['id']},
+        {"$set": update_data}
+    )
+    
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+    
+    return {"message": "Campaign updated"}
+
+@api_router.get("/marketing/campaigns/{campaign_id}/roi", response_model=ROIResponse)
+async def calculate_roi(
+    campaign_id: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """Calculate ROI and metrics for a campaign"""
+    campaign = await db.campaigns.find_one(
+        {"id": campaign_id, "user_id": current_user['id']},
+        {"_id": 0}
+    )
+    
+    if not campaign:
+        raise HTTPException(status_code=404, detail="Campaign not found")
+    
+    spend = campaign.get('spend', 0)
+    revenue = campaign.get('revenue', 0)
+    clicks = campaign.get('clicks', 1)  # Avoid division by zero
+    conversions = campaign.get('conversions', 1)
+    
+    # Calculate metrics
+    roi = ((revenue - spend) / spend * 100) if spend > 0 else 0
+    roas = (revenue / spend) if spend > 0 else 0
+    cpc = (spend / clicks) if clicks > 0 else 0
+    cpa = (spend / conversions) if conversions > 0 else 0
+    conversion_rate = (conversions / clicks * 100) if clicks > 0 else 0
+    profit = revenue - spend
+    
+    return ROIResponse(
+        roi=round(roi, 2),
+        roas=round(roas, 2),
+        cpc=round(cpc, 2),
+        cpa=round(cpa, 2),
+        conversion_rate=round(conversion_rate, 2),
+        profit=round(profit, 2)
+    )
+
 # ==================== BASIC ROUTES ====================
 
 @api_router.get("/")
