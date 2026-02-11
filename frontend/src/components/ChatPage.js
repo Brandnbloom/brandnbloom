@@ -12,6 +12,7 @@ import { Send, LogOut, Sparkles, Brain, Zap, BarChart3 } from 'lucide-react';
 
 const ChatPage = () => {
   const { user, token, logout, API } = useAuth();
+  const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
