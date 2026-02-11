@@ -99,6 +99,92 @@ class ChatResponse(BaseModel):
     model_used: str
     timestamp: datetime
 
+# ==================== MARKETING AI MODELS ====================
+
+class ContentGenerationRequest(BaseModel):
+    platform: Literal["social_media", "blog", "email", "ad_copy"]
+    topic: str
+    tone: Optional[Literal["professional", "casual", "friendly", "persuasive"]] = "professional"
+    length: Optional[Literal["short", "medium", "long"]] = "medium"
+
+class ContentGenerationResponse(BaseModel):
+    content: str
+    hashtags: Optional[List[str]] = None
+    platform: str
+    created_at: datetime
+
+class AdTestRequest(BaseModel):
+    ad_copy: str
+    target_audience: Optional[str] = None
+    platform: Optional[str] = "general"
+
+class AdTestResponse(BaseModel):
+    score: float  # 0-100
+    strengths: List[str]
+    weaknesses: List[str]
+    suggestions: List[str]
+    sentiment: str
+
+class HashtagRequest(BaseModel):
+    content: str
+    platform: Literal["instagram", "twitter", "linkedin", "facebook", "general"] = "general"
+    count: Optional[int] = 10
+
+class HashtagResponse(BaseModel):
+    hashtags: List[dict]  # [{tag, relevance_score, popularity}]
+    content_summary: str
+
+class FunnelRequest(BaseModel):
+    business_type: str
+    goal: Literal["awareness", "leads", "sales", "retention"]
+    budget: Optional[str] = None
+
+class FunnelResponse(BaseModel):
+    funnel_name: str
+    stages: List[dict]  # [{stage, description, tactics, metrics}]
+    timeline: str
+    budget_allocation: Optional[dict] = None
+
+class Campaign(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    user_id: str
+    name: str
+    platform: str
+    spend: float
+    revenue: float = 0.0
+    impressions: int = 0
+    clicks: int = 0
+    conversions: int = 0
+    start_date: datetime
+    end_date: Optional[datetime] = None
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class CampaignCreate(BaseModel):
+    name: str
+    platform: str
+    spend: float
+    revenue: Optional[float] = 0.0
+    impressions: Optional[int] = 0
+    clicks: Optional[int] = 0
+    conversions: Optional[int] = 0
+    start_date: datetime
+
+class CampaignUpdate(BaseModel):
+    revenue: Optional[float] = None
+    impressions: Optional[int] = None
+    clicks: Optional[int] = None
+    conversions: Optional[int] = None
+    end_date: Optional[datetime] = None
+
+class ROIResponse(BaseModel):
+    roi: float  # percentage
+    roas: float  # return on ad spend
+    cpc: float  # cost per click
+    cpa: float  # cost per acquisition
+    conversion_rate: float
+    profit: float
+
 # ==================== AUTH UTILITIES ====================
 
 def hash_password(password: str) -> str:
