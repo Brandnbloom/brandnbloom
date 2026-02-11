@@ -99,6 +99,15 @@ const ChatPage = () => {
             <Button
               variant="outline"
               size="sm"
+              onClick={() => navigate('/marketing')}
+              data-testid="marketing-button"
+            >
+              <BarChart3 className="w-4 h-4 mr-2" />
+              Marketing
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
               onClick={logout}
               data-testid="logout-button"
             >
