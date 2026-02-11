@@ -62,6 +62,14 @@ function App() {
               </PrivateRoute>
             }
           />
+          <Route
+            path="/marketing"
+            element={
+              <PrivateRoute>
+                <MarketingDashboard />
+              </PrivateRoute>
+            }
+          />
           <Route path="/" element={<Navigate to="/chat" />} />
         </Routes>
       </BrowserRouter>
