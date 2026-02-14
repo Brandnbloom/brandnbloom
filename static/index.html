@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brand n Bloom 🌸</title>
+
+  <!-- Favicon & Icons -->
+  <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#FF2898" />
+</head>
+<body style="margin: 0; padding: 0;">
+  <iframe 
+    src="https://brand-n-bloom.onrender.com"
+    width="100%"
+    height="100%"
+    style="border: none; position: fixed; top: 0; left: 0; height: 100vh; width: 100vw;"
+    allowfullscreen
+  ></iframe>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(reg => console.log("✅ Service worker registered!", reg))
+        .catch(err => console.warn("❌ Service worker failed:", err));
+    }
+  </script>
+</body>
+
+</html><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brand n Bloom 🌸</title>
+
+  <!-- SEO -->
+  <meta name="description" content="Brand n Bloom – AI-powered branding and business tools for creatives and entrepreneurs." />
+  <meta name="keywords" content="Branding, AI tools, Design, Marketing, Business" />
+  <meta name="author" content="Brand n Bloom" />
+
+  <!-- Social Sharing -->
+  <meta property="og:title" content="Brand n Bloom 🌸" />
+  <meta property="og:description" content="AI-powered branding and business tools for creatives and entrepreneurs." />
+  <meta property="og:image" content="/icons/icon-512.png" />
+  <meta property="og:url" content="https://brand-n-bloom.com" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <!-- Icons -->
+  <link rel="icon" href="/favicon.ico" type="image/x-icon" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#FF2898" />
+
+  <!-- Styles -->
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+      background-color: #fff;
+    }
+    iframe {
+      border: none;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Embedded Streamlit App -->
+  <iframe 
+    src="https://brand-n-bloom.onrender.com"
+    title="Brand n Bloom App"
+    allowfullscreen
+    loading="lazy">
+  </iframe>
+
+  <!-- PWA Service Worker -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js')
+        .then(reg => console.log("✅ Service Worker Registered!", reg))
+        .catch(err => {
+          console.warn("❌ Service Worker Failed:", err);
+          // Retry once after 5 seconds
+          setTimeout(() => {
+            navigator.serviceWorker.register('/service-worker.js')
+              .then(r => console.log("🔄 Retry Service Worker Registered!", r))
+              .catch(e => console.warn("❌ Retry Failed:", e));
+          }, 5000);
+        });
+    }
+  </script>
+
+</body>
+</html>
