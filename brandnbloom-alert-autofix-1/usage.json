@@ -1,0 +1,10 @@
+{
+    "example_user@example.com": {
+        "BloomScore": 1,
+        "Consumer_Behavior": 2,
+        "Visual_Audit": 0,
+        "Review_Reply": 0,
+        "Digital_Menu": 0,
+        "BloomInsight": 0
+    }
+}

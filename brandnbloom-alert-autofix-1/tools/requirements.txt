@@ -1,0 +1,13 @@
+flask
+streamlit
+requests
+beautifulsoup4
+pandas
+matplotlib
+APScheduler
+reportlab
+sqlalchemy
+psycopg2-binary
+python-dotenv
+playwright
+numpy
